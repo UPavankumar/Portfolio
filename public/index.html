@@ -79,7 +79,6 @@
 
         .typing-text::after {
             content: "|";
-            position: absolute;
             right: -5px;
             animation: blink 0.7s infinite;
         }
@@ -735,91 +734,106 @@
             </div>
         </div>
     </section>
+<!-- Projects Section -->
+<section id="projects" class="py-16 bg-gray-50">
+  <div class="container mx-auto px-4">
+    <h2 class="text-3xl font-bold text-center mb-12">Projects</h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
 
-    <!-- Projects Section -->
-    <section id="projects">
-        <div class="container mx-auto px-4">
-            <h2 class="section-title">Projects</h2>
-            
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                <div class="fade-in">
-                    <div class="project-card">
-                        <div class="p-6">
-                            <h3 class="project-title text-xl">E-commerce Customer Churn Prediction</h3>
-                            <div class="project-tags">
-                                <span class="project-tag">Python</span>
-                                <span class="project-tag">Pandas</span>
-                                <span class="project-tag">Scikit-learn</span>
-                                <span class="project-tag">XGBoost</span>
-                            </div>
-                            <p class="text-gray-600 mt-4">
-                                Built machine learning model for churn using Python and Scikit-learn, achieving 99% accuracy. Conducted data preprocessing and feature engineering with Pandas for model robustness. Tuned XGBoost with GridSearchCV, enhancing predictive analytics performance.
-                            </p>
-                            <div class="mt-6">
-                                <a href="#" class="text-blue-600 hover:underline flex items-center">
-                                    <span>View Project</span>
-                                    <i class="fas fa-arrow-right ml-1"></i>
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="fade-in">
-                    <div class="project-card">
-                        <div class="p-6">
-                            <h3 class="project-title text-xl">Discord Bot for Twitter Verification</h3>
-                            <div class="project-tags">
-                                <span class="project-tag">Python</span>
-                                <span class="project-tag">Discord API</span>
-                                <span class="project-tag">Twitter API</span>
-                            </div>
-                            <p class="text-gray-600 mt-4">
-                                Automated verification with Python and Discord API, enabling real-time data processing. Implemented exception handling for data reliability and system stability.
-                            </p>
-                            <div class="mt-6">
-                                <a href="#" class="text-blue-600 hover:underline flex items-center">
-                                    <span>View Project</span>
-                                    <i class="fas fa-arrow-right ml-1"></i>
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="fade-in">
-                    <div class="project-card">
-                        <div class="p-6">
-                            <h3 class="project-title text-xl">Sales Dashboard with Power BI</h3>
-                            <div class="project-tags">
-                                <span class="project-tag">Power BI</span>
-                                <span class="project-tag">SQL</span>
-                                <span class="project-tag">Excel</span>
-                                <span class="project-tag">DAX</span>
-                            </div>
-                            <p class="text-gray-600 mt-4">
-                                Created an interactive sales dashboard using Power BI with drill-down capabilities. Connected SQL database for real-time data updates. Implemented DAX measures for complex calculations.
-                            </p>
-                            <div class="mt-6">
-                                <a href="#" class="text-blue-600 hover:underline flex items-center">
-                                    <span>View Project</span>
-                                    <i class="fas fa-arrow-right ml-1"></i>
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="flex items-center fade-in">
-  <a href="https://github.com/UPavankumar" target="_blank" rel="noopener noreferrer"
-     class="bg-transparent hover:bg-blue-500 text-blue-700 font-semibold hover:text-white py-2 px-4 border border-blue-500 hover:border-transparent rounded">
-    Go To Projects
+      <!-- Project Card -->
+      <div class="project-card bg-white shadow-md rounded-lg p-6 flex flex-col h-full">
+        <h3 class="project-title text-xl font-semibold mb-2">Portfolio Assistant Chatbot</h3>
+        <div class="project-tags flex flex-wrap gap-2 mb-4">
+          <span class="project-tag bg-gray-200 text-sm px-2 py-1 rounded">Python</span>
+          <span class="project-tag bg-gray-200 text-sm px-2 py-1 rounded">Streamlit</span>
+          <span class="project-tag bg-gray-200 text-sm px-2 py-1 rounded">Firebase</span>
+          <span class="project-tag bg-gray-200 text-sm px-2 py-1 rounded">Groq API</span>
+        </div>
+        <p class="text-gray-600 mb-6 flex-grow">
+          A Streamlit-based chatbot assistant that responds to portfolio queries with Alfred Pennyworth’s wit. Integrated with Groq API and Firebase.
+        </p>
+        <div class="mt-auto flex justify-between items-center">
+  <a href="https://github.com/UPavankumar/Portfolio_Assistant" target="_blank" class="text-blue-600 hover:underline flex items-center">
+    <span>View Code</span>
+    <i class="fas fa-code ml-2"></i>
+  </a>
+  <a href="https://portfolio-bot.streamlit.app/" target="_blank" class="text-blue-600 hover:underline flex items-center">
+    <span>Live Demo</span>
+    <i class="fas fa-external-link-alt ml-2"></i>
   </a>
 </div>
 
-            </div>
+      </div>
+
+      <!-- Churn Prediction -->
+      <div class="project-card bg-white shadow-md rounded-lg p-6 flex flex-col h-full">
+        <h3 class="project-title text-xl font-semibold mb-2">E-commerce Churn Prediction</h3>
+        <div class="project-tags flex flex-wrap gap-2 mb-4">
+          <span class="project-tag bg-gray-200 text-sm px-2 py-1 rounded">Python</span>
+          <span class="project-tag bg-gray-200 text-sm px-2 py-1 rounded">Pandas</span>
+          <span class="project-tag bg-gray-200 text-sm px-2 py-1 rounded">Scikit-learn</span>
+          <span class="project-tag bg-gray-200 text-sm px-2 py-1 rounded">XGBoost</span>
         </div>
-    </section>
+        <p class="text-gray-600 mb-6 flex-grow">
+          Built a churn prediction model with 99% accuracy using XGBoost. Preprocessing and feature engineering done in Pandas, with hyperparameter tuning via GridSearchCV.
+        </p>
+        <div class="mt-auto flex space-x-4">
+          <a href="https://github.com/UPavankumar/Data-Analysis-Projects" target="_blank" class="text-blue-600 hover:underline flex items-center">
+            <span>View Code</span>
+            <i class="fas fa-code ml-2"></i>
+          </a>
+        </div>
+      </div>
+
+      <!-- Twitter Discord Bot -->
+      <div class="project-card bg-white shadow-md rounded-lg p-6 flex flex-col h-full">
+        <h3 class="project-title text-xl font-semibold mb-2">Twitter Discord Verification Bot</h3>
+        <div class="project-tags flex flex-wrap gap-2 mb-4">
+          <span class="project-tag bg-gray-200 text-sm px-2 py-1 rounded">Python</span>
+          <span class="project-tag bg-gray-200 text-sm px-2 py-1 rounded">Discord API</span>
+          <span class="project-tag bg-gray-200 text-sm px-2 py-1 rounded">Twitter API</span>
+        </div>
+        <p class="text-gray-600 mb-6 flex-grow">
+          Discord bot that streamlines Twitter verification by authenticating users and assigning roles based on verification.
+        </p>
+        <div class="mt-auto flex space-x-4">
+          <a href="https://github.com/UPavankumar/Twitter_Discord_verification_bot" target="_blank" class="text-blue-600 hover:underline flex items-center">
+            <span>View Code</span>
+            <i class="fas fa-code ml-2"></i>
+          </a>
+        </div>
+      </div>
+
+      <!-- Power BI Dashboard -->
+      <div class="project-card bg-white shadow-md rounded-lg p-6 flex flex-col h-full">
+        <h3 class="project-title text-xl font-semibold mb-2">Sales Dashboard with Power BI</h3>
+        <div class="project-tags flex flex-wrap gap-2 mb-4">
+          <span class="project-tag bg-gray-200 text-sm px-2 py-1 rounded">Power BI</span>
+          <span class="project-tag bg-gray-200 text-sm px-2 py-1 rounded">SQL</span>
+          <span class="project-tag bg-gray-200 text-sm px-2 py-1 rounded">Excel</span>
+          <span class="project-tag bg-gray-200 text-sm px-2 py-1 rounded">DAX</span>
+        </div>
+        <p class="text-gray-600 mb-6 flex-grow">
+          Designed an interactive sales dashboard in Power BI with real-time data via SQL and dynamic KPIs using DAX formulas.
+        </p>
+        <div class="mt-auto flex space-x-4">
+          <a href="https://github.com/UPavankumar/Data-Analysis-Projects" target="_blank" class="text-blue-600 hover:underline flex items-center">
+            <span>View Code</span>
+            <i class="fas fa-code ml-2"></i>
+          </a>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- More Projects Button -->
+    <div class="flex justify-center mt-12">
+      <a href="https://github.com/UPavankumar" target="_blank" class="bg-transparent hover:bg-blue-500 text-blue-700 font-semibold hover:text-white py-2 px-4 border border-blue-500 hover:border-transparent rounded">
+        Go To Projects
+      </a>
+    </div>
+  </div>
+</section>
 
     <!-- Contact Section -->
     <section id="contact" class="bg-gray-50">
