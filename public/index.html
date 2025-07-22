@@ -986,27 +986,20 @@
         });
 
         // Loading Screen
-        window.addEventListener('load', function() {
-            const loadingScreen = document.getElementById('loadingScreen');
-            const loaderProgress = document.getElementById('loaderProgress');
-            
-            let progress = 0;
-            const interval = setInterval(() => {
-                progress += 5;
-                loaderProgress.style.width = `${progress}%`;
-                
-                if (progress >= 100) {
-                    clearInterval(interval);
-                    setTimeout(() => {
-                        loadingScreen.style.opacity = '0';
-                        setTimeout(() => {
-                            loadingScreen.style.display = 'none';
-                        }, 500);
-                    }, 500);
-                }
-            }, 100);
-        });
+     window.addEventListener('load', function() {
+         const loadingScreen = document.getElementById('loadingScreen');
+    
+         // Check if the loading screen element exists
+         if (loadingScreen) {
+        // Fade out the loading screen
+             loadingScreen.style.opacity = '0';
         
+             // Hide it completely after the fade-out animation
+             setTimeout(() => {
+                 loadingScreen.style.display = 'none';
+                              }, 500); // This delay should match your CSS transition time
+                        }
+          });
         // Typing Animation
         const typingText = document.getElementById('typingText');
         const roles = ['Data Scientist', 'Data Analyst', 'Machine Learning Engineer', 'BI Developer', 'Statistical Analyst'];
