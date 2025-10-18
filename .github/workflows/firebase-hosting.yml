@@ -1,0 +1,27 @@
+name: Deploy to Firebase Hosting
+
+on:
+  push:
+    branches:
+      - main # This action runs when you push to the 'main' branch
+
+jobs:
+  deploy: # Changed job name to a simpler 'deploy'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy to Firebase
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          # This token is automatically created by GitHub for authentication
+          repoToken: '${{ secrets.GITHUB_TOKEN }}'
+          
+          # 🚨 CRITICAL CHANGE: Using the actual secret name from your GitHub settings 🚨
+          firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_PORTFOLIO_U_PAVAN_KUMAR }}' 
+          
+          # Your Firebase project ID
+          projectId: portfolio-u-pawan-kumar 
+          
+          # Deploys to the main public URL (https://portfolio-u-pawan-kumar.web.app)
+          channelId: live
