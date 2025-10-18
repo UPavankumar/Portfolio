@@ -23,5 +23,5 @@ jobs:
           # Your Firebase project ID
           projectId: portfolio-u-pawan-kumar 
           
-          # Deploys to the main public URL (https://portfolio-u-pawan-kumar.web.app)
+          # Deploys to the main public URL (https://portfolio-u-pavan-kumar.web.app)
           channelId: live
