@@ -21,7 +21,7 @@ jobs:
           firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_PORTFOLIO_U_PAVAN_KUMAR }}' 
           
           # Your Firebase project ID
-          projectId: portfolio-u-pawan-kumar 
+          projectId: portfolio-u-pavan-kumar 
           
           # Deploys to the main public URL (https://portfolio-u-pavan-kumar.web.app)
           channelId: live
