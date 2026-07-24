@@ -11,6 +11,22 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+        env:
+          # Optional: add VITE_GROQ_API_KEY as a repo secret to enable the live
+          # Alfred chat assistant. Without it the site builds in demo mode.
+          VITE_GROQ_API_KEY: ${{ secrets.VITE_GROQ_API_KEY }}
+
       - name: Deploy to Firebase
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:

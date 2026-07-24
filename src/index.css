@@ -1,0 +1,74 @@
+@import "tailwindcss";
+
+@theme {
+  --color-ink: #05070c;
+  --color-panel: #0a0e16;
+  --color-line: #1a2233;
+  --color-fg: #e7ebf2;
+  --color-mut: #8792a8;
+  --color-acc: #34e0c2;
+  --color-acc-dim: #34e0c233;
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+
+  --animate-marquee: marquee var(--duration, 30s) linear infinite;
+  --animate-marquee-reverse: marquee var(--duration, 30s) linear infinite reverse;
+
+  @keyframes marquee {
+    to {
+      transform: translateX(-50%);
+    }
+  }
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--color-ink);
+  color: var(--color-fg);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* dot-grid backdrop used by hero */
+.dotgrid {
+  background-image: radial-gradient(circle, #1e2a3f 1px, transparent 1px);
+  background-size: 28px 28px;
+  mask-image: radial-gradient(ellipse 90% 80% at 50% 40%, black 40%, transparent 100%);
+}
+
+::selection {
+  background: var(--color-acc);
+  color: var(--color-ink);
+}
+
+/* interaction & accessibility polish */
+button:not(:disabled) {
+  cursor: pointer;
+}
+
+:where(a, button, input, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--color-acc);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* keep anchored sections clear of the fixed nav */
+section[id],
+footer[id],
+header[id] {
+  scroll-margin-top: 4.5rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  .animate-marquee,
+  .animate-marquee-reverse,
+  .animate-ping {
+    animation: none;
+  }
+}

@@ -67,3 +67,15 @@ node_modules/
 
 # dataconnect generated files
 .dataconnect
+
+# Build output
+dist/
+
+# Local agent skills
+.agents/
+
+# Local-only files
+.claude/
+*.tsbuildinfo
+HeadShot.jpg
+Pavan Resume.pdf
