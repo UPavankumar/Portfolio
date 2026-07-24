@@ -40,13 +40,9 @@ Business Analyst with hands-on experience building enterprise AI applications, A
 
 ## Internships
 
-### Business Analyst Trainee — Envision Beyond, Bengaluru (Jun 2025 – Oct 2025)
+### Business Analyst Trainee — Envision Beyond, Bengaluru (Jul 2025 – Oct 2025)
 - The internship that started his current role: built the first automation workflows and dashboards for the team.
 - Double-promoted straight to Business Analyst at the end of the term, skipping a level.
-
-### Marketing Research Analyst Intern — Edureka, Bengaluru (Mar 2024 – Jun 2024)
-- Applied NLP and text analytics to improve marketing content engagement by 20%.
-- Customer segmentation with scikit-learn; interactive visualizations that improved conversion insights by 10%.
 
 ## Projects
 

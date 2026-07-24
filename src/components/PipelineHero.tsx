@@ -59,7 +59,7 @@ function Pipeline() {
   return (
     <div
       ref={containerRef}
-      className="relative w-full max-w-4xl py-4"
+      className="relative mx-auto w-full max-w-4xl py-4"
       role="img"
       aria-label="Animated diagram of an automation pipeline: inbox, extract, validate, act, done"
     >
@@ -75,8 +75,8 @@ function Pipeline() {
           gradientStartColor="#34e0c2"
           gradientStopColor="#38bdf8"
           curvature={i % 2 === 0 ? 0 : -18}
-          duration={2.4}
-          delay={i * 0.55}
+          duration={6}
+          delay={i * 1.1}
         />
       ))}
 
@@ -146,8 +146,8 @@ export default function PipelineHero() {
                 fontWeight: 700,
               }}
               color="rgb(231, 235, 242)"
-              spread={5}
-              density={5}
+              spread={6}
+              density={8}
               animation={{ vaporizeDuration: 0.6, fadeInDuration: 0.3, waitDuration: 0.9 }}
               direction="left-to-right"
               alignment="left"

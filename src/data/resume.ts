@@ -84,7 +84,6 @@ export const employment = [
     type: "Full-time",
     place: "Bengaluru · Hybrid",
     period: "Oct 2025 — Present",
-    badge: "Double-promoted — skipped a level",
     points: [
       "Built enterprise AI applications across invoice processing, sales automation and customer support.",
       "Led the multi-tenant e-Invoicing platform processing 2,000+ documents/month.",
@@ -99,7 +98,6 @@ export const employment = [
     type: "Contract",
     place: "Bengaluru",
     period: "Sep 2024 — Jan 2025",
-    badge: "",
     points: [
       "Python–SQL pipelines processing 100K+ records with improved data quality.",
       "Power BI recruitment analytics, cutting reporting turnaround by 15%.",
@@ -113,19 +111,10 @@ export const internships = [
     company: "Envision Beyond",
     role: "Business Analyst Trainee",
     place: "Bengaluru",
-    period: "Jun 2025 — Oct 2025",
+    period: "Jul 2025 — Oct 2025",
     summary:
       "Built the first automation workflows and dashboards that became the team's AI stack — promoted straight to Business Analyst at the end of the term.",
     stack: ["Python", "PostgreSQL", "IBM RPA", "Power BI"],
-  },
-  {
-    company: "Edureka",
-    role: "Marketing Research Analyst Intern",
-    place: "Bengaluru",
-    period: "Mar 2024 — Jun 2024",
-    summary:
-      "Applied NLP and text analytics to lift content engagement 20%, and segmented customers with scikit-learn to sharpen marketing strategy.",
-    stack: ["Python", "NLP", "scikit-learn"],
   },
 ];
 

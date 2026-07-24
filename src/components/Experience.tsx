@@ -34,13 +34,6 @@ const timelineData = employment.map((job) => ({
         <span>{job.place}</span>
       </div>
 
-      {job.badge && (
-        <div className="mt-4 flex items-start gap-2 rounded-lg border border-acc/25 bg-acc/[0.06] px-3 py-2">
-          <span className="text-sm leading-none text-acc">▲</span>
-          <span className="font-mono text-[11px] leading-snug text-acc/90">{job.badge}</span>
-        </div>
-      )}
-
       <ul className="mt-5 space-y-2.5 text-sm leading-relaxed text-mut sm:text-[15px]">
         {job.points.map((pt) => (
           <li key={pt} className="flex gap-3">
@@ -61,7 +54,9 @@ function Internships() {
         <div className="h-px flex-1 bg-line" />
       </div>
 
-      <div className="grid gap-5 md:grid-cols-2">
+      <div
+        className={`grid gap-5 ${internships.length > 1 ? "md:grid-cols-2" : "mx-auto max-w-2xl"}`}
+      >
         {internships.map((it, i) => (
           <motion.div
             key={it.company + it.role}

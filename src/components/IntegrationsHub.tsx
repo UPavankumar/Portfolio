@@ -44,7 +44,7 @@ export default function IntegrationsHub() {
           pathOpacity={0.9}
           gradientStartColor="#34e0c2"
           gradientStopColor="#38bdf8"
-          duration={2.6}
+          duration={5.5}
           delay={i * 0.45}
         />
       ))}
@@ -59,7 +59,7 @@ export default function IntegrationsHub() {
           pathOpacity={0.9}
           gradientStartColor="#34e0c2"
           gradientStopColor="#38bdf8"
-          duration={2.6}
+          duration={5.5}
           delay={i * 0.45 + 0.9}
         />
       ))}

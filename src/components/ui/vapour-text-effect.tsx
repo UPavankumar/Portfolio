@@ -677,14 +677,14 @@ const updateParticles = (
           1 - distanceFromOrigin / (100 * MULTIPLIED_VAPORIZE_SPREAD)
         );
 
-        const randomSpread = MULTIPLIED_VAPORIZE_SPREAD * 3;
+        // Light jitter only — heavy per-frame randomness made particles wander
+        // as one smear instead of dispersing outward from where they started.
+        const randomSpread = MULTIPLIED_VAPORIZE_SPREAD * 0.9;
         const spreadX = (Math.random() - 0.5) * randomSpread;
         const spreadY = (Math.random() - 0.5) * randomSpread;
 
-        particle.velocityX =
-          (particle.velocityX + spreadX + dx * 0.002) * dampingFactor;
-        particle.velocityY =
-          (particle.velocityY + spreadY + dy * 0.002) * dampingFactor;
+        particle.velocityX = (particle.velocityX + spreadX) * dampingFactor;
+        particle.velocityY = (particle.velocityY + spreadY) * dampingFactor;
 
         const maxVelocity = MULTIPLIED_VAPORIZE_SPREAD * 2;
         const currentVelocity = Math.sqrt(
@@ -698,8 +698,10 @@ const updateParticles = (
           particle.velocityY *= scale;
         }
 
-        particle.x += particle.velocityX * deltaTime * 20;
-        particle.y += particle.velocityY * deltaTime * 10;
+        // Equal factors: unequal x/y made the cloud streak sideways rather
+        // than bloom evenly off the glyphs.
+        particle.x += particle.velocityX * deltaTime * 14;
+        particle.y += particle.velocityY * deltaTime * 14;
 
         // The cycle can't advance until every particle is invisible, so this
         // rate — not vaporizeDuration alone — sets how long a cycle really takes.
