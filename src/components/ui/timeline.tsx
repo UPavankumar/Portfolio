@@ -50,7 +50,13 @@ export const Timeline = ({ data }: { data: TimelineGroup[] }) => {
             <div className="relative flex-1 space-y-8 pl-10">
               {group.items.map((item, ii) => (
                 <div key={ii} className="relative">
-                  <span className="absolute top-7 -left-10 size-3 -translate-x-1/2 rounded-full bg-acc shadow-[0_0_12px_#34e0c2]" />
+                  {/* zero-width gutter spanning the card: lets the dot stick at
+                      the same offset as the company heading, so it rides down
+                      with the role you're reading and then hands over to the
+                      next role's dot */}
+                  <div className="absolute top-7 -left-10 h-[calc(100%-1.75rem)] w-0">
+                    <span className="block size-3 -translate-x-1/2 rounded-full bg-acc shadow-[0_0_12px_#34e0c2] md:sticky md:top-32" />
+                  </div>
                   {item}
                 </div>
               ))}
