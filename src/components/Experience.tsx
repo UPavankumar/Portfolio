@@ -1,7 +1,7 @@
 import { employment, education, certifications } from "../data/resume";
 import SectionLabel from "./SectionLabel";
 import { GlowingEffect } from "./ui/glowing-effect";
-import { Timeline } from "./ui/timeline";
+import { Timeline, type TimelineGroup } from "./ui/timeline";
 
 const cardGlow = (
   <GlowingEffect
@@ -14,10 +14,7 @@ const cardGlow = (
   />
 );
 
-const timelineData = employment.map((job, i) => ({
-  // consecutive roles at the same company share one heading — only the dot repeats
-  title: i > 0 && employment[i - 1].company === job.company ? "" : job.company,
-  content: (
+const jobCard = (job: (typeof employment)[number]) => (
     <div className="relative rounded-2xl border border-line bg-panel/60 p-5 sm:p-6 lg:p-7">
       {cardGlow}
 
@@ -43,8 +40,17 @@ const timelineData = employment.map((job, i) => ({
         ))}
       </ul>
     </div>
-  ),
-}));
+);
+
+// Consecutive roles at one company become a single group, so the company name
+// stays pinned across all of them and only hands off at the next employer.
+const timelineData: TimelineGroup[] = employment.reduce<TimelineGroup[]>((groups, job) => {
+  const card = jobCard(job);
+  const last = groups[groups.length - 1];
+  if (last && last.title === job.company) last.items.push(card);
+  else groups.push({ title: job.company, items: [card] });
+  return groups;
+}, []);
 
 export default function Experience() {
   return (
