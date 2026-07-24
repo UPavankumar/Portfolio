@@ -148,7 +148,7 @@ export default function PipelineHero() {
               color="rgb(231, 235, 242)"
               spread={5}
               density={5}
-              animation={{ vaporizeDuration: 1, fadeInDuration: 0.5, waitDuration: 1.1 }}
+              animation={{ vaporizeDuration: 0.6, fadeInDuration: 0.3, waitDuration: 0.9 }}
               direction="left-to-right"
               alignment="left"
               paddingX={headline.paddingX}

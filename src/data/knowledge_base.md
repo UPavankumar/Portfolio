@@ -26,8 +26,7 @@ Business Analyst with hands-on experience building enterprise AI applications, A
 
 ## Work Experience
 
-### Business Analyst — Envision Beyond, Bengaluru (Oct 2025 – Present)
-- Joined as Business Analyst Trainee (internship, Jun – Oct 2025); double-promoted to Business Analyst, skipping a level, for exceptional performance.
+### Business Analyst — Envision Beyond, Bengaluru (Oct 2025 – Present) · Full-time
 - Built enterprise AI applications that eliminated manual workflows across invoice processing, sales automation, and customer support.
 - Led development of a multi-tenant e-Invoicing automation platform processing 2,000+ financial documents/month (extraction, validation, transformation, regulatory submission).
 - Engineered end-to-end automation integrating Microsoft Graph API, PostgreSQL, and Odoo CRM for email ingestion, lead management, and customer data sync.
@@ -38,6 +37,12 @@ Business Analyst with hands-on experience building enterprise AI applications, A
 - Built Python–SQL data pipelines processing 100K+ records, improving data quality and downstream analytics.
 - Developed Power BI dashboards for recruitment analytics, reducing reporting turnaround by 15%.
 - Optimized MongoDB workflows using Python and AWS.
+
+## Internships
+
+### Business Analyst Trainee — Envision Beyond, Bengaluru (Jun 2025 – Oct 2025)
+- The internship that started his current role: built the first automation workflows and dashboards for the team.
+- Double-promoted straight to Business Analyst at the end of the term, skipping a level.
 
 ### Marketing Research Analyst Intern — Edureka, Bengaluru (Mar 2024 – Jun 2024)
 - Applied NLP and text analytics to improve marketing content engagement by 20%.

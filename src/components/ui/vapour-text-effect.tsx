@@ -666,7 +666,7 @@ const updateParticles = (
       }
 
       if (particle.shouldFadeQuickly) {
-        particle.opacity = Math.max(0, particle.opacity - deltaTime);
+        particle.opacity = Math.max(0, particle.opacity - deltaTime * 2.5);
       } else {
         const dx = particle.originalX - particle.x;
         const dy = particle.originalY - particle.y;
@@ -701,7 +701,9 @@ const updateParticles = (
         particle.x += particle.velocityX * deltaTime * 20;
         particle.y += particle.velocityY * deltaTime * 10;
 
-        const baseFadeRate = 0.25;
+        // The cycle can't advance until every particle is invisible, so this
+        // rate — not vaporizeDuration alone — sets how long a cycle really takes.
+        const baseFadeRate = 0.7;
         const durationBasedFadeRate = baseFadeRate * (2000 / VAPORIZE_DURATION);
 
         particle.opacity = Math.max(
