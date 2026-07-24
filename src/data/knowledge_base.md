@@ -30,19 +30,22 @@ Business Analyst with hands-on experience building enterprise AI applications, A
 - Built enterprise AI applications that eliminated manual workflows across invoice processing, sales automation, and customer support.
 - Led development of a multi-tenant e-Invoicing automation platform processing 2,000+ financial documents/month (extraction, validation, transformation, regulatory submission).
 - Engineered end-to-end automation integrating Microsoft Graph API, PostgreSQL, and Odoo CRM for email ingestion, lead management, and customer data sync.
+- Built ETL pipelines: mailbox → PDF/Excel extraction → validated JSON → PostgreSQL.
+- Automated ticket extraction and inbound lead routing with N8n; migrated legacy UiPath workflows to IBM RPA.
 - Owned digital marketing, SEO, and content strategy — qualified inbound leads within 30 days, first-page Google rankings within 2 months.
 - Developed SQL-backed Power BI dashboards tracking operational KPIs.
+
+### Business Analyst Trainee (Internship) — Envision Beyond, Bengaluru (Jul 2025 – Oct 2025)
+- Wrote the team's first ETL scripts: data extraction, clean-up and scheduled refreshes.
+- Automated recurring reporting and manual data-entry tasks with Python.
+- Built the early dashboards that became the reporting layer for the AI automation work.
+- Promoted straight to Business Analyst at the end of the term, skipping a level.
 
 ### Data Analyst Consultant — Spire Technologies, Bengaluru (Sept 2024 – Jan 2025)
 - Built Python–SQL data pipelines processing 100K+ records, improving data quality and downstream analytics.
 - Developed Power BI dashboards for recruitment analytics, reducing reporting turnaround by 15%.
 - Optimized MongoDB workflows using Python and AWS.
 
-## Internships
-
-### Business Analyst Trainee — Envision Beyond, Bengaluru (Jul 2025 – Oct 2025)
-- The internship that started his current role: built the first automation workflows and dashboards for the team.
-- Double-promoted straight to Business Analyst at the end of the term, skipping a level.
 
 ## Projects
 

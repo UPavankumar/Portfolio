@@ -699,13 +699,13 @@ const updateParticles = (
         }
 
         // Equal factors: unequal x/y made the cloud streak sideways rather
-        // than bloom evenly off the glyphs.
-        particle.x += particle.velocityX * deltaTime * 14;
-        particle.y += particle.velocityY * deltaTime * 14;
+        // than bloom evenly off the glyphs. Kept low so it drifts, not races.
+        particle.x += particle.velocityX * deltaTime * 7;
+        particle.y += particle.velocityY * deltaTime * 7;
 
         // The cycle can't advance until every particle is invisible, so this
         // rate — not vaporizeDuration alone — sets how long a cycle really takes.
-        const baseFadeRate = 0.7;
+        const baseFadeRate = 0.32;
         const durationBasedFadeRate = baseFadeRate * (2000 / VAPORIZE_DURATION);
 
         particle.opacity = Math.max(

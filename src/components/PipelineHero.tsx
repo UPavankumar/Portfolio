@@ -146,9 +146,9 @@ export default function PipelineHero() {
                 fontWeight: 700,
               }}
               color="rgb(231, 235, 242)"
-              spread={6}
+              spread={4}
               density={8}
-              animation={{ vaporizeDuration: 0.6, fadeInDuration: 0.3, waitDuration: 0.9 }}
+              animation={{ vaporizeDuration: 2.4, fadeInDuration: 0.5, waitDuration: 0.4 }}
               direction="left-to-right"
               alignment="left"
               paddingX={headline.paddingX}

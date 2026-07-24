@@ -1,5 +1,4 @@
-import { motion } from "framer-motion";
-import { employment, internships, education, certifications } from "../data/resume";
+import { employment, education, certifications } from "../data/resume";
 import SectionLabel from "./SectionLabel";
 import { GlowingEffect } from "./ui/glowing-effect";
 import { Timeline } from "./ui/timeline";
@@ -46,52 +45,6 @@ const timelineData = employment.map((job) => ({
   ),
 }));
 
-function Internships() {
-  return (
-    <div className="mt-16">
-      <div className="mb-6 flex items-center gap-4">
-        <h3 className="font-mono text-xs tracking-widest text-mut">INTERNSHIPS</h3>
-        <div className="h-px flex-1 bg-line" />
-      </div>
-
-      <div
-        className={`grid gap-5 ${internships.length > 1 ? "md:grid-cols-2" : "mx-auto max-w-2xl"}`}
-      >
-        {internships.map((it, i) => (
-          <motion.div
-            key={it.company + it.role}
-            initial={{ opacity: 0, y: 16 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-60px" }}
-            transition={{ duration: 0.45, delay: i * 0.08 }}
-            className="relative flex flex-col rounded-2xl border border-line/70 bg-panel/40 p-5 sm:p-6"
-          >
-            {cardGlow}
-            <div className="flex items-baseline justify-between gap-3">
-              <h4 className="text-[15px] font-semibold sm:text-base">{it.company}</h4>
-              <span className="shrink-0 font-mono text-[10px] text-mut sm:text-[11px]">
-                {it.period}
-              </span>
-            </div>
-            <p className="mt-1 font-mono text-[11px] text-acc/80">{it.role}</p>
-            <p className="mt-3 flex-1 text-sm leading-relaxed text-mut">{it.summary}</p>
-            <div className="mt-4 flex flex-wrap gap-1.5">
-              {it.stack.map((s) => (
-                <span
-                  key={s}
-                  className="rounded-full border border-line px-2 py-0.5 font-mono text-[10px] text-mut"
-                >
-                  {s}
-                </span>
-              ))}
-            </div>
-          </motion.div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
 export default function Experience() {
   return (
     <section id="experience" className="border-t border-line bg-panel/30">
@@ -99,8 +52,6 @@ export default function Experience() {
         <SectionLabel n="02">Experience</SectionLabel>
 
         <Timeline data={timelineData} />
-
-        <Internships />
 
         <div className="mt-12 grid gap-5 sm:mt-16 sm:grid-cols-2 sm:gap-6">
           <div className="relative rounded-2xl border border-line bg-panel/60 p-6">

@@ -87,9 +87,24 @@ export const employment = [
     points: [
       "Built enterprise AI applications across invoice processing, sales automation and customer support.",
       "Led the multi-tenant e-Invoicing platform processing 2,000+ documents/month.",
+      "Built ETL pipelines that pull PDF and Excel attachments from mailboxes, transform them to validated JSON and load them into PostgreSQL.",
+      "Automated ticket extraction and inbound lead routing with N8n, and migrated legacy UiPath workflows to IBM RPA.",
       "Engineered Microsoft Graph + PostgreSQL + Odoo CRM automation for email ingestion, leads and customer sync.",
       "Owned SEO & content strategy — qualified inbound leads in 30 days, first-page rankings in 2 months.",
       "Shipped SQL-backed Power BI dashboards for operational KPIs.",
+    ],
+  },
+  {
+    company: "Envision Beyond",
+    role: "Business Analyst Trainee",
+    type: "Internship",
+    place: "Bengaluru",
+    period: "Jul 2025 — Oct 2025",
+    points: [
+      "Wrote the first ETL scripts for the team — data extraction, clean-up and scheduled refreshes.",
+      "Automated recurring reporting and manual data-entry tasks with Python.",
+      "Built the early dashboards that became the reporting layer for the AI automation work.",
+      "Promoted straight to Business Analyst at the end of the term, skipping a level.",
     ],
   },
   {
@@ -103,18 +118,6 @@ export const employment = [
       "Power BI recruitment analytics, cutting reporting turnaround by 15%.",
       "Optimized MongoDB workflows with Python and AWS.",
     ],
-  },
-];
-
-export const internships = [
-  {
-    company: "Envision Beyond",
-    role: "Business Analyst Trainee",
-    place: "Bengaluru",
-    period: "Jul 2025 — Oct 2025",
-    summary:
-      "Built the first automation workflows and dashboards that became the team's AI stack — promoted straight to Business Analyst at the end of the term.",
-    stack: ["Python", "PostgreSQL", "IBM RPA", "Power BI"],
   },
 ];
 
