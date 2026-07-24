@@ -4,7 +4,7 @@ import { AnimatedBeam } from "./ui/animated-beam";
 import VaporizeTextCycle, { Tag } from "./ui/vapour-text-effect";
 import { profile } from "../data/resume";
 
-const ROLES = ["AI Engineer.", "Voice AI Builder.", "Agent Architect.", "Automation Engineer."];
+const ROLES = ["Business Analyst.", "AI Automation Builder.", "Voice AI Builder.", "Data Analyst."];
 
 function useIsWide() {
   const [wide, setWide] = useState(() => window.innerWidth >= 640);

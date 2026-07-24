@@ -1,9 +1,9 @@
 export const profile = {
   name: "Pavan Kumar",
-  role: "AI Engineer",
+  role: "Business Analyst",
   tagline: "I automate what companies do by hand.",
   summary:
-    "I build enterprise AI applications — real-time voice assistants, LLM agents and document pipelines — that replace manual workflows in production. Python, SQL, and a lot of systems that quietly do the work of whole teams.",
+    "Business Analyst who builds enterprise AI automation — real-time voice assistants, LLM agents and document pipelines that replace manual workflows in production. Python, SQL, and a lot of systems that quietly do the work of whole teams.",
   location: "Bengaluru, India",
   email: "pavan.aidev@gmail.com",
   phone: "+91-8050737339",
@@ -80,10 +80,11 @@ export const projects: Project[] = [
 export const experience = [
   {
     company: "Envision Beyond",
-    role: "AI Engineer",
+    role: "Business Analyst",
     place: "Bengaluru",
-    period: "Jun 2025 — Present",
+    period: "Oct 2025 — Present",
     points: [
+      "Joined as Business Analyst Trainee (internship, Jun — Oct 2025); double-promoted to Business Analyst, skipping a level.",
       "Built enterprise AI applications across invoice processing, sales automation and customer support.",
       "Led the multi-tenant e-Invoicing platform processing 2,000+ documents/month.",
       "Engineered Microsoft Graph + PostgreSQL + Odoo CRM automation for email ingestion, leads and customer sync.",

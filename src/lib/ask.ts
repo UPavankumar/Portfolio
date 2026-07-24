@@ -33,7 +33,7 @@ function localAnswer(q: string): string {
   if (/(skill|stack|tech|tool|language|python|sql)/.test(s))
     return "His principal instruments: Python and SQL, with LLMs, AI agents, prompt engineering, RAG and voice AI. On the enterprise side — Microsoft Graph, Google Workspace APIs, OAuth 2.0, PostgreSQL, MongoDB, AWS, IBM RPA and Odoo CRM, with Power BI for the dashboards.";
   if (/(experience|work|job|envision|spire|career|edureka)/.test(s))
-    return "Presently an AI Engineer at Envision Beyond in Bengaluru — double-promoted within four months, I might add. Previously a Data Analyst Consultant at Spire Technologies, and before that a research intern at Edureka.";
+    return "Presently a Business Analyst at Envision Beyond in Bengaluru — he began as a trainee in mid-2025 and was double-promoted by October, I might add. Previously a Data Analyst Consultant at Spire Technologies, and before that a research intern at Edureka.";
   if (/(education|college|degree|study|certif)/.test(s))
     return "A B.E. in Computer Science (Data Science) from MVJ College of Engineering, Bengaluru, class of 2024. Certified in Google Data Analytics, Google Project Management, and Smart Contracts.";
   if (/(contact|hire|reach|mail|available|remote|relocat)/.test(s))
