@@ -23,7 +23,7 @@ function Study({ p }: { p: Project }) {
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-80px" }}
       transition={{ duration: 0.55 }}
-      className="relative rounded-2xl border border-line bg-panel/60 p-7 sm:p-9"
+      className="relative rounded-2xl border border-line bg-panel/60 p-5 sm:p-7 lg:p-9"
     >
       <GlowingEffect
         spread={40}
@@ -34,8 +34,8 @@ function Study({ p }: { p: Project }) {
         borderWidth={2}
       />
       <div className="flex flex-wrap items-baseline justify-between gap-3">
-        <h3 className="text-xl font-semibold sm:text-2xl">
-          <span className="mr-3 font-mono text-sm text-acc">{p.index}</span>
+        <h3 className="text-lg font-semibold sm:text-xl lg:text-2xl">
+          <span className="mr-2 font-mono text-xs text-acc sm:mr-3 sm:text-sm">{p.index}</span>
           {p.title}
         </h3>
       </div>
@@ -51,7 +51,7 @@ function Study({ p }: { p: Project }) {
         ))}
       </div>
 
-      <dl className="mt-6 space-y-4 text-[15px] leading-relaxed">
+      <dl className="mt-6 space-y-4 text-sm leading-relaxed sm:text-[15px]">
         <div>
           <dt className="font-mono text-xs tracking-widest text-mut">PROBLEM</dt>
           <dd className="mt-1 text-fg/90">{p.problem}</dd>
@@ -75,9 +75,9 @@ function Study({ p }: { p: Project }) {
 
 export default function CaseStudies() {
   return (
-    <section id="work" className="mx-auto max-w-5xl px-6 py-24">
+    <section id="work" className="mx-auto max-w-5xl px-6 py-16 sm:py-20 md:px-10 lg:py-24">
       <SectionLabel n="01">Case studies</SectionLabel>
-      <div className="space-y-8">
+      <div className="space-y-6 sm:space-y-8">
         {projects.map((p) => (
           <Study key={p.id} p={p} />
         ))}

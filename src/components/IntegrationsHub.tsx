@@ -10,7 +10,7 @@ const Chip = forwardRef<HTMLDivElement, { children: ReactNode; className?: strin
     <div
       ref={ref}
       className={cn(
-        "z-10 rounded-full border border-line bg-panel px-3 py-2 text-center font-mono text-[10px] tracking-wider text-fg/90 shadow-[0_0_20px_-8px_#34e0c230] sm:text-[11px]",
+        "z-10 rounded-full border border-line bg-panel px-2.5 py-1.5 text-center font-mono text-[9px] leading-tight tracking-wider text-fg/90 shadow-[0_0_20px_-8px_#34e0c230] sm:px-3 sm:py-2 sm:text-[10px] lg:text-[11px]",
         className
       )}
     >
@@ -29,7 +29,7 @@ export default function IntegrationsHub() {
   return (
     <div
       ref={containerRef}
-      className="relative mx-auto mt-16 w-full max-w-3xl"
+      className="relative mx-auto mt-12 w-full max-w-3xl sm:mt-16"
       role="img"
       aria-label="Diagram of enterprise systems flowing through an LLM core into databases and dashboards"
     >
@@ -64,8 +64,8 @@ export default function IntegrationsHub() {
         />
       ))}
 
-      <div className="flex items-center justify-between gap-4 py-4">
-        <div className="flex flex-col gap-5">
+      <div className="flex items-center justify-between gap-2 py-4 sm:gap-4">
+        <div className="flex flex-col gap-4 sm:gap-5">
           {SOURCES.map((s, i) => (
             <Chip key={s} ref={sourceRefs[i]}>
               {s}
@@ -75,13 +75,13 @@ export default function IntegrationsHub() {
 
         <div
           ref={hubRef}
-          className="z-10 flex size-24 shrink-0 flex-col items-center justify-center rounded-full border-2 border-acc/60 bg-panel text-center shadow-[0_0_50px_-10px_#34e0c280] sm:size-28"
+          className="z-10 flex size-16 shrink-0 flex-col items-center justify-center rounded-full border-2 border-acc/60 bg-panel text-center shadow-[0_0_50px_-10px_#34e0c280] sm:size-24 lg:size-28"
         >
-          <span className="font-mono text-xs font-semibold text-acc">LLM</span>
-          <span className="font-mono text-[9px] text-mut">agents · prompts</span>
+          <span className="font-mono text-[10px] font-semibold text-acc sm:text-xs">LLM</span>
+          <span className="hidden font-mono text-[9px] text-mut sm:block">agents · prompts</span>
         </div>
 
-        <div className="flex flex-col gap-5">
+        <div className="flex flex-col gap-4 sm:gap-5">
           {SINKS.map((s, i) => (
             <Chip key={s} ref={sinkRefs[i]}>
               {s}

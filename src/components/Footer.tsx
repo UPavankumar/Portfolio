@@ -4,12 +4,12 @@ import SectionLabel from "./SectionLabel";
 export default function Footer() {
   return (
     <footer id="contact" className="border-t border-line bg-panel/30">
-      <div className="mx-auto max-w-5xl px-6 py-24">
+      <div className="mx-auto max-w-5xl px-6 py-16 sm:py-20 md:px-10 lg:py-24">
         <SectionLabel n="04">Contact</SectionLabel>
-        <h2 className="max-w-2xl text-3xl font-bold tracking-tight text-balance sm:text-4xl">
+        <h2 className="max-w-2xl text-2xl font-bold tracking-tight text-balance sm:text-3xl lg:text-4xl">
           Have a workflow that still needs humans? <span className="text-acc">Let's fix that.</span>
         </h2>
-        <div className="mt-8 flex flex-wrap gap-4 font-mono text-sm">
+        <div className="mt-8 flex flex-wrap gap-3 font-mono text-xs sm:gap-4 sm:text-sm">
           <a
             href={`mailto:${profile.email}`}
             className="rounded-lg bg-acc px-5 py-2.5 font-semibold text-ink transition-transform hover:scale-105"

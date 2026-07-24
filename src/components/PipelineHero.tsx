@@ -6,14 +6,24 @@ import { profile } from "../data/resume";
 
 const ROLES = ["Business Analyst.", "AI Automation Builder.", "Voice AI Builder.", "Data Analyst."];
 
-function useIsWide() {
-  const [wide, setWide] = useState(() => window.innerWidth >= 640);
+/** Headline size + canvas inset per breakpoint (xs → sm → md → lg → xl). */
+function useHeadline() {
+  const read = () => {
+    const w = window.innerWidth;
+    if (w >= 1280) return { fontSize: "76px", paddingX: 40 };
+    if (w >= 1024) return { fontSize: "64px", paddingX: 40 };
+    if (w >= 768) return { fontSize: "54px", paddingX: 40 };
+    if (w >= 640) return { fontSize: "44px", paddingX: 24 };
+    if (w >= 420) return { fontSize: "34px", paddingX: 24 };
+    return { fontSize: "27px", paddingX: 24 };
+  };
+  const [cfg, setCfg] = useState(read);
   useEffect(() => {
-    const onResize = () => setWide(window.innerWidth >= 640);
+    const onResize = () => setCfg(read());
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
   }, []);
-  return wide;
+  return cfg;
 }
 
 const NODES = [
@@ -46,12 +56,14 @@ function Pipeline() {
           pathOpacity={0.9}
           gradientStartColor="#34e0c2"
           gradientStopColor="#38bdf8"
+          curvature={i % 2 === 0 ? 0 : -18}
           duration={2.4}
           delay={i * 0.55}
         />
       ))}
 
-      <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-8">
+      {/* 2-up serpentine on phones, single row from sm up */}
+      <div className="grid grid-cols-2 items-center gap-x-4 gap-y-6 sm:flex sm:justify-between sm:gap-x-3">
         {NODES.map((n, i) => (
           <motion.div
             key={n.id}
@@ -59,12 +71,14 @@ function Pipeline() {
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.15 * i + 0.3, duration: 0.5 }}
-            className="z-10 rounded-xl border border-line bg-panel px-3 py-2.5 text-center shadow-[0_0_28px_-6px_#34e0c240] transition-colors hover:border-acc/60 sm:px-5 sm:py-3.5"
+            className="z-10 rounded-xl border border-line bg-panel px-3 py-2.5 text-center shadow-[0_0_28px_-6px_#34e0c240] transition-colors last:col-span-2 last:justify-self-center hover:border-acc/60 sm:px-4 sm:py-3 sm:last:col-span-1 md:px-5 md:py-3.5"
           >
-            <div className="font-mono text-[11px] font-semibold tracking-wider text-fg sm:text-sm">
+            <div className="font-mono text-[11px] font-semibold tracking-wider text-fg sm:text-xs md:text-sm">
               {n.label}
             </div>
-            <div className="mt-0.5 hidden font-mono text-[10px] text-mut sm:block">{n.sub}</div>
+            <div className="mt-0.5 font-mono text-[9px] text-mut sm:text-[10px] md:text-[11px]">
+              {n.sub}
+            </div>
           </motion.div>
         ))}
       </div>
@@ -73,11 +87,11 @@ function Pipeline() {
 }
 
 export default function PipelineHero() {
-  const wide = useIsWide();
+  const headline = useHeadline();
   return (
     <header id="top" className="relative overflow-hidden">
       <div className="dotgrid absolute inset-0" aria-hidden />
-      <div className="relative mx-auto flex min-h-[92svh] max-w-5xl flex-col justify-center px-6 py-24">
+      <div className="relative mx-auto flex min-h-[92svh] max-w-5xl flex-col justify-center px-6 py-24 md:px-10">
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
@@ -89,9 +103,9 @@ export default function PipelineHero() {
             alt="Portrait of Pavan Kumar"
             width={56}
             height={56}
-            className="border-line size-14 rounded-full border object-cover"
+            className="border-line size-12 rounded-full border object-cover sm:size-14"
           />
-          <div className="font-mono text-sm text-mut">
+          <div className="font-mono text-xs text-mut sm:text-sm">
             <span className="text-acc">~/</span>pavan-kumar · {profile.location}
           </div>
         </motion.div>
@@ -102,12 +116,15 @@ export default function PipelineHero() {
           transition={{ duration: 0.6, delay: 0.1 }}
           className="mt-8"
         >
-          <div className="h-14 sm:h-24" aria-hidden={false}>
+          {/* Canvas is deliberately taller/wider than the text so vaporized
+              particles can drift past the glyphs instead of being clipped;
+              negative margins keep the visual rhythm tight. */}
+          <div className="-mx-6 -my-10 h-36 md:-mx-10 md:-my-12 md:h-48 lg:h-56 xl:-my-14 xl:h-64">
             <VaporizeTextCycle
               texts={ROLES}
               font={{
                 fontFamily: "Inter, sans-serif",
-                fontSize: wide ? "72px" : "38px",
+                fontSize: headline.fontSize,
                 fontWeight: 700,
               }}
               color="rgb(231, 235, 242)"
@@ -116,10 +133,11 @@ export default function PipelineHero() {
               animation={{ vaporizeDuration: 2, fadeInDuration: 1, waitDuration: 2 }}
               direction="left-to-right"
               alignment="left"
+              paddingX={headline.paddingX}
               tag={Tag.H1}
             />
           </div>
-          <p className="mt-2 text-3xl font-bold tracking-tight text-balance text-mut sm:text-5xl">
+          <p className="text-2xl font-bold tracking-tight text-balance text-mut min-[420px]:text-3xl md:text-4xl lg:text-5xl">
             {profile.tagline}
           </p>
         </motion.div>
@@ -128,13 +146,13 @@ export default function PipelineHero() {
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.2 }}
-          className="mt-6 max-w-2xl text-lg leading-relaxed text-mut"
+          className="mt-6 max-w-2xl text-base leading-relaxed text-mut sm:text-lg"
         >
           {profile.summary}
         </motion.p>
 
-        <div className="mt-14">
-          <div className="mb-5 font-mono text-xs tracking-widest text-mut">
+        <div className="mt-10 sm:mt-14">
+          <div className="mb-5 font-mono text-[10px] tracking-widest text-mut sm:text-xs">
             // WHAT MY SYSTEMS DO ALL DAY
           </div>
           <Pipeline />

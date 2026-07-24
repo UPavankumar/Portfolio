@@ -7,12 +7,12 @@ const allTools = skills.flatMap((s) => s.items);
 
 export default function Skills() {
   return (
-    <section id="skills" className="mx-auto max-w-5xl px-6 py-24">
+    <section id="skills" className="mx-auto max-w-5xl px-6 py-16 sm:py-20 md:px-10 lg:py-24">
       <SectionLabel n="03">Toolbox</SectionLabel>
       <div className="space-y-5">
         {skills.map((row) => (
           <div key={row.group} className="flex flex-col gap-2 sm:flex-row sm:items-baseline">
-            <div className="w-44 shrink-0 font-mono text-xs tracking-widest text-mut">
+            <div className="w-40 shrink-0 font-mono text-[10px] tracking-widest text-mut sm:text-xs lg:w-44">
               {row.group.toUpperCase()}
             </div>
             <div className="flex flex-wrap gap-2">

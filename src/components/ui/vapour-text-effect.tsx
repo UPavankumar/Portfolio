@@ -33,6 +33,9 @@ type VaporizeTextCycleProps = {
   direction?: "left-to-right" | "right-to-left";
   alignment?: "left" | "center" | "right";
   tag?: Tag;
+  /** CSS px inset from the canvas edge for left/right alignment, so a
+   *  larger-than-text canvas can give vaporized particles room to drift. */
+  paddingX?: number;
 };
 
 type Particle = {
@@ -80,6 +83,7 @@ export default function VaporizeTextCycle({
   direction = "left-to-right",
   alignment = "center",
   tag = Tag.P,
+  paddingX = 0,
 }: VaporizeTextCycleProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const wrapperRef = useRef<HTMLDivElement | null>(null);
@@ -304,6 +308,7 @@ export default function VaporizeTextCycle({
         font,
         color,
         alignment,
+        paddingX,
       },
       canvasRef,
       wrapperSize,
@@ -326,10 +331,11 @@ export default function VaporizeTextCycle({
         font,
         color,
         alignment,
+        paddingX,
       },
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [texts, font, color, alignment, wrapperSize, currentTextIndex, globalDpr]);
+  }, [texts, font, color, alignment, wrapperSize, currentTextIndex, globalDpr, paddingX]);
 
   // Handle resize
   useEffect(() => {
@@ -348,6 +354,7 @@ export default function VaporizeTextCycle({
           font,
           color,
           alignment,
+          paddingX,
         },
         canvasRef,
         wrapperSize: {
@@ -361,8 +368,21 @@ export default function VaporizeTextCycle({
     });
 
     resizeObserver.observe(container);
+
+    // ResizeObserver callbacks are delivered during rendering steps, which some
+    // browsers pause for backgrounded pages; a plain resize listener keeps the
+    // canvas in step with the viewport regardless.
+    const onWindowResize = () => {
+      setWrapperSize({
+        width: container.clientWidth,
+        height: container.clientHeight,
+      });
+    };
+    window.addEventListener("resize", onWindowResize);
+
     return () => {
       resizeObserver.disconnect();
+      window.removeEventListener("resize", onWindowResize);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -504,12 +524,13 @@ const renderCanvas = ({
   const textY = canvas.height / 2;
   const currentText = framerProps.texts[currentTextIndex] || "Next.js";
 
+  const edgeInset = (framerProps.paddingX ?? 0) * globalDpr;
   if (framerProps.alignment === "center") {
     textX = canvas.width / 2;
   } else if (framerProps.alignment === "left") {
-    textX = 0;
+    textX = edgeInset;
   } else {
-    textX = canvas.width;
+    textX = canvas.width - edgeInset;
   }
 
   const { particles, textBoundaries } = createParticles(
