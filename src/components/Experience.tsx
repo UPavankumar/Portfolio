@@ -14,8 +14,9 @@ const cardGlow = (
   />
 );
 
-const timelineData = employment.map((job) => ({
-  title: job.company,
+const timelineData = employment.map((job, i) => ({
+  // consecutive roles at the same company share one heading — only the dot repeats
+  title: i > 0 && employment[i - 1].company === job.company ? "" : job.company,
   content: (
     <div className="relative rounded-2xl border border-line bg-panel/60 p-5 sm:p-6 lg:p-7">
       {cardGlow}

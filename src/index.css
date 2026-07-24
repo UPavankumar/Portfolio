@@ -32,7 +32,8 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* dot-grid backdrop used by hero */
+/* dot-grid backdrop: sits under the hero's WebGL field, and is the fallback
+   when WebGL is unavailable */
 .dotgrid {
   background-image: radial-gradient(circle, #1e2a3f 1px, transparent 1px);
   background-size: 28px 28px;

@@ -2,6 +2,7 @@ import { createRef, useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { AnimatedBeam } from "./ui/animated-beam";
 import VaporizeTextCycle, { Tag } from "./ui/vapour-text-effect";
+import InteractiveNeuralVortex from "./ui/interactive-neural-vortex-background";
 import { profile } from "../data/resume";
 
 const ROLES = ["Business Analyst.", "AI Automation Builder.", "Voice AI Builder.", "Data Analyst."];
@@ -108,7 +109,8 @@ export default function PipelineHero() {
   const headline = useHeadline(ROLES);
   return (
     <header id="top" className="relative overflow-hidden">
-      <div className="dotgrid absolute inset-0" aria-hidden />
+      <div className="dotgrid absolute inset-0 opacity-60" aria-hidden />
+      <InteractiveNeuralVortex />
       <div className="relative mx-auto flex min-h-[92svh] max-w-5xl flex-col justify-center px-6 py-24 md:px-10">
         <motion.div
           initial={{ opacity: 0, y: 16 }}
