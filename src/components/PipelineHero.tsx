@@ -6,22 +6,40 @@ import { profile } from "../data/resume";
 
 const ROLES = ["Business Analyst.", "AI Automation Builder.", "Voice AI Builder.", "Data Analyst."];
 
-/** Headline size + canvas inset per breakpoint (xs → sm → md → lg → xl). */
-function useHeadline() {
+/** Longest role decides the size: shrink until it fits the canvas with room to
+ *  spare on the right, so no headline is ever clipped mid-word. */
+function measureFits(px: number, text: string, available: number) {
+  const canvas = document.createElement("canvas");
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return true;
+  ctx.font = `700 ${px}px Inter, sans-serif`;
+  return ctx.measureText(text).width <= available;
+}
+
+function useHeadline(texts: string[]) {
   const read = () => {
-    const w = window.innerWidth;
-    if (w >= 1280) return { fontSize: "76px", paddingX: 40 };
-    if (w >= 1024) return { fontSize: "64px", paddingX: 40 };
-    if (w >= 768) return { fontSize: "54px", paddingX: 40 };
-    if (w >= 640) return { fontSize: "44px", paddingX: 24 };
-    if (w >= 420) return { fontSize: "34px", paddingX: 24 };
-    return { fontSize: "27px", paddingX: 24 };
+    const vw = window.innerWidth;
+    const paddingX = vw >= 768 ? 40 : 24;
+    // canvas spans the content column (max-w-5xl), edge to edge
+    const canvasWidth = Math.min(vw, 1024);
+    // leave breathing room to the right so particles drift, never clip
+    const available = canvasWidth - paddingX - (vw >= 768 ? 72 : 28);
+    const ceiling = vw >= 1280 ? 76 : vw >= 1024 ? 64 : vw >= 768 ? 54 : vw >= 640 ? 44 : 34;
+    const longest = texts.reduce((a, b) => (a.length >= b.length ? a : b), "");
+
+    let px = ceiling;
+    while (px > 16 && !measureFits(px, longest, available)) px -= 1;
+    return { fontSize: `${px}px`, paddingX };
   };
+
   const [cfg, setCfg] = useState(read);
   useEffect(() => {
-    const onResize = () => setCfg(read());
-    window.addEventListener("resize", onResize);
-    return () => window.removeEventListener("resize", onResize);
+    const update = () => setCfg(read());
+    window.addEventListener("resize", update);
+    // fonts load after first paint; Inter's metrics differ from the fallback
+    document.fonts?.ready.then(update);
+    return () => window.removeEventListener("resize", update);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   return cfg;
 }
@@ -87,7 +105,7 @@ function Pipeline() {
 }
 
 export default function PipelineHero() {
-  const headline = useHeadline();
+  const headline = useHeadline(ROLES);
   return (
     <header id="top" className="relative overflow-hidden">
       <div className="dotgrid absolute inset-0" aria-hidden />
@@ -130,7 +148,7 @@ export default function PipelineHero() {
               color="rgb(231, 235, 242)"
               spread={5}
               density={5}
-              animation={{ vaporizeDuration: 2, fadeInDuration: 1, waitDuration: 2 }}
+              animation={{ vaporizeDuration: 1, fadeInDuration: 0.5, waitDuration: 1.1 }}
               direction="left-to-right"
               alignment="left"
               paddingX={headline.paddingX}
