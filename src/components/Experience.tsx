@@ -1,3 +1,4 @@
+import { motion } from "framer-motion";
 import { employment, education, certifications } from "../data/resume";
 import SectionLabel from "./SectionLabel";
 import { GlowingEffect } from "./ui/glowing-effect";
@@ -15,7 +16,13 @@ const cardGlow = (
 );
 
 const jobCard = (job: (typeof employment)[number]) => (
-    <div className="relative rounded-2xl border border-line bg-panel/60 p-5 sm:p-6 lg:p-7">
+    <motion.div
+      initial={{ opacity: 0, y: 24 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.2 }}
+      transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+      className="relative rounded-2xl border border-line bg-panel/60 p-5 sm:p-6 lg:p-7"
+    >
       {cardGlow}
 
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
@@ -39,7 +46,7 @@ const jobCard = (job: (typeof employment)[number]) => (
           </li>
         ))}
       </ul>
-    </div>
+    </motion.div>
 );
 
 // Consecutive roles at one company become a single group, so the company name
@@ -61,15 +68,27 @@ export default function Experience() {
         <Timeline data={timelineData} />
 
         <div className="mt-12 grid gap-5 sm:mt-16 sm:grid-cols-2 sm:gap-6">
-          <div className="relative rounded-2xl border border-line bg-panel/60 p-6">
+          <motion.div
+            initial={{ opacity: 0, y: 24 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.3 }}
+            transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+            className="relative rounded-2xl border border-line bg-panel/60 p-6"
+          >
             {cardGlow}
             <div className="font-mono text-xs tracking-widest text-mut">EDUCATION</div>
             <p className="mt-3 font-medium">{education.school}</p>
             <p className="mt-1 text-sm text-mut">
               {education.degree} · {education.period} · {education.detail}
             </p>
-          </div>
-          <div className="relative rounded-2xl border border-line bg-panel/60 p-6">
+          </motion.div>
+          <motion.div
+            initial={{ opacity: 0, y: 24 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.3 }}
+            transition={{ duration: 0.5, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
+            className="relative rounded-2xl border border-line bg-panel/60 p-6"
+          >
             {cardGlow}
             <div className="font-mono text-xs tracking-widest text-mut">CERTIFICATIONS</div>
             <ul className="mt-3 space-y-1 text-sm text-mut">
@@ -77,7 +96,7 @@ export default function Experience() {
                 <li key={c}>{c}</li>
               ))}
             </ul>
-          </div>
+          </motion.div>
         </div>
       </div>
     </section>

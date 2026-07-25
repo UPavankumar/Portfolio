@@ -25,7 +25,7 @@ function useHeadline(texts: string[]) {
     const canvasWidth = Math.min(vw, 1024);
     // leave breathing room to the right so particles drift, never clip
     const available = canvasWidth - paddingX - (vw >= 768 ? 72 : 28);
-    const ceiling = vw >= 1280 ? 76 : vw >= 1024 ? 64 : vw >= 768 ? 54 : vw >= 640 ? 44 : 34;
+    const ceiling = vw >= 1280 ? 40 : vw >= 1024 ? 36 : vw >= 768 ? 32 : vw >= 640 ? 28 : 24;
     const longest = texts.reduce((a, b) => (a.length >= b.length ? a : b), "");
 
     let px = ceiling;
@@ -75,7 +75,7 @@ function Pipeline() {
           pathOpacity={0.9}
           gradientStartColor="#34e0c2"
           gradientStopColor="#38bdf8"
-          curvature={i % 2 === 0 ? 0 : -18}
+          curvature={0}
           duration={6}
           delay={i * 1.1}
         />
@@ -87,8 +87,8 @@ function Pipeline() {
           <motion.div
             key={n.id}
             ref={nodeRefs[i]}
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
             transition={{ delay: 0.15 * i + 0.3, duration: 0.5 }}
             className="z-10 rounded-xl border border-line bg-panel px-3 py-2.5 text-center shadow-[0_0_28px_-6px_#34e0c240] transition-colors last:col-span-2 last:justify-self-center hover:border-acc/60 sm:px-4 sm:py-3 sm:last:col-span-1 md:px-5 md:py-3.5"
           >
@@ -136,10 +136,15 @@ export default function PipelineHero() {
           transition={{ duration: 0.6, delay: 0.1 }}
           className="mt-8"
         >
-          {/* Canvas is deliberately taller/wider than the text so vaporized
-              particles can drift past the glyphs instead of being clipped;
-              negative margins keep the visual rhythm tight. */}
-          <div className="-mx-6 -my-10 h-36 md:-mx-10 md:-my-12 md:h-48 lg:h-56 xl:-my-14 xl:h-64">
+          {/* Name is the anchor now — big enough to fill the space the smaller
+              rotating role would otherwise leave empty next to the portrait. */}
+          <h1 className="text-5xl font-bold tracking-tight text-balance sm:text-6xl md:text-7xl">
+            {profile.name}
+          </h1>
+          {/* Rotating role — a size down from the name. Canvas stays a bit
+              taller/wider than the text so vaporized particles can drift past
+              the glyphs instead of being clipped. */}
+          <div className="mt-2 -mx-6 -my-6 h-24 md:-mx-10 md:h-28">
             <VaporizeTextCycle
               texts={ROLES}
               font={{
@@ -154,10 +159,10 @@ export default function PipelineHero() {
               direction="left-to-right"
               alignment="left"
               paddingX={headline.paddingX}
-              tag={Tag.H1}
+              tag={Tag.H2}
             />
           </div>
-          <p className="text-2xl font-bold tracking-tight text-balance text-mut min-[420px]:text-3xl md:text-4xl lg:text-5xl">
+          <p className="mt-1 text-2xl font-bold tracking-tight text-balance text-mut min-[420px]:text-3xl md:text-4xl lg:text-5xl">
             {profile.tagline}
           </p>
         </motion.div>
