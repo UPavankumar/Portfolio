@@ -11,17 +11,38 @@ const GROQ_KEY = import.meta.env.VITE_GROQ_API_KEY as string | undefined;
 export type ChatMsg = { role: "user" | "assistant"; content: string };
 
 const SYSTEM_PROMPT = `You are Alfred Pennyworth, Mr. Pavan Kumar's professional AI assistant — analytical, articulate, and composed.
-Speak like a seasoned British advisor: concise (2-4 sentences), insightful, and respectful.
+Speak like a seasoned British advisor: concise (2–4 sentences), insightful, and respectful.
 
 Rules:
 1. Address the user by name if they have provided one.
 2. Never exceed 4 sentences unless the user asks for detail.
 3. Maintain warm professionalism and authority.
 4. Answer questions about Mr. Kumar grounded ONLY in the knowledge base below; if asked something unrelated, steer back politely.
+5. Use résumé context only when relevant.
 
-Knowledge base:
+Résumé Summary Context:
+Mr. Pavan Kumar — Business Analyst specialising in AI automation, skilled in Python, SQL, LLMs, AI agents, Voice AI (Groq LLaMA, Whisper), Power BI, RPA, and enterprise automation.
+Business Analyst at Envision Beyond since Oct 2025 (double-promoted from trainee), where he built a multi-tenant e-Invoicing platform processing 2,000+ documents/month and real-time Voice AI systems.
+
+Full Knowledge Base:
 ${knowledgeBase}`;
 
+// --- Name extraction (mirrors Streamlit logic) ---
+const NAME_INDICATORS = ["my name is", "i'm ", "i am ", "call me", "this is", "name's", "it's"];
+
+export function extractName(input: string): string | null {
+  const lower = input.toLowerCase();
+  for (const ind of NAME_INDICATORS) {
+    if (lower.includes(ind)) {
+      const after = lower.split(ind)[1]?.trim().split(/\s+/)[0] ?? "";
+      const name = after.replace(/[^a-z]/gi, "");
+      if (name.length > 1) return name.charAt(0).toUpperCase() + name.slice(1);
+    }
+  }
+  return null;
+}
+
+// --- Fallback keyword-matching (no API key) ---
 function localAnswer(q: string): string {
   const s = q.toLowerCase();
   if (/(voice|aria|speech|whisper|call)/.test(s))
@@ -29,7 +50,7 @@ function localAnswer(q: string): string {
   if (/(invoice|einvoice|e-invoice|lhdn|document|etl)/.test(s))
     return "His multi-tenant e-Invoicing platform processes upwards of 2,000 financial documents monthly — automated PDF and Excel extraction, JSON transformation, schema validation and Malaysian LHDN regulatory submission, each tenant kept properly isolated.";
   if (/(lead|sales|email|outreach|crm|agent)/.test(s))
-    return "Mr. Kumar built an AI sales agent that reads inbound email via Microsoft Graph, researches the sender's company, drafts a personalized reply into Outlook and tracks responses — PostgreSQL and Odoo CRM keeping the books, as it were.";
+    return "Mr. Kumar built an AI sales agent that reads inbound email via Microsoft Graph, researches the sender's company, drafts a personalised reply into Outlook and tracks responses — PostgreSQL and Odoo CRM keeping the books, as it were.";
   if (/(skill|stack|tech|tool|language|python|sql)/.test(s))
     return "His principal instruments: Python and SQL, with LLMs, AI agents, prompt engineering, RAG and voice AI. On the enterprise side — Microsoft Graph, Google Workspace APIs, OAuth 2.0, PostgreSQL, MongoDB, AWS, IBM RPA and Odoo CRM, with Power BI for the dashboards.";
   if (/(experience|work|job|envision|spire|career|edureka)/.test(s))
@@ -43,7 +64,29 @@ function localAnswer(q: string): string {
   return "I'd be delighted to tell you about Mr. Kumar's voice AI work, his document pipelines, the sales agent he built, his skills, experience, or how to contact him. (I'm presently in demo mode; with a Groq key configured I can answer anything.)";
 }
 
-async function groqAnswer(q: string, history: ChatMsg[]): Promise<string> {
+// --- Groq streaming response ---
+export async function groqStream(
+  q: string,
+  history: ChatMsg[],
+  onChunk: (chunk: string) => void,
+  userMsgCount: number
+): Promise<void> {
+  const messages: Array<{ role: string; content: string }> = [
+    { role: "system", content: SYSTEM_PROMPT },
+  ];
+
+  // Re-inject full KB every 5 user messages for better LLM memory (mirrors Streamlit)
+  if (userMsgCount > 0 && userMsgCount % 5 === 0) {
+    messages.push({
+      role: "system",
+      content: `Full résumé reference (periodic refresh):\n${knowledgeBase}`,
+    });
+  }
+
+  // Append recent history (last 8 turns)
+  messages.push(...history.slice(-8));
+  messages.push({ role: "user", content: q });
+
   const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
     method: "POST",
     headers: {
@@ -55,22 +98,55 @@ async function groqAnswer(q: string, history: ChatMsg[]): Promise<string> {
       temperature: 0.9,
       max_tokens: 400,
       top_p: 0.9,
-      messages: [
-        { role: "system", content: SYSTEM_PROMPT },
-        ...history.slice(-8),
-        { role: "user", content: q },
-      ],
+      stream: true,
+      messages,
     }),
   });
+
   if (!res.ok) throw new Error(`Groq ${res.status}`);
-  const data = await res.json();
-  return data.choices[0].message.content as string;
+
+  const reader = res.body?.getReader();
+  const decoder = new TextDecoder();
+  if (!reader) throw new Error("No response body");
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    const lines = decoder.decode(value).split("\n");
+    for (const line of lines) {
+      const trimmed = line.replace(/^data: /, "").trim();
+      if (!trimmed || trimmed === "[DONE]") continue;
+      try {
+        const parsed = JSON.parse(trimmed);
+        const delta = parsed.choices?.[0]?.delta?.content ?? "";
+        if (delta) onChunk(delta);
+      } catch {
+        // skip malformed SSE lines
+      }
+    }
+  }
 }
 
-export async function ask(q: string, history: ChatMsg[] = []): Promise<string> {
+// --- Main export ---
+export async function ask(
+  q: string,
+  history: ChatMsg[] = [],
+  onChunk?: (chunk: string) => void,
+  userMsgCount = 0
+): Promise<string> {
   if (GROQ_KEY) {
     try {
-      return await groqAnswer(q, history);
+      let full = "";
+      await groqStream(
+        q,
+        history,
+        (chunk) => {
+          full += chunk;
+          onChunk?.(chunk);
+        },
+        userMsgCount
+      );
+      return full;
     } catch {
       return localAnswer(q);
     }
