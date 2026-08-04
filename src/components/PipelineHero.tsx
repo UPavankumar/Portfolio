@@ -1,50 +1,11 @@
-import { createRef, useEffect, useMemo, useRef, useState } from "react";
+import { createRef, useMemo, useRef } from "react";
 import { motion } from "framer-motion";
 import { AnimatedBeam } from "./ui/animated-beam";
-import VaporizeTextCycle, { Tag } from "./ui/vapour-text-effect";
+import TypingTextCycle from "./ui/typing-text-effect";
 import InteractiveNeuralVortex from "./ui/interactive-neural-vortex-background";
 import { profile } from "../data/resume";
 
 const ROLES = ["Business Analyst.", "AI Automation Builder.", "Voice AI Builder.", "Data Analyst."];
-
-/** Longest role decides the size: shrink until it fits the canvas with room to
- *  spare on the right, so no headline is ever clipped mid-word. */
-const sharedCanvas = typeof document !== "undefined" ? document.createElement("canvas") : null;
-const sharedCtx = sharedCanvas ? sharedCanvas.getContext("2d") : null;
-
-function measureFits(px: number, text: string, available: number) {
-  if (!sharedCtx) return true;
-  sharedCtx.font = `700 ${px}px Inter, sans-serif`;
-  return sharedCtx.measureText(text).width <= available;
-}
-
-function useHeadline(texts: string[]) {
-  const read = () => {
-    const vw = window.innerWidth;
-    const paddingX = vw >= 768 ? 40 : 24;
-    // canvas spans the content column (max-w-5xl), edge to edge
-    const canvasWidth = Math.min(vw, 1024);
-    // leave breathing room to the right so particles drift, never clip
-    const available = canvasWidth - paddingX - (vw >= 768 ? 72 : 28);
-    const ceiling = vw >= 1280 ? 40 : vw >= 1024 ? 36 : vw >= 768 ? 32 : vw >= 640 ? 28 : 24;
-    const longest = texts.reduce((a, b) => (a.length >= b.length ? a : b), "");
-
-    let px = ceiling;
-    while (px > 16 && !measureFits(px, longest, available)) px -= 1;
-    return { fontSize: `${px}px`, paddingX };
-  };
-
-  const [cfg, setCfg] = useState(read);
-  useEffect(() => {
-    const update = () => setCfg(read());
-    window.addEventListener("resize", update);
-    // fonts load after first paint; Inter's metrics differ from the fallback
-    document.fonts?.ready.then(update);
-    return () => window.removeEventListener("resize", update);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-  return cfg;
-}
 
 const NODES = [
   { id: "inbox", label: "INBOX", sub: "email · pdf · voice" },
@@ -107,7 +68,6 @@ function Pipeline() {
 }
 
 export default function PipelineHero() {
-  const headline = useHeadline(ROLES);
   return (
     <header id="top" className="relative overflow-hidden">
       <div className="dotgrid absolute inset-0 opacity-60" aria-hidden />
@@ -145,22 +105,10 @@ export default function PipelineHero() {
           {/* Rotating role — a size down from the name. Canvas stays a bit
               taller/wider than the text so vaporized particles can drift past
               the glyphs instead of being clipped. */}
-          <div className="mt-2 -mx-6 -my-6 h-24 md:-mx-10 md:h-28">
-            <VaporizeTextCycle
+          <div className="mt-3 min-h-[2.5rem] sm:min-h-[3rem] md:min-h-[3.5rem]">
+            <TypingTextCycle
               texts={ROLES}
-              font={{
-                fontFamily: "Inter, sans-serif",
-                fontSize: headline.fontSize,
-                fontWeight: 700,
-              }}
-              color="rgb(231, 235, 242)"
-              spread={4}
-              density={8}
-              animation={{ vaporizeDuration: 2.4, fadeInDuration: 0.5, waitDuration: 0.4 }}
-              direction="left-to-right"
-              alignment="left"
-              paddingX={headline.paddingX}
-              tag={Tag.H2}
+              className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl"
             />
           </div>
           <p className="mt-1 text-2xl font-bold tracking-tight text-balance text-mut min-[420px]:text-3xl md:text-4xl lg:text-5xl">
