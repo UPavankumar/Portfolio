@@ -79,9 +79,9 @@ function extractVisitorDetails(msgs: { from: string; text: string }[]): {
 function sendLead(
   msgs: { from: string; text: string }[],
   userName: string | null
-): void {
+): boolean {
   const userMsgs = msgs.filter((m) => m.from === "you" && m.text.trim());
-  if (!WEBHOOK_URL || userMsgs.length < 1) return;
+  if (!WEBHOOK_URL || userMsgs.length < 1) return false;
 
   const details = extractVisitorDetails(msgs);
 
@@ -105,6 +105,8 @@ function sendLead(
     headers: { "Content-Type": "text/plain" },
     body: payload,
   }).catch(() => {});
+
+  return true;
 }
 
 type Msg = { from: "you" | "bot"; text: string };
@@ -128,6 +130,26 @@ export default function AskPortfolio() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  // Keep refs in sync with state for pagehide / unload events
+  const msgsRef = useRef(msgs);
+  const userNameRef = useRef(userName);
+  const leadSentRef = useRef(false);
+
+  useEffect(() => {
+    msgsRef.current = msgs;
+  }, [msgs]);
+
+  useEffect(() => {
+    userNameRef.current = userName;
+  }, [userName]);
+
+  // Lead capture wrapper using latest refs
+  const triggerLeadCapture = useCallback(() => {
+    if (leadSentRef.current) return;
+    const sent = sendLead(msgsRef.current, userNameRef.current);
+    if (sent) leadSentRef.current = true;
+  }, []);
+
   // Auto-scroll to bottom on new messages
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
@@ -138,13 +160,24 @@ export default function AskPortfolio() {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
-        sendLead(msgs, userName);
+        triggerLeadCapture();
         setOpen(false);
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [open, msgs, userName]);
+  }, [open, triggerLeadCapture]);
+
+  // Fire lead capture if tab is closed or navigated away
+  useEffect(() => {
+    const handleExit = () => triggerLeadCapture();
+    window.addEventListener("pagehide", handleExit);
+    window.addEventListener("beforeunload", handleExit);
+    return () => {
+      window.removeEventListener("pagehide", handleExit);
+      window.removeEventListener("beforeunload", handleExit);
+    };
+  }, [triggerLeadCapture]);
 
   // Focus input when chat opens
   useEffect(() => {
@@ -153,14 +186,14 @@ export default function AskPortfolio() {
 
   // Reset conversation — capture lead from the old session first
   const handleNewChat = useCallback(() => {
-    sendLead(msgs, userName);
+    triggerLeadCapture();
+    leadSentRef.current = false;
     setMsgs([{ from: "bot", text: GREETING }]);
     setInput("");
     setBusy(false);
     setStreaming(false);
     setUserName(null);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [msgs, userName]);
+  }, [triggerLeadCapture]);
 
   const userMsgCount = msgs.filter((m) => m.from === "you").length;
 
@@ -178,6 +211,7 @@ export default function AskPortfolio() {
       content: m.text,
     }));
 
+    leadSentRef.current = false;
     setMsgs((m) => [...m, { from: "you", text: q }]);
     setBusy(true);
     setStreaming(true);
@@ -291,7 +325,7 @@ export default function AskPortfolio() {
                 </button>
                 {/* Close button — fires lead capture before closing */}
                 <button
-                  onClick={() => { sendLead(msgs, userName); setOpen(false); }}
+                  onClick={() => { triggerLeadCapture(); setOpen(false); }}
                   aria-label="Close chat"
                   className="flex size-9 items-center justify-center rounded-lg text-mut transition-colors hover:bg-ink hover:text-fg"
                 >
