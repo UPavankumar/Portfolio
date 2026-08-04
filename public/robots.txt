@@ -1,0 +1,5 @@
+# Robots.txt for Pavan Kumar Portfolio
+User-agent: *
+Allow: /
+
+Sitemap: https://portfolio-u-pavan-kumar.web.app/sitemap.xml

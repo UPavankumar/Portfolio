@@ -1,0 +1,16 @@
+# Pavan Kumar — Professional Portfolio
+
+> Business Analyst specializing in AI Automation, Voice AI, LLMs, and Enterprise Automation.
+
+## About
+Pavan Kumar is a Business Analyst based in Bengaluru, India. He builds enterprise AI applications, real-time Voice AI assistants (Aria), multi-tenant e-Invoicing pipelines, and sales automation agents.
+
+## Stack & Skills
+- **Languages:** Python, SQL
+- **AI & ML:** LLMs, Groq LLaMA, Whisper, Pipecat, RAG, Voice AI
+- **Enterprise Automation:** Microsoft Graph API, Google Workspace APIs, PostgreSQL, MongoDB, Power BI, Odoo CRM, IBM RPA, N8n
+
+## Main Pages & Projects
+- [Portfolio Home](https://portfolio-u-pavan-kumar.web.app/)
+- [GitHub](https://github.com/UPavankumar)
+- [LinkedIn](https://linkedin.com/in/u-pavankumar)
