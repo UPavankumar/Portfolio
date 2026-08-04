@@ -40,10 +40,10 @@ export default function IntegrationsHub() {
           fromRef={r}
           toRef={hubRef}
           curvature={i % 2 === 0 ? -28 : 28}
-          pathColor="#1a2233"
+          pathColor="#1e293b"
           pathOpacity={0.9}
-          gradientStartColor="#34e0c2"
-          gradientStopColor="#38bdf8"
+          gradientStartColor="#38bdf8"
+          gradientStopColor="#60a5fa"
           duration={5.5}
           delay={i * 0.45}
         />
@@ -55,10 +55,10 @@ export default function IntegrationsHub() {
           fromRef={hubRef}
           toRef={r}
           curvature={i % 2 === 0 ? 28 : -28}
-          pathColor="#1a2233"
+          pathColor="#1e293b"
           pathOpacity={0.9}
-          gradientStartColor="#34e0c2"
-          gradientStopColor="#38bdf8"
+          gradientStartColor="#38bdf8"
+          gradientStopColor="#60a5fa"
           duration={5.5}
           delay={i * 0.45 + 0.9}
         />
@@ -75,7 +75,7 @@ export default function IntegrationsHub() {
 
         <div
           ref={hubRef}
-          className="z-10 flex size-16 shrink-0 flex-col items-center justify-center rounded-full border-2 border-acc/60 bg-panel text-center shadow-[0_0_50px_-10px_#34e0c280] sm:size-24 lg:size-28"
+          className="z-10 flex size-16 shrink-0 flex-col items-center justify-center rounded-full border-2 border-acc/60 bg-panel text-center shadow-[0_0_50px_-10px_rgba(56,189,248,0.4)] sm:size-24 lg:size-28"
         >
           <span className="font-mono text-[10px] font-semibold text-acc sm:text-xs">LLM</span>
           <span className="hidden font-mono text-[9px] text-mut sm:block">agents · prompts</span>

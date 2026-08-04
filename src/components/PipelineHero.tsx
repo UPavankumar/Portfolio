@@ -32,11 +32,11 @@ function Pipeline() {
           containerRef={containerRef}
           fromRef={nodeRefs[i]}
           toRef={nodeRefs[i + 1]}
-          pathColor="#1a2233"
+          pathColor="#1e293b"
           pathWidth={2}
           pathOpacity={0.9}
-          gradientStartColor="#34e0c2"
-          gradientStopColor="#38bdf8"
+          gradientStartColor="#38bdf8"
+          gradientStopColor="#60a5fa"
           curvature={0}
           duration={6}
           delay={i * 1.1}
@@ -52,7 +52,7 @@ function Pipeline() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.15 * i + 0.3, duration: 0.5 }}
-            className="z-10 rounded-xl border border-line bg-panel px-3 py-2.5 text-center shadow-[0_0_28px_-6px_#34e0c240] transition-colors last:col-span-2 last:justify-self-center hover:border-acc/60 sm:px-4 sm:py-3 sm:last:col-span-1 md:px-5 md:py-3.5"
+            className="z-10 rounded-xl border border-line bg-panel px-3 py-2.5 text-center shadow-[0_0_28px_-6px_rgba(56,189,248,0.35)] transition-colors last:col-span-2 last:justify-self-center hover:border-acc/60 sm:px-4 sm:py-3 sm:last:col-span-1 md:px-5 md:py-3.5"
           >
             <div className="font-mono text-[11px] font-semibold tracking-wider text-fg sm:text-xs md:text-sm">
               {n.label}
