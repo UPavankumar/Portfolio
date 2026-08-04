@@ -12,9 +12,9 @@ export default function TypingTextCycle({
   const [reverse, setReverse] = useState(false);
 
   useEffect(() => {
-    // When full word is typed, pause for 2 seconds with white cursor blinking on-off
+    // When full word is typed, pause for 2.3 seconds with white cursor blinking on-off
     if (subIndex === texts[index].length && !reverse) {
-      const timeout = setTimeout(() => setReverse(true), 2000);
+      const timeout = setTimeout(() => setReverse(true), 2300);
       return () => clearTimeout(timeout);
     }
 
