@@ -83,7 +83,8 @@ function sendLead(
   msgs: { from: string; text: string }[],
   userName: string | null
 ): void {
-  if (!WEBHOOK_URL || msgs.length < 3) return;
+  const userMsgs = msgs.filter((m) => m.from === "you" && m.text.trim());
+  if (!WEBHOOK_URL || userMsgs.length < 1) return;
 
   const details = extractVisitorDetails(msgs);
 
