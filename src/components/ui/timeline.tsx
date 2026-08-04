@@ -43,8 +43,8 @@ export const Timeline = ({ data }: { data: TimelineGroup[] }) => {
             key={group.title + gi}
             className="flex flex-col pt-12 first:pt-0 md:flex-row md:gap-10 md:pt-20 md:first:pt-2"
           >
-            {/* Company title — fixed/static on mobile, sticky on desktop */}
-            <div className="mb-5 self-start md:sticky md:top-32 md:mb-0 md:h-fit md:w-56 md:shrink-0 lg:w-64">
+            {/* Company title — padded pl-10 on mobile so line at left: 0 stays clear of text */}
+            <div className="mb-5 pl-10 self-start md:sticky md:top-32 md:mb-0 md:h-fit md:w-56 md:shrink-0 md:pl-0 lg:w-64">
               <h3 className="text-2xl font-bold text-mut md:text-4xl">{group.title}</h3>
             </div>
 
