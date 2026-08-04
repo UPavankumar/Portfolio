@@ -2,10 +2,10 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 
 const LINKS = [
-  { id: "work", label: "work", href: "#work" },
-  { id: "experience", label: "experience", href: "#experience" },
-  { id: "skills", label: "skills", href: "#skills" },
-  { id: "contact", label: "contact", href: "#contact" },
+  { id: "work", label: "work", href: "#work", hideBelow: "" },
+  { id: "experience", label: "experience", href: "#experience", hideBelow: "hidden md:inline-block" },
+  { id: "skills", label: "skills", href: "#skills", hideBelow: "hidden sm:inline-block" },
+  { id: "contact", label: "contact", href: "#contact", hideBelow: "" },
 ] as const;
 
 export default function Nav() {
@@ -29,7 +29,7 @@ export default function Nav() {
       }
     };
 
-    // Entry-trigger observer: activates a section as soon as its top enters upper 30% of screen
+    // Entry-trigger observer: activates a section as soon as its top enters upper viewport
     const observer = new IntersectionObserver(
       (entries) => {
         if (window.scrollY < 120) {
@@ -84,9 +84,9 @@ export default function Nav() {
               <a
                 key={l.href}
                 href={l.href}
-                className={`relative rounded-md px-1.5 py-1 transition-colors min-[380px]:px-2.5 min-[380px]:py-1.5 sm:px-3 ${
+                className={`relative rounded-md px-2 py-1 transition-colors sm:px-3 ${
                   isActive ? "text-acc font-semibold" : "text-mut hover:text-fg"
-                }`}
+                } ${l.hideBelow}`}
               >
                 {isActive && (
                   <motion.span

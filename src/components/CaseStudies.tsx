@@ -29,7 +29,7 @@ function Study({ p }: { p: Project }) {
         spread={40}
         glow={true}
         disabled={false}
-        proximity={350}
+        proximity={150}
         inactiveZone={0.01}
         borderWidth={2}
       />
