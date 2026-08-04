@@ -44,7 +44,7 @@ export default function Nav() {
         });
       },
       {
-        rootMargin: "-80px 0px -70% 0px",
+        rootMargin: "-60px 0px -25% 0px",
         threshold: 0,
       }
     );
