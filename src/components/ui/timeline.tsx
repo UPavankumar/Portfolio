@@ -43,6 +43,7 @@ export const Timeline = ({ data }: { data: TimelineGroup[] }) => {
             key={group.title + gi}
             className="flex flex-col pt-12 first:pt-0 md:flex-row md:gap-10 md:pt-20 md:first:pt-2"
           >
+            {/* Company title — stays static on mobile, sticky on desktop */}
             <div className="mb-5 self-start md:sticky md:top-32 md:mb-0 md:h-fit md:w-56 md:shrink-0 lg:w-64">
               <h3 className="text-2xl font-bold text-mut md:text-4xl">{group.title}</h3>
             </div>
@@ -50,12 +51,11 @@ export const Timeline = ({ data }: { data: TimelineGroup[] }) => {
             <div className="relative flex-1 space-y-8 pl-10">
               {group.items.map((item, ii) => (
                 <div key={ii} className="relative">
-                  {/* zero-width gutter spanning the card: lets the dot stick at
-                      the same offset as the company heading, so it rides down
-                      with the role you're reading and then hands over to the
-                      next role's dot */}
-                  <div className="absolute top-7 -left-10 h-[calc(100%-1.75rem)] w-0">
-                    <span className="block size-3 -translate-x-1/2 rounded-full bg-acc shadow-[0_0_12px_#34e0c2] md:sticky md:top-32" />
+                  {/* Rich timeline dot positioned ABOVE the line (z-20) */}
+                  <div className="absolute top-7 -left-10 z-20 h-[calc(100%-1.75rem)] w-0">
+                    <div className="flex size-4 -translate-x-1/2 items-center justify-center rounded-full border-2 border-acc/90 bg-ink shadow-[0_0_14px_rgba(52,224,194,0.7)] backdrop-blur-sm sm:size-5 md:sticky md:top-32">
+                      <span className="size-1.5 rounded-full bg-acc shadow-[0_0_6px_#34e0c2] sm:size-2" />
+                    </div>
                   </div>
                   {item}
                 </div>
@@ -64,15 +64,22 @@ export const Timeline = ({ data }: { data: TimelineGroup[] }) => {
           </div>
         ))}
 
+        {/* Timeline vertical rail line (z-10, behind the dots) */}
         <div
           style={{ height: height + "px" }}
-          className="absolute top-0 left-[var(--tl-x)] w-[2px] overflow-hidden bg-[linear-gradient(to_bottom,var(--tw-gradient-stops))] from-transparent from-[0%] via-line to-transparent to-[99%] [mask-image:linear-gradient(to_bottom,transparent_0%,black_10%,black_90%,transparent_100%)]"
+          className="absolute top-0 left-[var(--tl-x)] z-10 w-[2px] overflow-hidden bg-[linear-gradient(to_bottom,var(--tw-gradient-stops))] from-transparent from-[0%] via-line to-transparent to-[99%] [mask-image:linear-gradient(to_bottom,transparent_0%,black_10%,black_90%,transparent_100%)]"
         >
           <motion.div
             style={{ height: heightTransform, opacity: opacityTransform }}
             className="absolute inset-x-0 top-0 w-[2px] rounded-full bg-gradient-to-t from-acc from-[0%] via-sky-400 via-[10%] to-transparent"
           />
         </div>
+
+        {/* Mobile-only tracer dot: moves DOWN the line as you scroll (z-30) */}
+        <motion.div
+          style={{ y: heightTransform, opacity: opacityTransform }}
+          className="absolute -left-[5px] top-0 z-30 size-3 rounded-full bg-acc shadow-[0_0_16px_#34e0c2,0_0_8px_#38bdf8] md:hidden"
+        />
       </div>
     </div>
   );
