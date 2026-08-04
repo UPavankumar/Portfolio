@@ -43,7 +43,7 @@ export const Timeline = ({ data }: { data: TimelineGroup[] }) => {
             key={group.title + gi}
             className="flex flex-col pt-12 first:pt-0 md:flex-row md:gap-10 md:pt-20 md:first:pt-2"
           >
-            {/* Company title — stays static on mobile, sticky on desktop */}
+            {/* Company title — fixed/static on mobile, sticky on desktop */}
             <div className="mb-5 self-start md:sticky md:top-32 md:mb-0 md:h-fit md:w-56 md:shrink-0 lg:w-64">
               <h3 className="text-2xl font-bold text-mut md:text-4xl">{group.title}</h3>
             </div>
@@ -51,9 +51,9 @@ export const Timeline = ({ data }: { data: TimelineGroup[] }) => {
             <div className="relative flex-1 space-y-8 pl-10">
               {group.items.map((item, ii) => (
                 <div key={ii} className="relative">
-                  {/* Rich timeline dot positioned ABOVE the line (z-20) */}
+                  {/* Rich timeline dot — sticky top-32 on both mobile & desktop (z-20) */}
                   <div className="absolute top-7 -left-10 z-20 h-[calc(100%-1.75rem)] w-0">
-                    <div className="flex size-4 -translate-x-1/2 items-center justify-center rounded-full border-2 border-acc/90 bg-ink shadow-[0_0_14px_rgba(52,224,194,0.7)] backdrop-blur-sm sm:size-5 md:sticky md:top-32">
+                    <div className="sticky top-32 flex size-4 -translate-x-1/2 items-center justify-center rounded-full border-2 border-acc/90 bg-ink shadow-[0_0_14px_rgba(52,224,194,0.7)] backdrop-blur-sm sm:size-5">
                       <span className="size-1.5 rounded-full bg-acc shadow-[0_0_6px_#34e0c2] sm:size-2" />
                     </div>
                   </div>
@@ -74,12 +74,6 @@ export const Timeline = ({ data }: { data: TimelineGroup[] }) => {
             className="absolute inset-x-0 top-0 w-[2px] rounded-full bg-gradient-to-t from-acc from-[0%] via-sky-400 via-[10%] to-transparent"
           />
         </div>
-
-        {/* Mobile-only tracer dot: moves DOWN the line as you scroll (z-30) */}
-        <motion.div
-          style={{ y: heightTransform, opacity: opacityTransform }}
-          className="absolute -left-[5px] top-0 z-30 size-3 rounded-full bg-acc shadow-[0_0_16px_#34e0c2,0_0_8px_#38bdf8] md:hidden"
-        />
       </div>
     </div>
   );
