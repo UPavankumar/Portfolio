@@ -9,8 +9,8 @@ const cardGlow = (
     spread={36}
     glow={true}
     disabled={false}
-    proximity={64}
-    inactiveZone={0.05}
+    proximity={350}
+    inactiveZone={0.01}
     borderWidth={2}
   />
 );
