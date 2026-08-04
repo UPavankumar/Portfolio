@@ -149,8 +149,8 @@ export async function ask(
         },
         userMsgCount
       );
-      return full;
-    } catch {
+    } catch (err) {
+      console.warn("Alfred LLM stream failed, falling back to local answer:", err);
       return localAnswer(q);
     }
   }

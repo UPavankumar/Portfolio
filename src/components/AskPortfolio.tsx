@@ -193,7 +193,7 @@ export default function AskPortfolio() {
     setMsgs((m) => [...m, { from: "bot", text: "" }]);
 
     try {
-      await ask(
+      const ans = await ask(
         q,
         history,
         // onChunk: append each token to the last (bot) message
@@ -209,6 +209,16 @@ export default function AskPortfolio() {
         },
         userMsgCount + 1 // +1 because we just added one
       );
+
+      // Fallback: If streaming didn't produce text (e.g. fallback to local answer or API error), fill in the complete answer
+      setMsgs((prev) => {
+        const copy = [...prev];
+        const lastIndex = copy.length - 1;
+        if (lastIndex >= 0 && copy[lastIndex].from === "bot" && !copy[lastIndex].text) {
+          copy[lastIndex] = { from: "bot", text: ans };
+        }
+        return copy;
+      });
     } finally {
       setBusy(false);
       setStreaming(false);
