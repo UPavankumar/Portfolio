@@ -12,31 +12,43 @@ export default function TypingTextCycle({
   const [reverse, setReverse] = useState(false);
 
   useEffect(() => {
-    if (subIndex === texts[index].length + 1 && !reverse) {
-      const timeout = setTimeout(() => setReverse(true), 2200);
+    // When full word is typed, pause for 2 seconds with white cursor blinking on-off
+    if (subIndex === texts[index].length && !reverse) {
+      const timeout = setTimeout(() => setReverse(true), 2000);
       return () => clearTimeout(timeout);
     }
 
+    // When word is fully deleted, pause briefly before typing next word
     if (subIndex === 0 && reverse) {
-      setReverse(false);
-      setIndex((prev) => (prev + 1) % texts.length);
-      return;
+      const timeout = setTimeout(() => {
+        setReverse(false);
+        setIndex((prev) => (prev + 1) % texts.length);
+      }, 400);
+      return () => clearTimeout(timeout);
     }
 
+    // Calm, deliberate typing (130ms per char) & smooth deletion (65ms per char)
     const timeout = setTimeout(
       () => {
         setSubIndex((prev) => prev + (reverse ? -1 : 1));
       },
-      reverse ? 35 : 75
+      reverse ? 65 : 130
     );
 
     return () => clearTimeout(timeout);
   }, [subIndex, index, reverse, texts]);
 
+  // Cursor blinks sharply (on/off) ONLY when paused at the end of a word or before typing next
+  const isPaused = subIndex === texts[index].length || (subIndex === 0 && !reverse);
+
   return (
     <h2 className={`font-bold tracking-tight text-acc ${className}`}>
       <span>{texts[index].substring(0, subIndex)}</span>
-      <span className="ml-1 inline-block h-[0.85em] w-1.5 animate-pulse bg-acc align-baseline" />
+      <span
+        className={`ml-1.5 inline-block h-[0.82em] w-1.5 bg-white align-baseline ${
+          isPaused ? "animate-cursor-blink" : ""
+        }`}
+      />
     </h2>
   );
 }

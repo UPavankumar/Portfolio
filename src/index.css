@@ -13,10 +13,17 @@
 
   --animate-marquee: marquee var(--duration, 30s) linear infinite;
   --animate-marquee-reverse: marquee var(--duration, 30s) linear infinite reverse;
+  --animate-cursor-blink: cursor-blink 1s steps(2, start) infinite;
 
   @keyframes marquee {
     to {
       transform: translateX(-50%);
+    }
+  }
+
+  @keyframes cursor-blink {
+    to {
+      visibility: hidden;
     }
   }
 }
