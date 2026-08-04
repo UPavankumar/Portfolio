@@ -15,21 +15,84 @@ function buildTranscript(msgs: { from: string; text: string }[]): string {
 // First real user question (skips name introductions) — used as the "topic"
 function firstQuestion(msgs: { from: string; text: string }[]): string {
   const userMsgs = msgs.filter((m) => m.from === "you" && m.text);
-  // Skip messages that are just name introductions
   const real = userMsgs.find(
     (m) => !/^(hi|hello|hey|my name|i'm |i am |call me)/i.test(m.text.trim())
   );
   return real?.text.slice(0, 200) || userMsgs[0]?.text.slice(0, 200) || "(no question)";
 }
 
-// Fire-and-forget lead capture — no AI, just raw data
+// Extract visitor details from their messages — no AI, just regex/pattern matching
+function extractVisitorDetails(msgs: { from: string; text: string }[]): {
+  email: string;
+  phone: string;
+  company: string;
+  role: string;
+} {
+  const allUserText = msgs
+    .filter((m) => m.from === "you" && m.text)
+    .map((m) => m.text)
+    .join(" ");
+
+  // Email — standard regex
+  const emailMatch = allUserText.match(
+    /[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/
+  );
+
+  // Phone — 7+ digit sequences with optional +, -, spaces, parens
+  const phoneMatch = allUserText.match(
+    /(?:\+?\d{1,3}[\s\-]?)?\(?\d{2,5}\)?[\s\-]?\d{3,5}[\s\-]?\d{3,5}/
+  );
+
+  // Company — patterns like "work at X", "from X", "company is X", "at X company"
+  const companyPatterns = [
+    /(?:work(?:ing)?\s+(?:at|for|with)|from|company\s+(?:is|called)|at)\s+([A-Z][A-Za-z0-9\s&.\-]{1,40}?)(?:\s*[.,;!?]|\s+(?:and|as|where|i |we |my |for |since|in ))/i,
+    /(?:represent(?:ing)?|belong\s+to|part\s+of|joined)\s+([A-Z][A-Za-z0-9\s&.\-]{1,40}?)(?:\s*[.,;!?]|\s+(?:and|as|where|i |we |my ))/i,
+  ];
+  let company = "";
+  for (const p of companyPatterns) {
+    const m = allUserText.match(p);
+    if (m?.[1]) {
+      company = m[1].trim();
+      break;
+    }
+  }
+
+  // Role/title — patterns like "I'm a developer", "I work as a PM", "my role is"
+  const rolePatterns = [
+    /(?:i'?m\s+a(?:n)?\s+|i\s+am\s+a(?:n)?\s+|work\s+as\s+a(?:n)?\s+|my\s+(?:role|title|position|designation)\s+is\s+)([A-Za-z\s]{2,40}?)(?:\s*[.,;!?]|\s+(?:at|in|from|and|with|for|here|who|looking))/i,
+  ];
+  let role = "";
+  for (const p of rolePatterns) {
+    const m = allUserText.match(p);
+    if (m?.[1]) {
+      role = m[1].trim();
+      break;
+    }
+  }
+
+  return {
+    email: emailMatch?.[0] || "",
+    phone: phoneMatch?.[0] || "",
+    company,
+    role,
+  };
+}
+
+// Fire-and-forget lead capture — no AI, just raw data + pattern extraction
 async function sendLead(
   msgs: { from: string; text: string }[],
   userName: string | null
 ): Promise<void> {
   if (!WEBHOOK_URL || msgs.length < 3) return;
+
+  const details = extractVisitorDetails(msgs);
+
   const payload = {
     name: userName || "Unknown Visitor",
+    email: details.email,
+    phone: details.phone,
+    company: details.company,
+    role: details.role,
     topic: firstQuestion(msgs),
     transcript: buildTranscript(msgs),
     timestamp: new Date().toISOString(),

@@ -26,6 +26,8 @@ jobs:
           # Optional: add VITE_GROQ_API_KEY as a repo secret to enable the live
           # Alfred chat assistant. Without it the site builds in demo mode.
           VITE_GROQ_API_KEY: ${{ secrets.VITE_GROQ_API_KEY }}
+          # Webhook URL for Alfred lead capture (Google Apps Script)
+          VITE_WEBHOOK_URL: ${{ secrets.VITE_WEBHOOK_URL }}
 
       - name: Deploy to Firebase
         uses: FirebaseExtended/action-hosting-deploy@v0
