@@ -53,8 +53,8 @@ export const Timeline = ({ data }: { data: TimelineGroup[] }) => {
                 <div key={ii} className="relative">
                   {/* Rich timeline dot — sticky top-32 on both mobile & desktop (z-20) */}
                   <div className="absolute top-7 -left-10 z-20 h-[calc(100%-1.75rem)] w-0">
-                    <div className="sticky top-32 flex size-4 -translate-x-1/2 items-center justify-center rounded-full border-2 border-acc/90 bg-ink shadow-[0_0_14px_rgba(56,189,248,0.7)] backdrop-blur-sm sm:size-5">
-                      <span className="size-1.5 rounded-full bg-acc shadow-[0_0_6px_#38bdf8] sm:size-2" />
+                    <div className="sticky top-32 flex size-4 -translate-x-1/2 items-center justify-center rounded-full border-2 border-acc/90 bg-ink shadow-[0_0_14px_rgba(52,224,194,0.7)] backdrop-blur-sm sm:size-5">
+                      <span className="size-1.5 rounded-full bg-acc shadow-[0_0_6px_#34e0c2] sm:size-2" />
                     </div>
                   </div>
                   {item}
