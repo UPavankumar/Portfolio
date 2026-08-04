@@ -31,14 +31,6 @@ export default function Nav() {
               {l.label}
             </a>
           ))}
-          <a
-            href="/resume.pdf"
-            target="_blank"
-            rel="noreferrer"
-            className="ml-0.5 rounded-lg border border-line px-2.5 py-1.5 text-fg transition-colors hover:border-acc sm:ml-1 sm:px-3"
-          >
-            resume
-          </a>
         </div>
       </div>
     </nav>
