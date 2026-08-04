@@ -21,7 +21,7 @@ function Study({ p }: { p: Project }) {
     <motion.article
       initial={{ opacity: 0, y: 24 }}
       whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-80px" }}
+      viewport={{ once: false, margin: "-40px" }}
       transition={{ duration: 0.55 }}
       className="relative rounded-2xl border border-line bg-panel/60 p-5 sm:p-7 lg:p-9"
     >

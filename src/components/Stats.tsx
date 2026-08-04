@@ -4,11 +4,14 @@ import { stats } from "../data/resume";
 
 function Counter({ to, suffix }: { to: number; suffix: string }) {
   const ref = useRef<HTMLSpanElement>(null);
-  const inView = useInView(ref, { once: true, margin: "-40px" });
+  const inView = useInView(ref, { once: false, margin: "-40px" });
   const [n, setN] = useState(0);
 
   useEffect(() => {
-    if (!inView) return;
+    if (!inView) {
+      setN(0);
+      return;
+    }
     const controls = animate(0, to, {
       duration: 1.4,
       ease: "easeOut",
