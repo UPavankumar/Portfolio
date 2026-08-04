@@ -2,11 +2,14 @@ import knowledgeBase from "../data/knowledge_base.md?raw";
 import { profile } from "../data/resume";
 
 // Ported from github.com/UPavankumar/Portfolio_Assistant (Streamlit "Alfred" bot).
-// Set VITE_GROQ_API_KEY in .env (local) or as a GitHub Actions secret (deploy)
-// to make Alfred answer with a live LLM; without it he falls back to
-// keyword matching over the resume. Note: a key bundled into a static site is
-// visible to visitors — use a free-tier key or move this behind a proxy.
-const GROQ_KEY = import.meta.env.VITE_GROQ_API_KEY as string | undefined;
+// Set VITE_GROQ_API_KEY in .env for direct Groq calls (key visible in bundle).
+// Set VITE_WORKER_URL to route through the Cloudflare Worker instead (key hidden server-side).
+const GROQ_KEY   = import.meta.env.VITE_GROQ_API_KEY as string | undefined;
+const WORKER_URL = import.meta.env.VITE_WORKER_URL   as string | undefined;
+
+// Resolved endpoint: Worker takes priority over direct Groq
+const API_ENDPOINT = WORKER_URL ?? "https://api.groq.com/openai/v1/chat/completions";
+const AUTH_HEADER  = WORKER_URL ? undefined : GROQ_KEY; // Worker handles auth server-side
 
 export type ChatMsg = { role: "user" | "assistant"; content: string };
 
@@ -87,11 +90,11 @@ export async function groqStream(
   messages.push(...history.slice(-8));
   messages.push({ role: "user", content: q });
 
-  const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+  const res = await fetch(API_ENDPOINT, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${GROQ_KEY}`,
+      ...(AUTH_HEADER ? { Authorization: `Bearer ${AUTH_HEADER}` } : {}),
     },
     body: JSON.stringify({
       model: "llama-3.1-8b-instant",
@@ -134,7 +137,7 @@ export async function ask(
   onChunk?: (chunk: string) => void,
   userMsgCount = 0
 ): Promise<string> {
-  if (GROQ_KEY) {
+  if (WORKER_URL || GROQ_KEY) {
     try {
       let full = "";
       await groqStream(

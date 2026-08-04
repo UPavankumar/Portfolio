@@ -2,6 +2,50 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ask, extractName, type ChatMsg } from "../lib/ask";
 
+const WEBHOOK_URL = import.meta.env.VITE_WEBHOOK_URL as string | undefined;
+
+// Join all messages into a readable transcript
+function buildTranscript(msgs: { from: string; text: string }[]): string {
+  return msgs
+    .filter((m) => m.text)
+    .map((m) => `${m.from === "you" ? "User" : "Alfred"}: ${m.text}`)
+    .join("\n");
+}
+
+// First real user question (skips name introductions) — used as the "topic"
+function firstQuestion(msgs: { from: string; text: string }[]): string {
+  const userMsgs = msgs.filter((m) => m.from === "you" && m.text);
+  // Skip messages that are just name introductions
+  const real = userMsgs.find(
+    (m) => !/^(hi|hello|hey|my name|i'm |i am |call me)/i.test(m.text.trim())
+  );
+  return real?.text.slice(0, 200) || userMsgs[0]?.text.slice(0, 200) || "(no question)";
+}
+
+// Fire-and-forget lead capture — no AI, just raw data
+async function sendLead(
+  msgs: { from: string; text: string }[],
+  userName: string | null
+): Promise<void> {
+  if (!WEBHOOK_URL || msgs.length < 3) return;
+  const payload = {
+    name: userName || "Unknown Visitor",
+    topic: firstQuestion(msgs),
+    transcript: buildTranscript(msgs),
+    timestamp: new Date().toISOString(),
+    referrer: document.referrer || "direct",
+  };
+  try {
+    await fetch(WEBHOOK_URL, {
+      method: "POST",
+      mode: "no-cors",
+      body: JSON.stringify(payload),
+    });
+  } catch {
+    // silent fail — never surface errors to the visitor
+  }
+}
+
 type Msg = { from: "you" | "bot"; text: string };
 
 const SUGGESTIONS = [
@@ -28,27 +72,34 @@ export default function AskPortfolio() {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [msgs, open, streaming]);
 
-  // Escape to close
+  // Escape to close — fire lead capture first
   useEffect(() => {
     if (!open) return;
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        sendLead(msgs, userName);
+        setOpen(false);
+      }
+    };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [open]);
+  }, [open, msgs, userName]);
 
   // Focus input when chat opens
   useEffect(() => {
     if (open) setTimeout(() => inputRef.current?.focus(), 150);
   }, [open]);
 
-  // Reset conversation
+  // Reset conversation — capture lead from the old session first
   const handleNewChat = useCallback(() => {
+    sendLead(msgs, userName);
     setMsgs([{ from: "bot", text: GREETING }]);
     setInput("");
     setBusy(false);
     setStreaming(false);
     setUserName(null);
-  }, []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [msgs, userName]);
 
   const userMsgCount = msgs.filter((m) => m.from === "you").length;
 
@@ -167,9 +218,9 @@ export default function AskPortfolio() {
                     <path d="M4 10h12M10 4v12" />
                   </svg>
                 </button>
-                {/* Close button */}
+                {/* Close button — fires lead capture before closing */}
                 <button
-                  onClick={() => setOpen(false)}
+                  onClick={() => { sendLead(msgs, userName); setOpen(false); }}
                   aria-label="Close chat"
                   className="flex size-9 items-center justify-center rounded-lg text-mut transition-colors hover:bg-ink hover:text-fg"
                 >
