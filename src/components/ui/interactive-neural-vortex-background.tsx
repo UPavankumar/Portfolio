@@ -147,7 +147,7 @@ export default function InteractiveNeuralVortex({
     const resizeCanvas = () => {
       const rect = canvasEl.getBoundingClientRect();
       if (!rect.width || !rect.height) return;
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
       const w = Math.floor(rect.width * dpr);
       const h = Math.floor(rect.height * dpr);
       if (canvasEl.width === w && canvasEl.height === h) return;
@@ -180,7 +180,6 @@ export default function InteractiveNeuralVortex({
 
     const render = () => {
       if (visible) {
-        resizeCanvas();
         draw(performance.now());
       }
       raf = requestAnimationFrame(render);

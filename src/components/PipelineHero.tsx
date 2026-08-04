@@ -9,12 +9,13 @@ const ROLES = ["Business Analyst.", "AI Automation Builder.", "Voice AI Builder.
 
 /** Longest role decides the size: shrink until it fits the canvas with room to
  *  spare on the right, so no headline is ever clipped mid-word. */
+const sharedCanvas = typeof document !== "undefined" ? document.createElement("canvas") : null;
+const sharedCtx = sharedCanvas ? sharedCanvas.getContext("2d") : null;
+
 function measureFits(px: number, text: string, available: number) {
-  const canvas = document.createElement("canvas");
-  const ctx = canvas.getContext("2d");
-  if (!ctx) return true;
-  ctx.font = `700 ${px}px Inter, sans-serif`;
-  return ctx.measureText(text).width <= available;
+  if (!sharedCtx) return true;
+  sharedCtx.font = `700 ${px}px Inter, sans-serif`;
+  return sharedCtx.measureText(text).width <= available;
 }
 
 function useHeadline(texts: string[]) {
