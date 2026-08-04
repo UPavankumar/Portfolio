@@ -7,18 +7,15 @@ const WEBHOOK_URL = import.meta.env.VITE_WEBHOOK_URL as string | undefined;
 // Join all messages into a readable transcript
 function buildTranscript(msgs: { from: string; text: string }[]): string {
   return msgs
-    .filter((m) => m.text)
-    .map((m) => `${m.from === "you" ? "User" : "Alfred"}: ${m.text}`)
-    .join("\n");
+    .filter((m) => m.text && m.text.trim())
+    .map((m) => `${m.from === "you" ? "User" : "Alfred"}: ${m.text.trim()}`)
+    .join("\n\n");
 }
 
-// First real user question (skips name introductions) — used as the "topic"
+// First user message — used as the "topic"
 function firstQuestion(msgs: { from: string; text: string }[]): string {
-  const userMsgs = msgs.filter((m) => m.from === "you" && m.text);
-  const real = userMsgs.find(
-    (m) => !/^(hi|hello|hey|my name|i'm |i am |call me)/i.test(m.text.trim())
-  );
-  return real?.text.slice(0, 200) || userMsgs[0]?.text.slice(0, 200) || "(no question)";
+  const userMsgs = msgs.filter((m) => m.from === "you" && m.text && m.text.trim());
+  return userMsgs[0]?.text.trim().slice(0, 300) || "(no question)";
 }
 
 // Extract visitor details from their messages — no AI, just regex/pattern matching
