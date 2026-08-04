@@ -97,19 +97,14 @@ function sendLead(
     referrer: document.referrer || "direct",
   });
 
-  // sendBeacon is designed for fire-and-forget — handles GAS redirects,
-  // works even when the page/tab is closing, never blocks the UI
-  const blob = new Blob([payload], { type: "text/plain;charset=UTF-8" });
-  const sent = navigator.sendBeacon(WEBHOOK_URL, blob);
-
-  // Fallback for older browsers where sendBeacon fails
-  if (!sent) {
-    fetch(WEBHOOK_URL, {
-      method: "POST",
-      mode: "no-cors",
-      body: payload,
-    }).catch(() => {});
-  }
+  // Use fetch with keepalive: true — preserves POST method across Google Apps Script 302 redirects
+  fetch(WEBHOOK_URL, {
+    method: "POST",
+    mode: "no-cors",
+    keepalive: true,
+    headers: { "Content-Type": "text/plain" },
+    body: payload,
+  }).catch(() => {});
 }
 
 type Msg = { from: "you" | "bot"; text: string };
