@@ -79,15 +79,15 @@ function extractVisitorDetails(msgs: { from: string; text: string }[]): {
 }
 
 // Fire-and-forget lead capture — no AI, just raw data + pattern extraction
-async function sendLead(
+function sendLead(
   msgs: { from: string; text: string }[],
   userName: string | null
-): Promise<void> {
+): void {
   if (!WEBHOOK_URL || msgs.length < 3) return;
 
   const details = extractVisitorDetails(msgs);
 
-  const payload = {
+  const payload = JSON.stringify({
     name: userName || "Unknown Visitor",
     email: details.email,
     phone: details.phone,
@@ -97,15 +97,20 @@ async function sendLead(
     transcript: buildTranscript(msgs),
     timestamp: new Date().toISOString(),
     referrer: document.referrer || "direct",
-  };
-  try {
-    await fetch(WEBHOOK_URL, {
+  });
+
+  // sendBeacon is designed for fire-and-forget — handles GAS redirects,
+  // works even when the page/tab is closing, never blocks the UI
+  const blob = new Blob([payload], { type: "text/plain;charset=UTF-8" });
+  const sent = navigator.sendBeacon(WEBHOOK_URL, blob);
+
+  // Fallback for older browsers where sendBeacon fails
+  if (!sent) {
+    fetch(WEBHOOK_URL, {
       method: "POST",
       mode: "no-cors",
-      body: JSON.stringify(payload),
-    });
-  } catch {
-    // silent fail — never surface errors to the visitor
+      body: payload,
+    }).catch(() => {});
   }
 }
 
