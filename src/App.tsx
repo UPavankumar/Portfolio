@@ -1,24 +1,43 @@
-import { MotionConfig } from "framer-motion";
-import Nav from "./components/Nav";
-import PipelineHero from "./components/PipelineHero";
-import Stats from "./components/Stats";
-import CaseStudies from "./components/CaseStudies";
-import Experience from "./components/Experience";
-import Skills from "./components/Skills";
-import Footer from "./components/Footer";
-import AskPortfolio from "./components/AskPortfolio";
+import { useEffect } from "react";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import Home from "./pages/Home";
+import Projects from "./pages/Projects";
+import Preloader from "./components/Preloader";
+
+function ScrollToTop() {
+  const { pathname, hash } = useLocation();
+  useEffect(() => {
+    if (!hash) {
+      window.scrollTo(0, 0);
+    }
+  }, [pathname, hash]);
+  return null;
+}
 
 export default function App() {
+  useEffect(() => {
+    let originalTitle = document.title;
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        document.title = "Come back! 🥺";
+      } else {
+        document.title = originalTitle;
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, []);
+
   return (
-    <MotionConfig reducedMotion="user">
-      <Nav />
-      <PipelineHero />
-      <Stats />
-      <CaseStudies />
-      <Experience />
-      <Skills />
-      <Footer />
-      <AskPortfolio />
-    </MotionConfig>
+    <BrowserRouter>
+      <ScrollToTop />
+      <Preloader />
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/projects" element={<Projects />} />
+      </Routes>
+    </BrowserRouter>
   );
 }

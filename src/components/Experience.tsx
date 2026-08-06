@@ -1,103 +1,141 @@
-import { motion } from "framer-motion";
-import { employment, education, certifications } from "../data/resume";
+import { useLayoutEffect, useRef } from "react";
+import gsap from "gsap";
+import ScrollTrigger from "gsap/ScrollTrigger";
+import { employment } from "../data/resume";
 import SectionLabel from "./SectionLabel";
-import { GlowingEffect } from "./ui/glowing-effect";
-import { Timeline, type TimelineGroup } from "./ui/timeline";
 
-const cardGlow = (
-  <GlowingEffect
-    spread={36}
-    glow={true}
-    disabled={false}
-    proximity={150}
-    inactiveZone={0.01}
-    borderWidth={2}
-  />
-);
-
-const jobCard = (job: (typeof employment)[number]) => (
-    <motion.div
-      initial={{ opacity: 0, y: 24 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: false, amount: 0.2 }}
-      transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-      className="relative rounded-2xl border border-line bg-panel/60 p-5 sm:p-6 lg:p-7"
-    >
-      {cardGlow}
-
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-        <h4 className="text-base font-semibold sm:text-lg">{job.role}</h4>
-        <span className="rounded-full border border-acc/40 bg-acc/10 px-2.5 py-0.5 font-mono text-[10px] tracking-wider text-acc">
-          {job.type.toUpperCase()}
-        </span>
-      </div>
-
-      <div className="mt-1.5 flex flex-wrap items-center gap-x-2 font-mono text-[11px] text-mut sm:text-xs">
-        <span>{job.period}</span>
-        <span className="text-line">|</span>
-        <span>{job.place}</span>
-      </div>
-
-      <ul className="mt-5 space-y-2.5 text-sm leading-relaxed text-mut sm:text-[15px]">
-        {job.points.map((pt) => (
-          <li key={pt} className="flex gap-3">
-            <span className="mt-0.5 shrink-0 text-acc">▸</span>
-            <span>{pt}</span>
-          </li>
-        ))}
-      </ul>
-    </motion.div>
-);
-
-// Consecutive roles at one company become a single group, so the company name
-// stays pinned across all of them and only hands off at the next employer.
-const timelineData: TimelineGroup[] = employment.reduce<TimelineGroup[]>((groups, job) => {
-  const card = jobCard(job);
-  const last = groups[groups.length - 1];
-  if (last && last.title === job.company) last.items.push(card);
-  else groups.push({ title: job.company, items: [card] });
-  return groups;
-}, []);
+gsap.registerPlugin(ScrollTrigger);
 
 export default function Experience() {
+  const pinSectionRef = useRef<HTMLElement>(null);
+  const trackRef = useRef<HTMLDivElement>(null);
+
+  useLayoutEffect(() => {
+    const pinSection = pinSectionRef.current;
+    const track = trackRef.current;
+
+    if (!pinSection || !track) return;
+
+    // Calculate how much we need to scroll. 
+    // The exact JS from inspiration:
+    // xPercent: -66.666, end: () => `+=${track.offsetWidth}`
+    // Since we map dynamically, we calculate based on the number of items.
+    const itemsCount = employment.length;
+    // We want to translate such that the last item is in view
+    const xPercentVal = -100 * ((itemsCount - 1) / itemsCount);
+
+    const ctx = gsap.context(() => {
+      // Create a timeline so we can add "empty" pauses before and after the movement
+      const tl = gsap.timeline({
+        scrollTrigger: {
+          trigger: pinSection,
+          pin: true,
+          scrub: 0.5,
+          anticipatePin: 1,
+          // We add window.innerHeight to the total scroll distance to account for the pauses
+          end: () => `+=${track.offsetWidth + window.innerHeight}`,
+        },
+      });
+
+      // Let it sit still for a moment (10% of the total scroll)
+      tl.to({}, { duration: 0.1 })
+        // Perform the actual horizontal scroll
+        .to(track, {
+          xPercent: xPercentVal,
+          ease: "none",
+          duration: 0.8,
+        })
+        // Let it sit still at the end for a moment (10% of the total scroll)
+        .to({}, { duration: 0.1 });
+
+      // 3D Perspective Tilt on Mouse Move (Exact JS logic)
+      const stages = document.querySelectorAll(".exhibit-preview-stage");
+      stages.forEach((stage) => {
+        const el = stage as HTMLElement;
+        el.addEventListener("mousemove", (e: MouseEvent) => {
+          const rect = el.getBoundingClientRect();
+          const x = e.clientX - rect.left - rect.width / 2;
+          const y = e.clientY - rect.top - rect.height / 2;
+          el.style.transform = `perspective(1000px) rotateX(${-y / 20}deg) rotateY(${x / 20}deg) scale(1.02)`;
+        });
+
+        el.addEventListener("mouseleave", () => {
+          el.style.transform = "perspective(1000px) rotateX(0deg) rotateY(0deg) scale(1)";
+        });
+      });
+    }, pinSectionRef);
+
+    return () => ctx.revert();
+  }, []);
+
   return (
-    <section id="experience" className="border-t border-line bg-panel/30">
-      <div className="mx-auto max-w-5xl px-6 py-16 sm:py-20 md:px-10 lg:py-24">
+    <section ref={pinSectionRef} id="experience" className="section-projects-pin h-screen overflow-hidden bg-panel/30 border-t border-line relative">
+      {/* Title overlay floating above the track */}
+      <div className="absolute top-10 left-10 md:top-16 md:left-24 z-10">
         <SectionLabel n="02">Experience</SectionLabel>
+      </div>
 
-        <Timeline data={timelineData} />
+      <div 
+        ref={trackRef} 
+        className="projects-track flex h-full"
+        style={{ width: `${employment.length * 100}vw` }}
+      >
+        {employment.map((job, index) => (
+          <div key={index} className="project-exhibit w-screen h-full flex items-center justify-center p-6 md:p-24 shrink-0">
+            <div className="exhibit-grid w-full max-w-7xl grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-24 items-center">
+              
+              <div className="exhibit-info flex flex-col justify-center">
+                <div className="exhibit-num font-mono text-sm tracking-[0.2em] text-acc mb-4">
+                  EXHIBIT /// {String(index + 1).padStart(2, "0")}
+                </div>
+                <h2 className="exhibit-title text-4xl lg:text-5xl font-bold text-fg mb-6 leading-tight">
+                  {job.role}
+                </h2>
+                <p className="exhibit-desc text-lg text-mut leading-relaxed mb-10">
+                  {job.points[0]}
+                </p>
 
-        <div className="mt-12 grid gap-5 sm:mt-16 sm:grid-cols-2 sm:gap-6">
-          <motion.div
-            initial={{ opacity: 0, y: 24 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: false, amount: 0.3 }}
-            transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-            className="relative rounded-2xl border border-line bg-panel/60 p-6"
-          >
-            {cardGlow}
-            <div className="font-mono text-xs tracking-widest text-mut">EDUCATION</div>
-            <p className="mt-3 font-medium">{education.school}</p>
-            <p className="mt-1 text-sm text-mut">
-              {education.degree} · {education.period} · {education.detail}
-            </p>
-          </motion.div>
-          <motion.div
-            initial={{ opacity: 0, y: 24 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: false, amount: 0.3 }}
-            transition={{ duration: 0.5, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-            className="relative rounded-2xl border border-line bg-panel/60 p-6"
-          >
-            {cardGlow}
-            <div className="font-mono text-xs tracking-widest text-mut">CERTIFICATIONS</div>
-            <ul className="mt-3 space-y-1 text-sm text-mut">
-              {certifications.map((c) => (
-                <li key={c}>{c}</li>
-              ))}
-            </ul>
-          </motion.div>
-        </div>
+                <div className="exhibit-stats-row flex gap-12 border-t border-line pt-6">
+                  <div className="exhibit-stat-item flex flex-col">
+                    <span className="exhibit-stat-val text-3xl font-bold text-fg mb-1">{job.type}</span>
+                    <span className="exhibit-stat-lbl font-mono text-xs text-mut uppercase tracking-wider">Engagement</span>
+                  </div>
+                  <div className="exhibit-stat-item flex flex-col">
+                    <span className="exhibit-stat-val text-3xl font-bold text-fg mb-1">{job.place}</span>
+                    <span className="exhibit-stat-lbl font-mono text-xs text-mut uppercase tracking-wider">Location</span>
+                  </div>
+                  <div className="exhibit-stat-item flex flex-col">
+                    <span className="exhibit-stat-val text-xl font-bold text-acc mb-1 mt-2">{job.company}</span>
+                    <span className="exhibit-stat-lbl font-mono text-xs text-mut uppercase tracking-wider">{job.period}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div 
+                className="exhibit-preview-stage relative rounded-xl border border-line bg-ink/80 p-8 shadow-2xl transition-transform duration-200 ease-out will-change-transform flex flex-col min-h-[400px]"
+                style={{ transformStyle: "preserve-3d" }}
+              >
+                <div className="exhibit-mockup-screen flex-1 flex flex-col">
+                  <div className="exhibit-screen-badge inline-flex items-center gap-3 text-sm font-mono text-acc mb-8 bg-acc/10 w-fit px-4 py-2 rounded-full border border-acc/20">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                    </svg>
+                    Action & Scope
+                  </div>
+                  <div className="exhibit-screen-content font-mono text-sm text-mut/90 leading-loose space-y-4 flex-1">
+                    {job.points.slice(1).map((pt, i) => (
+                      <div key={i} className="flex gap-4">
+                        <span className="text-acc shrink-0">[{i + 1}]</span>
+                        <span>{pt}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        ))}
       </div>
     </section>
   );

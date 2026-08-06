@@ -1,5 +1,6 @@
-import { createRef, useMemo, useRef } from "react";
+import { createRef, useMemo, useRef, useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import { Link } from "react-router-dom";
 import { AnimatedBeam } from "./ui/animated-beam";
 import TypingTextCycle from "./ui/typing-text-effect";
 import InteractiveNeuralVortex from "./ui/interactive-neural-vortex-background";
@@ -68,100 +69,125 @@ function Pipeline() {
 }
 
 export default function PipelineHero() {
+  const [mouseX, setMouseX] = useState(0);
+  const [mouseY, setMouseY] = useState(0);
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      setMouseX(e.clientX - window.innerWidth / 2);
+      setMouseY(e.clientY - window.innerHeight / 2);
+    };
+    window.addEventListener("mousemove", handleMouseMove, { passive: true });
+    return () => window.removeEventListener("mousemove", handleMouseMove);
+  }, []);
+
+  // Simple tilt physics based on mouse
+  const rotateX = `${-(mouseY / 300) * 4}deg`;
+  const rotateY = `${(mouseX / 300) * 4}deg`;
+
   return (
-    <header id="top" className="relative overflow-hidden">
+    <header id="top" className="relative overflow-hidden min-h-screen flex items-center justify-center">
       <div className="dotgrid absolute inset-0 opacity-60" aria-hidden />
       <InteractiveNeuralVortex />
-      <div className="relative mx-auto flex min-h-[92svh] max-w-5xl flex-col justify-center px-6 py-24 md:px-10">
+
+      {/* Light beams */}
+      <div className="absolute inset-0 z-10 pointer-events-none">
+        <div className="absolute top-0 left-1/4 w-px h-[55vh] opacity-20"
+          style={{ background: "linear-gradient(to bottom, var(--color-acc), transparent)" }} />
+        <div className="absolute top-0 right-1/3 w-px h-[38vh] opacity-10"
+          style={{ background: "linear-gradient(to bottom, var(--color-acc), transparent)" }} />
+      </div>
+
+      <motion.div
+        className="relative z-20 text-center px-6 max-w-5xl mx-auto w-full flex flex-col items-center"
+        style={{ transform: `perspective(1200px) rotateX(${rotateX}) rotateY(${rotateY})`, transition: 'transform 0.1s ease-out' }}
+      >
+        {/* Status badge */}
         <motion.div
-          initial={{ opacity: 0, y: 16 }}
+          initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="flex items-center gap-4"
+          transition={{ delay: 0.2, duration: 0.8 }}
+          className="inline-flex items-center gap-2 mb-8 px-4 py-2 rounded-full border border-line bg-panel/50 text-xs font-mono text-mut backdrop-blur-sm"
         >
-          <img
-            src="/IMG.png"
-            alt="Portrait of Pavan Kumar"
-            width={56}
-            height={56}
-            className="border-line size-12 rounded-full border object-cover sm:size-14"
-          />
-          <div className="font-mono text-xs text-mut sm:text-sm">
-            <span className="text-acc">~/</span>pavan-kumar · {profile.location}
-          </div>
+          <span className="size-1.5 rounded-full bg-acc animate-pulse shadow-[0_0_8px_var(--color-acc)]" />
+          {profile.location} · {profile.tagline.toLowerCase()}
         </motion.div>
 
+        {/* Heading */}
         <motion.div
-          initial={{ opacity: 0, y: 16 }}
+          initial={{ opacity: 0, y: 40 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.1 }}
-          className="mt-8"
+          transition={{ delay: 0.4, duration: 1, ease: [0.16, 1, 0.3, 1] }}
+          className="mb-6"
         >
-          {/* Name is the anchor now — big enough to fill the space the smaller
-              rotating role would otherwise leave empty next to the portrait. */}
-          <h1 className="text-5xl font-bold tracking-tight text-balance sm:text-6xl md:text-7xl">
-            {profile.name}
+          <h1
+            className="font-extrabold leading-[0.85] tracking-tighter text-fg"
+            style={{ fontSize: "clamp(3.5rem, 14vw, 12rem)" }}
+          >
+            <span className="block">PAVAN</span>
+            <span className="block text-mut/50">KUMAR</span>
           </h1>
-          {/* Rotating role — a size down from the name. Canvas stays a bit
-              taller/wider than the text so vaporized particles can drift past
-              the glyphs instead of being clipped. */}
-          <div className="mt-3 min-h-[2.5rem] sm:min-h-[3rem] md:min-h-[3.5rem]">
-            <TypingTextCycle
-              texts={ROLES}
-              className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl"
-            />
-          </div>
-          <p className="mt-1 text-2xl font-bold tracking-tight text-balance text-mut min-[420px]:text-3xl md:text-4xl lg:text-5xl">
-            {profile.tagline}
-          </p>
         </motion.div>
 
+        {/* Typewriter */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.8, duration: 0.6 }}
+          className="font-mono text-xl md:text-3xl text-mut mb-10 h-10 flex items-center justify-center gap-3"
+        >
+          <span className="text-acc/50">&gt;</span>
+          <div className="text-fg/80">
+            <TypingTextCycle texts={ROLES} className="text-xl md:text-3xl" />
+          </div>
+        </motion.div>
+
+        {/* Description */}
         <motion.p
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-          className="mt-6 max-w-2xl text-base leading-relaxed text-mut sm:text-lg"
+          transition={{ delay: 0.9, duration: 0.6 }}
+          className="max-w-2xl text-base leading-relaxed text-mut sm:text-lg mb-12"
         >
           {profile.summary}
         </motion.p>
 
-        <div className="mt-10 sm:mt-14">
-          <div className="mb-5 font-mono text-[10px] tracking-widest text-mut sm:text-xs">
-            // WHAT MY SYSTEMS DO ALL DAY
-          </div>
-          <Pipeline />
-        </div>
-
+        {/* CTAs */}
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.8 }}
-          className="mt-12 flex flex-wrap gap-4 font-mono text-sm"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 1, duration: 0.8 }}
+          className="flex flex-wrap items-center justify-center gap-5"
         >
-          <a
-            href="#work"
-            className="rounded-lg bg-acc px-5 py-2.5 font-semibold text-ink transition-transform hover:scale-105"
+          <Link
+            to="/projects"
+            className="group px-8 py-4 rounded-xl font-semibold text-sm text-ink bg-fg transition-all duration-300 relative overflow-hidden shadow-[0_0_25px_rgba(255,255,255,0.1)]"
           >
-            see the work ↓
-          </a>
-          <a
-            href={profile.github}
-            target="_blank"
-            rel="noreferrer"
-            className="rounded-lg border border-line px-5 py-2.5 text-fg transition-colors hover:border-acc"
-          >
-            github
-          </a>
+            <span className="relative z-10">View Projects</span>
+            <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
+          </Link>
+
           <a
             href={profile.linkedin}
             target="_blank"
             rel="noreferrer"
-            className="rounded-lg border border-line px-5 py-2.5 text-fg transition-colors hover:border-acc"
+            className="px-8 py-4 rounded-xl font-semibold text-sm text-fg bg-panel/30 border border-line hover:border-acc hover:bg-acc/10 transition-all duration-300 backdrop-blur-sm"
           >
-            linkedin
+            Contact Me
           </a>
         </motion.div>
-      </div>
+      </motion.div>
+
+      {/* Optional Pipeline (moved to the bottom, subtly) */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 1.4, duration: 1 }}
+        className="absolute bottom-10 left-1/2 -translate-x-1/2 w-full max-w-4xl hidden lg:block opacity-40 hover:opacity-100 transition-opacity"
+      >
+         <Pipeline />
+      </motion.div>
+
     </header>
   );
 }

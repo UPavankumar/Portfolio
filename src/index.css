@@ -82,3 +82,9 @@ header[id] {
     animation: none;
   }
 }
+
+@media (hover: hover) and (pointer: fine) {
+  * {
+    cursor: none !important;
+  }
+}
