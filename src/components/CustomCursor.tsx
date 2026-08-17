@@ -34,12 +34,28 @@ export default function CustomCursor() {
   };
 
   const points = useRef<{ x: number; y: number; dx: number; dy: number }[]>([]);
-  const [isFinePointer, setIsFinePointer] = useState(false);
+  const [isDesktopMouse, setIsDesktopMouse] = useState(false);
   const isHoverRef = useRef(false);
   const isProjectRef = useRef(false);
 
+  // Strict check: only activate custom cursor for desktop with hover capability and fine pointer
+  useEffect(() => {
+    const checkPointer = () => {
+      const isFine = window.matchMedia("(pointer: fine) and (hover: hover)").matches;
+      const isWideEnough = window.innerWidth >= 768;
+      const isTouch = "ontouchstart" in window && window.innerWidth < 1024;
+      setIsDesktopMouse(isFine && isWideEnough && !isTouch);
+    };
+
+    checkPointer();
+    window.addEventListener("resize", checkPointer);
+    return () => window.removeEventListener("resize", checkPointer);
+  }, []);
+
   // Frame loop for paper plane rotation & speed scaling
   useAnimationFrame(() => {
+    if (!isDesktopMouse) return;
+
     const vx = velocityX.get();
     const vy = velocityY.get();
     const speed = Math.sqrt(vx * vx + vy * vy);
@@ -49,7 +65,7 @@ export default function CustomCursor() {
     speedVal.set(targetScale);
 
     if (speed > 10) {
-      let targetAngle = Math.atan2(vy, vx);
+      const targetAngle = Math.atan2(vy, vx);
 
       let delta = targetAngle - prevAngleRad.current;
       while (delta > Math.PI) delta -= Math.PI * 2;
@@ -62,15 +78,8 @@ export default function CustomCursor() {
   });
 
   useEffect(() => {
-    const checkPointer = () => {
-      setIsFinePointer(window.matchMedia("(pointer: fine)").matches);
-    };
-    checkPointer();
-    window.addEventListener("resize", checkPointer);
-    return () => window.removeEventListener("resize", checkPointer);
-  }, []);
+    if (!isDesktopMouse) return;
 
-  useEffect(() => {
     if (points.current.length === 0) {
       const initialX = window.innerWidth / 2;
       const initialY = window.innerHeight / 2;
@@ -86,7 +95,7 @@ export default function CustomCursor() {
     }
 
     const canvas = canvasRef.current;
-    if (!canvas || !isFinePointer) return;
+    if (!canvas) return;
 
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
@@ -111,11 +120,6 @@ export default function CustomCursor() {
       updateMouse(e.clientX, e.clientY);
     };
 
-    const handleTouchMove = (e: TouchEvent) => {
-      isMoved.current = true;
-      updateMouse(e.targetTouches[0].clientX, e.targetTouches[0].clientY);
-    };
-
     const handleMouseOver = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
       const hoverTarget =
@@ -135,7 +139,6 @@ export default function CustomCursor() {
 
     window.addEventListener("resize", handleResize);
     window.addEventListener("mousemove", handleMouseMove);
-    window.addEventListener("touchmove", handleTouchMove);
     window.addEventListener("mouseover", handleMouseOver);
     window.addEventListener("click", handleClick);
     handleResize();
@@ -221,19 +224,19 @@ export default function CustomCursor() {
     return () => {
       window.removeEventListener("resize", handleResize);
       window.removeEventListener("mousemove", handleMouseMove);
-      window.removeEventListener("touchmove", handleTouchMove);
       window.removeEventListener("mouseover", handleMouseOver);
       window.removeEventListener("click", handleClick);
       cancelAnimationFrame(animId);
     };
-  }, [isFinePointer, planeX, planeY, mouseX, mouseY, scale]);
+  }, [isDesktopMouse, planeX, planeY, mouseX, mouseY, scale]);
 
-  if (!isFinePointer) return null;
+  // Completely disabled on mobile and touch screens
+  if (!isDesktopMouse) return null;
 
   return (
     <canvas
       ref={canvasRef}
-      className="fixed top-0 left-0 w-full h-full pointer-events-none z-[10000] mix-blend-difference"
+      className="fixed top-0 left-0 w-full h-full pointer-events-none z-[10000] mix-blend-difference hidden md:block"
       style={{ filter: "drop-shadow(0 0 4px rgba(255,255,255,0.25))" }}
     />
   );

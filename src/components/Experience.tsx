@@ -71,8 +71,14 @@ export default function Experience() {
   return (
     <section ref={pinSectionRef} id="experience" className="section-projects-pin h-screen overflow-hidden bg-panel/30 border-t border-line relative">
       {/* Title overlay floating above the track */}
-      <div className="absolute top-10 left-10 md:top-16 md:left-24 z-10">
+      <div className="absolute top-10 left-10 md:top-16 md:left-24 z-10 flex items-center gap-6">
         <SectionLabel n="02">Experience</SectionLabel>
+        <a
+          href="/about"
+          className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-white/10 bg-black/60 text-xs font-mono text-neutral-300 hover:text-white hover:border-acc/40 transition-colors backdrop-blur-md"
+        >
+          View Full Bio & Resume →
+        </a>
       </div>
 
       <div 

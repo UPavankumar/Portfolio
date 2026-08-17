@@ -1,16 +1,37 @@
 import { useEffect } from "react";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import Home from "./pages/Home";
+import About from "./pages/About";
 import Projects from "./pages/Projects";
+import SkillsPage from "./pages/SkillsPage";
+import Contact from "./pages/Contact";
 import Preloader from "./components/Preloader";
+import PageTransitionLoader from "./components/PageTransitionLoader";
+import FloatingDock from "./components/FloatingDock";
+import CustomCursor from "./components/CustomCursor";
+import SoundToggle from "./components/SoundToggle";
 
 function ScrollToTop() {
   const { pathname, hash } = useLocation();
+
   useEffect(() => {
     if (!hash) {
-      window.scrollTo(0, 0);
+      window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+    } else {
+      // Allow slight delay for page DOM mounting
+      const elementId = hash.replace("#", "");
+      const scrollToHashElement = () => {
+        const element = document.getElementById(elementId);
+        if (element) {
+          element.scrollIntoView({ behavior: "smooth" });
+        }
+      };
+
+      const timer = setTimeout(scrollToHashElement, 100);
+      return () => clearTimeout(timer);
     }
   }, [pathname, hash]);
+
   return null;
 }
 
@@ -33,10 +54,17 @@ export default function App() {
   return (
     <BrowserRouter>
       <ScrollToTop />
+      <CustomCursor />
+      <SoundToggle />
       <Preloader />
+      <PageTransitionLoader />
+      <FloatingDock />
       <Routes>
         <Route path="/" element={<Home />} />
+        <Route path="/about" element={<About />} />
         <Route path="/projects" element={<Projects />} />
+        <Route path="/skills" element={<SkillsPage />} />
+        <Route path="/contact" element={<Contact />} />
       </Routes>
     </BrowserRouter>
   );

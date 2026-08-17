@@ -1,193 +1,161 @@
-import { createRef, useMemo, useRef, useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import { AnimatedBeam } from "./ui/animated-beam";
-import TypingTextCycle from "./ui/typing-text-effect";
-import InteractiveNeuralVortex from "./ui/interactive-neural-vortex-background";
-import { profile } from "../data/resume";
+import { playClickSound, playHoverSound } from "../lib/sound";
 
-const ROLES = ["Business Analyst.", "AI Automation Builder.", "Voice AI Builder.", "Data Analyst."];
-
-const NODES = [
-  { id: "inbox", label: "INBOX", sub: "email · pdf · voice" },
-  { id: "extract", label: "EXTRACT", sub: "whisper · llm" },
-  { id: "validate", label: "VALIDATE", sub: "schema · rules" },
-  { id: "act", label: "ACT", sub: "crm · draft · submit" },
-  { id: "done", label: "DONE", sub: "no humans harmed" },
+const MODES = [
+  { id: "ai", title: "AI Automation Architect", stat: "10M+ Workflows", desc: "Building autonomous AI pipelines that eliminate manual labor." },
+  { id: "voice", title: "Voice AI & Speech Specialist", stat: "99.4% Transcribe Acc", desc: "Deploying Whisper & real-time conversational voice agents." },
+  { id: "webgl", title: "3D & Web Architect", stat: "60 FPS Performance", desc: "Crafting immersive WebGL graphics & high-converting web apps." },
 ];
 
-function Pipeline() {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const nodeRefs = useMemo(() => NODES.map(() => createRef<HTMLDivElement>()), []);
-
-  return (
-    <div
-      ref={containerRef}
-      className="relative mx-auto w-full max-w-4xl py-4"
-      role="img"
-      aria-label="Animated diagram of an automation pipeline: inbox, extract, validate, act, done"
-    >
-      {NODES.slice(0, -1).map((_, i) => (
-        <AnimatedBeam
-          key={i}
-          containerRef={containerRef}
-          fromRef={nodeRefs[i]}
-          toRef={nodeRefs[i + 1]}
-          pathColor="#1e293b"
-          pathWidth={2}
-          pathOpacity={0.9}
-          gradientStartColor="#38bdf8"
-          gradientStopColor="#60a5fa"
-          curvature={0}
-          duration={6}
-          delay={i * 1.1}
-        />
-      ))}
-
-      {/* 2-up serpentine on phones, single row from sm up */}
-      <div className="grid grid-cols-2 items-center gap-x-4 gap-y-6 sm:flex sm:justify-between sm:gap-x-3">
-        {NODES.map((n, i) => (
-          <motion.div
-            key={n.id}
-            ref={nodeRefs[i]}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.15 * i + 0.3, duration: 0.5 }}
-            className="z-10 rounded-xl border border-line bg-panel px-3 py-2.5 text-center shadow-[0_0_28px_-6px_rgba(56,189,248,0.35)] transition-colors last:col-span-2 last:justify-self-center hover:border-acc/60 sm:px-4 sm:py-3 sm:last:col-span-1 md:px-5 md:py-3.5"
-          >
-            <div className="font-mono text-[11px] font-semibold tracking-wider text-fg sm:text-xs md:text-sm">
-              {n.label}
-            </div>
-            <div className="mt-0.5 font-mono text-[9px] text-mut sm:text-[10px] md:text-[11px]">
-              {n.sub}
-            </div>
-          </motion.div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
 export default function PipelineHero() {
-  const [mouseX, setMouseX] = useState(0);
-  const [mouseY, setMouseY] = useState(0);
+  const [activeMode, setActiveMode] = useState(0);
+  const [currentTime, setCurrentTime] = useState("");
 
   useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      setMouseX(e.clientX - window.innerWidth / 2);
-      setMouseY(e.clientY - window.innerHeight / 2);
+    const updateTime = () => {
+      const now = new Date();
+      setCurrentTime(
+        now.toLocaleTimeString("en-US", {
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+          hour12: false,
+        }) + " IST"
+      );
     };
-    window.addEventListener("mousemove", handleMouseMove, { passive: true });
-    return () => window.removeEventListener("mousemove", handleMouseMove);
+    updateTime();
+    const interval = setInterval(updateTime, 1000);
+    return () => clearInterval(interval);
   }, []);
 
-  // Simple tilt physics based on mouse
-  const rotateX = `${-(mouseY / 300) * 4}deg`;
-  const rotateY = `${(mouseX / 300) * 4}deg`;
-
   return (
-    <header id="top" className="relative overflow-hidden min-h-screen flex items-center justify-center">
+    <header id="top" className="relative overflow-hidden min-h-screen flex items-center justify-center pt-24 pb-16">
       <div className="dotgrid absolute inset-0 opacity-60" aria-hidden />
-      <InteractiveNeuralVortex />
 
-      {/* Light beams */}
-      <div className="absolute inset-0 z-10 pointer-events-none">
-        <div className="absolute top-0 left-1/4 w-px h-[55vh] opacity-20"
-          style={{ background: "linear-gradient(to bottom, var(--color-acc), transparent)" }} />
-        <div className="absolute top-0 right-1/3 w-px h-[38vh] opacity-10"
-          style={{ background: "linear-gradient(to bottom, var(--color-acc), transparent)" }} />
-      </div>
-
-      <motion.div
-        className="relative z-20 text-center px-6 max-w-5xl mx-auto w-full flex flex-col items-center"
-        style={{ transform: `perspective(1200px) rotateX(${rotateX}) rotateY(${rotateY})`, transition: 'transform 0.1s ease-out' }}
-      >
-        {/* Status badge */}
+      <div className="relative z-20 text-center px-6 max-w-6xl mx-auto w-full flex flex-col items-center">
+        {/* Live Cyber Telemetry Badge */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: -15 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2, duration: 0.8 }}
-          className="inline-flex items-center gap-2 mb-8 px-4 py-2 rounded-full border border-line bg-panel/50 text-xs font-mono text-mut backdrop-blur-sm"
+          transition={{ duration: 0.6 }}
+          className="inline-flex items-center gap-3 mb-8 px-5 py-2 rounded-full border border-[#00f0ff]/40 bg-panel/90 text-xs font-mono text-fg backdrop-blur-xl shadow-[0_0_25px_rgba(0,240,255,0.25)]"
         >
-          <span className="size-1.5 rounded-full bg-acc animate-pulse shadow-[0_0_8px_var(--color-acc)]" />
-          {profile.location} · {profile.tagline.toLowerCase()}
+          <span className="relative flex size-2.5">
+            <span className="absolute inline-flex size-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+            <span className="relative inline-flex size-2.5 rounded-full bg-emerald-500" />
+          </span>
+          <span className="font-bold text-[#00f0ff]">LIVE STATUS</span>
+          <span className="text-mut/40">•</span>
+          <span className="text-fg font-semibold">BANGALORE, IN</span>
+          <span className="text-mut/40">•</span>
+          <span className="text-emerald-400 font-bold">{currentTime || "18:12 IST"}</span>
         </motion.div>
 
-        {/* Heading */}
+        {/* Massive Single-Line Kinetic Header */}
         <motion.div
-          initial={{ opacity: 0, y: 40 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4, duration: 1, ease: [0.16, 1, 0.3, 1] }}
-          className="mb-6"
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+          className="mb-6 w-full"
         >
           <h1
-            className="font-extrabold leading-[0.85] tracking-tighter text-fg"
-            style={{ fontSize: "clamp(3.5rem, 14vw, 12rem)" }}
+            className="font-black leading-none tracking-tighter text-fg uppercase select-none whitespace-nowrap flex flex-wrap items-center justify-center gap-[0.25em]"
+            style={{ fontSize: "clamp(2.5rem, 9vw, 8rem)" }}
           >
-            <span className="block">PAVAN</span>
-            <span className="block text-mut/50">KUMAR</span>
+            <span className="text-fg drop-shadow-[0_0_35px_rgba(255,255,255,0.2)]">PAVAN</span>
+            <span className="kinetic-gradient">KUMAR</span>
           </h1>
         </motion.div>
 
-        {/* Typewriter */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.8, duration: 0.6 }}
-          className="font-mono text-xl md:text-3xl text-mut mb-10 h-10 flex items-center justify-center gap-3"
-        >
-          <span className="text-acc/50">&gt;</span>
-          <div className="text-fg/80">
-            <TypingTextCycle texts={ROLES} className="text-xl md:text-3xl" />
-          </div>
-        </motion.div>
-
-        {/* Description */}
-        <motion.p
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.9, duration: 0.6 }}
-          className="max-w-2xl text-base leading-relaxed text-mut sm:text-lg mb-12"
-        >
-          {profile.summary}
-        </motion.p>
-
-        {/* CTAs */}
+        {/* Dynamic Mode Switcher Matrix */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 1, duration: 0.8 }}
-          className="flex flex-wrap items-center justify-center gap-5"
+          transition={{ delay: 0.4, duration: 0.6 }}
+          className="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full max-w-3xl my-6"
         >
+          {MODES.map((mode, idx) => (
+            <button
+              key={mode.id}
+              onMouseEnter={playHoverSound}
+              onClick={() => {
+                playClickSound();
+                setActiveMode(idx);
+              }}
+              className={`p-3.5 rounded-xl border text-left transition-all duration-300 ${
+                activeMode === idx
+                  ? "border-[#00f0ff] bg-[#00f0ff]/10 shadow-[0_0_20px_rgba(0,240,255,0.3)] scale-105"
+                  : "border-line bg-panel-light/30 hover:border-white/30 text-mut opacity-70"
+              }`}
+            >
+              <div className="font-mono text-xs font-bold text-fg flex items-center justify-between">
+                <span>{mode.title}</span>
+                {activeMode === idx && <span className="size-1.5 rounded-full bg-[#00f0ff] animate-pulse" />}
+              </div>
+              <div className="font-mono text-[10px] text-[#00f0ff] mt-1 font-semibold">{mode.stat}</div>
+            </button>
+          ))}
+        </motion.div>
+
+        {/* Mode Summary Description */}
+        <motion.p
+          key={activeMode}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="max-w-xl text-base text-mut leading-relaxed my-4 min-h-[48px]"
+        >
+          {MODES[activeMode].desc}
+        </motion.p>
+
+        {/* High-Impact Actions */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.6, duration: 0.6 }}
+          className="flex flex-wrap items-center justify-center gap-4 mt-4 mb-8"
+        >
+          <a
+            href="#pipeline-simulator"
+            onMouseEnter={playHoverSound}
+            onClick={playClickSound}
+            className="group px-8 py-4 rounded-xl font-bold text-sm text-ink bg-[#00f0ff] hover:bg-white transition-all duration-300 shadow-[0_0_30px_rgba(0,240,255,0.5)] hover:scale-105"
+          >
+            <span className="flex items-center gap-2">
+              ⚡ Test Interactive Simulator <span className="transition-transform group-hover:translate-x-1">→</span>
+            </span>
+          </a>
+
           <Link
             to="/projects"
-            className="group px-8 py-4 rounded-xl font-semibold text-sm text-ink bg-fg transition-all duration-300 relative overflow-hidden shadow-[0_0_25px_rgba(255,255,255,0.1)]"
+            onMouseEnter={playHoverSound}
+            onClick={playClickSound}
+            className="px-8 py-4 rounded-xl font-bold text-sm text-fg bg-panel/80 border border-line hover:border-[#00f0ff] hover:bg-[#00f0ff]/10 transition-all duration-300 backdrop-blur-md hover:scale-105"
           >
-            <span className="relative z-10">View Projects</span>
-            <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
+            🚀 View All Engineering Projects
           </Link>
-
-          <a
-            href={profile.linkedin}
-            target="_blank"
-            rel="noreferrer"
-            className="px-8 py-4 rounded-xl font-semibold text-sm text-fg bg-panel/30 border border-line hover:border-acc hover:bg-acc/10 transition-all duration-300 backdrop-blur-sm"
-          >
-            Contact Me
-          </a>
         </motion.div>
-      </motion.div>
 
-      {/* Optional Pipeline (moved to the bottom, subtly) */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 1.4, duration: 1 }}
-        className="absolute bottom-10 left-1/2 -translate-x-1/2 w-full max-w-4xl hidden lg:block opacity-40 hover:opacity-100 transition-opacity"
-      >
-         <Pipeline />
-      </motion.div>
-
+        {/* Carried Energy Stream / Morph Conduit into Concept section */}
+        <motion.div
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.8, duration: 0.8 }}
+          className="flex flex-col items-center gap-2 pt-4"
+        >
+          <span className="text-[10px] font-mono tracking-[0.25em] text-[#00f0ff]/70 uppercase">
+            CONTINUOUS ARCHITECTURE STREAM
+          </span>
+          <div className="relative w-px h-16 bg-gradient-to-b from-[#00f0ff] via-[#00f0ff]/50 to-transparent flex items-center justify-center">
+            <motion.div
+              animate={{ y: [0, 60, 0], opacity: [0, 1, 0] }}
+              transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
+              className="size-2 rounded-full bg-white shadow-[0_0_12px_#00f0ff]"
+            />
+          </div>
+        </motion.div>
+      </div>
     </header>
   );
 }

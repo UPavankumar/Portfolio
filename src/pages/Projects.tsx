@@ -1,138 +1,198 @@
 import { motion, MotionConfig } from "framer-motion";
+import { Link } from "react-router-dom";
 import Nav from "../components/Nav";
 import Footer from "../components/Footer";
-import CustomCursor from "../components/CustomCursor";
-import { projects } from "../data/resume";
+import { projects, type Project } from "../data/resume";
+import { playClickSound, playHoverSound } from "../lib/sound";
 
 function MiniPipeline({ steps }: { steps: string[] }) {
   return (
     <div className="flex flex-wrap items-center gap-2 font-mono text-[11px] text-acc mt-6 mb-4">
       {steps.map((s, i) => (
         <span key={s} className="flex items-center gap-2">
-          <span className="rounded border border-acc/30 bg-acc/10 px-2 py-1 shadow-[0_0_10px_rgba(56,189,248,0.15)]">{s}</span>
-          {i < steps.length - 1 && <span className="text-acc/50">→</span>}
+          <span className="rounded-lg border border-acc/30 bg-acc/10 px-2.5 py-1 shadow-[0_0_10px_rgba(56,189,248,0.15)] font-semibold">{s}</span>
+          {i < steps.length - 1 && <span className="text-acc/50 font-bold">→</span>}
         </span>
       ))}
     </div>
   );
 }
 
-// Assign unique, highly thematic images and colors to Pavan's specific projects
-const projectAssets = {
-  "aria": {
+const projectMeta: Record<string, { year: string; domain: string; type: string; color: string; imgL: string; imgM: string; imgR: string }> = {
+  aria: {
+    year: "2025",
+    domain: "Voice AI & WebRTC",
+    type: "Production Assistant",
     color: "bg-blue-500",
-    imgL: "https://images.unsplash.com/photo-1620712943543-bcc4688e7485?q=80&w=800&auto=format&fit=crop", // Sound waves / abstract AI
-    imgM: "https://images.unsplash.com/photo-1589254065878-42c9da997008?q=80&w=800&auto=format&fit=crop", // Robot head
-    imgR: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=800&auto=format&fit=crop", // Global data network
+    imgL: "https://images.unsplash.com/photo-1620712943543-bcc4688e7485?q=80&w=800&auto=format&fit=crop",
+    imgM: "https://images.unsplash.com/photo-1589254065878-42c9da997008?q=80&w=800&auto=format&fit=crop",
+    imgR: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=800&auto=format&fit=crop",
   },
   "sales-agent": {
+    year: "2025",
+    domain: "Autonomous Agents",
+    type: "Inbound Pipeline",
     color: "bg-purple-500",
-    imgL: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=800&auto=format&fit=crop", // Data dashboard
-    imgM: "https://images.unsplash.com/photo-1504868584819-f8e8b4b6d7e3?q=80&w=800&auto=format&fit=crop", // Analytics papers
-    imgR: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=800&auto=format&fit=crop", // Cyber / matrix
+    imgL: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=800&auto=format&fit=crop",
+    imgM: "https://images.unsplash.com/photo-1504868584819-f8e8b4b6d7e3?q=80&w=800&auto=format&fit=crop",
+    imgR: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=800&auto=format&fit=crop",
   },
-  "einvoice": {
+  einvoice: {
+    year: "2024 — 2025",
+    domain: "Enterprise ETL",
+    type: "LHDN Compliance",
     color: "bg-emerald-500",
-    imgL: "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?q=80&w=800&auto=format&fit=crop", // Finance / numbers
-    imgM: "https://images.unsplash.com/photo-1664575602276-acd073f104c1?q=80&w=800&auto=format&fit=crop", // Corporate spreadsheet / analysis
-    imgR: "https://images.unsplash.com/photo-1640161704729-cbe966a08476?q=80&w=800&auto=format&fit=crop", // Abstract data flow
+    imgL: "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?q=80&w=800&auto=format&fit=crop",
+    imgM: "https://images.unsplash.com/photo-1664575602276-acd073f104c1?q=80&w=800&auto=format&fit=crop",
+    imgR: "https://images.unsplash.com/photo-1640161704729-cbe966a08476?q=80&w=800&auto=format&fit=crop",
   },
-  "content": {
+  content: {
+    year: "2024",
+    domain: "SEO Automation",
+    type: "Multi-Channel Publishing",
     color: "bg-orange-500",
-    imgL: "https://images.unsplash.com/photo-1432821596592-e2c18b78144f?q=80&w=800&auto=format&fit=crop", // Blog / Writing
-    imgM: "https://images.unsplash.com/photo-1493612276216-ee3925520721?q=80&w=800&auto=format&fit=crop", // Creative desk
-    imgR: "https://images.unsplash.com/photo-1499750310107-5fef28a66643?q=80&w=800&auto=format&fit=crop", // Minimalist workspace
-  }
+    imgL: "https://images.unsplash.com/photo-1432821596592-e2c18b78144f?q=80&w=800&auto=format&fit=crop",
+    imgM: "https://images.unsplash.com/photo-1493612276216-ee3925520721?q=80&w=800&auto=format&fit=crop",
+    imgR: "https://images.unsplash.com/photo-1499750310107-5fef28a66643?q=80&w=800&auto=format&fit=crop",
+  },
 };
 
 export default function Projects() {
   return (
     <MotionConfig reducedMotion="user">
-      <CustomCursor />
       <Nav />
       
-      <main className="min-h-screen bg-[#050505] text-white pt-32 pb-20 px-[5vw]">
-        <div className="max-w-7xl mx-auto space-y-32">
+      <main className="min-h-screen bg-[#030712] text-white pt-28 md:pt-36 pb-20 px-4 sm:px-6 md:px-[5vw] overflow-x-hidden">
+        <div className="max-w-7xl mx-auto space-y-24 md:space-y-32">
           
-          <div className="text-center mb-20">
-            <h1 className="text-5xl md:text-7xl font-black uppercase tracking-tighter">My Projects</h1>
-            <p className="text-neutral-400 mt-6 text-lg md:text-xl max-w-2xl mx-auto">
-              Production AI systems, data pipelines, and automation architectures that replace manual workflows.
+          {/* Header */}
+          <div className="text-center space-y-4 max-w-3xl mx-auto">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-acc/30 bg-acc/10 text-acc text-xs font-mono">
+              <span>✦</span> Selected Case Studies & Systems
+            </div>
+            <h1 className="text-4xl sm:text-6xl md:text-7xl font-black uppercase tracking-tight">
+              Production <span className="text-acc">Architectures</span>
+            </h1>
+            <p className="text-neutral-400 text-base sm:text-lg leading-relaxed">
+              Real-world AI implementations, automated data pipelines, and deterministic agent loops that eliminate manual human tasks in enterprise environments.
             </p>
           </div>
 
-          {projects.map((project, i) => {
-            const isEven = i % 2 === 0;
-            const assets = projectAssets[project.id as keyof typeof projectAssets] || projectAssets["aria"];
-            
-            return (
-              <motion.div
-                key={project.id}
-                initial={{ opacity: 0, y: 50 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: "-100px" }}
-                className="grid grid-cols-12 gap-8 md:gap-20 items-center"
-              >
-                {/* Text Content */}
-                <div className={`col-span-12 lg:col-span-4 ${isEven ? "" : "lg:order-2"} space-y-6 md:space-y-8`}>
-                  <div className="flex items-center gap-6">
-                    <div className={`w-12 md:w-16 h-[2px] ${assets.color} shadow-[0_0_20px_currentColor]`} />
-                    <h3 className="text-3xl md:text-4xl lg:text-5xl font-black uppercase tracking-tighter italic text-white leading-none">
+          {/* Projects List */}
+          <div className="space-y-32">
+            {projects.map((project: Project, i: number) => {
+              const isEven = i % 2 === 0;
+              const meta = projectMeta[project.id] || projectMeta.aria;
+              
+              return (
+                <motion.div
+                  key={project.id}
+                  initial={{ opacity: 0, y: 60 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: "-100px" }}
+                  transition={{ duration: 0.8 }}
+                  className="grid grid-cols-12 gap-8 lg:gap-16 items-center p-8 sm:p-12 rounded-[2.5rem] border border-white/10 bg-neutral-900/30 backdrop-blur-xl"
+                >
+                  {/* Left Info Column */}
+                  <div className={`col-span-12 lg:col-span-5 ${isEven ? "" : "lg:order-2"} space-y-6`}>
+                    
+                    {/* Index & Meta */}
+                    <div className="flex items-center justify-between border-b border-white/10 pb-4 font-mono text-xs text-neutral-400">
+                      <div className="flex items-center gap-2">
+                        <span className="w-2.5 h-2.5 rounded-full bg-acc animate-pulse" />
+                        <span className="text-acc font-bold">PROJECT /// {project.index}</span>
+                      </div>
+                      <div className="flex items-center gap-3 text-[11px]">
+                        <span>{meta.domain}</span>
+                        <span>•</span>
+                        <span>{meta.year}</span>
+                      </div>
+                    </div>
+
+                    {/* Title */}
+                    <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black uppercase tracking-tight text-white leading-tight">
                       {project.title}
-                    </h3>
-                  </div>
-                  
-                  <div className="flex flex-wrap gap-2 pt-2">
-                    {project.stack.map(tech => (
-                      <span key={tech} className="rounded-full border border-white/10 px-3 py-1 font-mono text-[10px] md:text-[11px] text-neutral-400 bg-white/5">
-                        {tech}
-                      </span>
-                    ))}
+                    </h2>
+                    
+                    {/* Stack Pills */}
+                    <div className="flex flex-wrap gap-1.5 pt-1">
+                      {project.stack.map(tech => (
+                        <span key={tech} className="rounded-full border border-white/10 px-3 py-1 font-mono text-[10px] md:text-[11px] text-neutral-300 bg-white/5">
+                          {tech}
+                        </span>
+                      ))}
+                    </div>
+
+                    {/* Problem / Solution Breakdown (like befreaky.co) */}
+                    <div className="space-y-5 pt-2">
+                      <div className="p-4 rounded-2xl bg-black/40 border border-white/5 space-y-1">
+                        <h4 className="font-mono text-[11px] tracking-widest text-acc uppercase font-bold">THE PROBLEM</h4>
+                        <p className="text-xs sm:text-sm text-neutral-300 leading-relaxed font-normal">
+                          {project.problem}
+                        </p>
+                      </div>
+
+                      <div className="p-4 rounded-2xl bg-black/40 border border-white/5 space-y-1">
+                        <h4 className="font-mono text-[11px] tracking-widest text-neutral-400 uppercase font-bold">THE BUILD & ARCHITECTURE</h4>
+                        <p className="text-xs sm:text-sm text-neutral-400 leading-relaxed font-normal">
+                          {project.build}
+                        </p>
+                      </div>
+                    </div>
+                    
+                    {/* Pipeline Sequence */}
+                    <MiniPipeline steps={project.pipeline} />
+                    
+                    {/* Outcome / Impact */}
+                    <div className="p-4 rounded-2xl bg-acc/10 border border-acc/30 flex items-start gap-3">
+                      <span className="text-acc font-bold text-base">⚡</span>
+                      <div>
+                        <span className="font-mono text-[10px] tracking-widest text-acc block uppercase font-bold">OUTCOME & MEASURABLE IMPACT</span>
+                        <p className="text-xs sm:text-sm text-white font-medium mt-0.5">
+                          {project.outcome}
+                        </p>
+                      </div>
+                    </div>
+
                   </div>
 
-                  <div className="space-y-6">
-                    <div>
-                      <h4 className="font-mono text-xs tracking-widest text-neutral-500 mb-2">THE PROBLEM</h4>
-                      <p className="text-base md:text-lg text-neutral-300 font-medium leading-relaxed">
-                        {project.problem}
-                      </p>
+                  {/* Right Image Collage Column */}
+                  <div className={`col-span-12 lg:col-span-7 grid grid-cols-1 md:grid-cols-3 gap-4 ${isEven ? "" : "lg:order-1"}`}>
+                    <div className="hidden md:flex flex-col gap-4">
+                      <div className="aspect-[4/5] rounded-3xl overflow-hidden border border-white/10 shadow-2xl group relative bg-black">
+                        <img className="absolute inset-0 w-full h-full object-cover grayscale opacity-50 group-hover:grayscale-0 group-hover:opacity-85 group-hover:scale-110 transition-all duration-700" src={meta.imgL} alt={project.title} />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent pointer-events-none" />
+                      </div>
+                      <div className="aspect-square rounded-3xl overflow-hidden border border-white/10 shadow-2xl group relative bg-black">
+                        <img className="absolute inset-0 w-full h-full object-cover grayscale opacity-50 group-hover:grayscale-0 group-hover:opacity-85 group-hover:scale-110 transition-all duration-700" src={meta.imgM} alt={project.title} />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent pointer-events-none" />
+                      </div>
                     </div>
-                    <div>
-                      <h4 className="font-mono text-xs tracking-widest text-neutral-500 mb-2">THE BUILD</h4>
-                      <p className="text-base md:text-lg text-neutral-400 font-medium leading-relaxed">
-                        {project.build}
-                      </p>
-                    </div>
-                  </div>
-                  
-                  <MiniPipeline steps={project.pipeline} />
-                  
-                  <p className="text-sm md:text-base text-white/90 font-medium border-l-2 border-white/20 pl-4 py-1 italic">
-                    <span className="font-bold not-italic tracking-widest text-[10px] text-neutral-500 block mb-1">OUTCOME</span>
-                    {project.outcome}
-                  </p>
-                </div>
 
-                {/* Images Grid */}
-                <div className={`col-span-12 lg:col-span-8 grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 ${isEven ? "" : "lg:order-1"}`}>
-                  <div className="hidden md:flex flex-col gap-6">
-                    <div className="aspect-[4/5] rounded-[2rem] md:rounded-[3rem] overflow-hidden border border-white/5 shadow-2xl group relative">
-                      <img className="absolute inset-0 w-full h-full object-cover scale-110 opacity-30 group-hover:opacity-60 group-hover:scale-125 transition-all duration-[2000ms]" src={assets.imgL} alt={project.title} />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent z-10 opacity-80 pointer-events-none" />
-                    </div>
-                    <div className="aspect-square rounded-[2rem] md:rounded-[3rem] overflow-hidden border border-white/5 shadow-2xl group relative">
-                      <img className="absolute inset-0 w-full h-full object-cover scale-110 opacity-30 group-hover:opacity-60 group-hover:scale-125 transition-all duration-[2000ms]" src={assets.imgM} alt={project.title} />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent z-10 opacity-80 pointer-events-none" />
+                    <div className="col-span-1 md:col-span-2 aspect-video md:aspect-[4/5] rounded-3xl overflow-hidden border border-white/10 shadow-2xl group self-center relative bg-black">
+                      <img className="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:opacity-90 group-hover:scale-105 transition-all duration-700" src={meta.imgR} alt={project.title} />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent pointer-events-none" />
+                      <div className="absolute bottom-6 left-6 right-6 flex items-center justify-between font-mono text-xs">
+                        <span className="px-3 py-1 rounded-full bg-black/80 border border-white/15 text-white backdrop-blur-md">
+                          {meta.type}
+                        </span>
+                        <Link
+                          to="/contact"
+                          onMouseEnter={playHoverSound}
+                          onClick={playClickSound}
+                          className="px-4 py-1.5 rounded-full bg-acc text-black font-bold hover:bg-white transition-colors"
+                        >
+                          Request Demo →
+                        </Link>
+                      </div>
                     </div>
                   </div>
-                  <div className="col-span-1 md:col-span-2 aspect-video md:aspect-[4/5] rounded-[2rem] md:rounded-[3rem] overflow-hidden border border-white/5 shadow-2xl group self-center relative">
-                    <img className="absolute inset-0 w-full h-full object-cover scale-110 opacity-30 group-hover:opacity-60 group-hover:scale-125 transition-all duration-[2000ms]" src={assets.imgR} alt={project.title} />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent z-10 opacity-80 pointer-events-none" />
-                  </div>
-                </div>
-              </motion.div>
-            );
-          })}
+
+                </motion.div>
+              );
+            })}
+          </div>
+
         </div>
       </main>
       
