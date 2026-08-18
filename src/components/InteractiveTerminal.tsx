@@ -2,30 +2,26 @@ import { useState, useRef, useEffect } from "react";
 import { ask } from "../lib/ask";
 
 interface CommandOutput {
+  id: string;
   command: string;
-  output: React.ReactNode;
   isAgent?: boolean;
+  reasoningSteps?: string[];
+  outputText: string;
+  isTyping?: boolean;
 }
 
 export default function InteractiveTerminal() {
   const [history, setHistory] = useState<CommandOutput[]>([
     {
+      id: "init",
       command: "pavan --init",
-      output: (
-        <div className="space-y-1.5 font-mono">
-          <p className="text-acc font-bold flex items-center gap-2">
-            <span className="size-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span>PAVAN KUMAR CLI /// NEURAL ENGINE v3.0</span>
-          </p>
-          <p className="text-neutral-400 text-xs leading-relaxed">
-            Interactive terminal with integrated Autonomous AI Agent. Type any command, query <span className="text-acc">agent [prompt]</span>, or select a quick action below.
-          </p>
-        </div>
-      ),
+      isAgent: false,
+      outputText:
+        "⚡ PAVAN KUMAR CLI /// AUTONOMOUS AGENT CONSOLE v3.2\nType any natural language question, run 'agent [prompt]', or query 'skills', 'projects', 'contact'.",
     },
   ]);
   const [input, setInput] = useState("");
-  const [isProcessing, setIsProcessing] = useState(false);
+  const [isBusy, setIsBusy] = useState(false);
   const terminalContainerRef = useRef<HTMLDivElement>(null);
 
   // Strictly scroll the terminal container div ONLY (never scrolls window/page!)
@@ -37,204 +33,131 @@ export default function InteractiveTerminal() {
 
   useEffect(() => {
     scrollToBottom();
-  }, [history, isProcessing]);
+  }, [history, isBusy]);
 
   const handleCommand = async (cmd: string) => {
     const trimmed = cmd.trim();
-    if (!trimmed || isProcessing) return;
+    if (!trimmed || isBusy) return;
 
     const lower = trimmed.toLowerCase();
 
-    // 1. CLEAR COMMAND
+    // CLEAR COMMAND
     if (lower === "clear") {
       setHistory([]);
       return;
     }
 
-    // 2. AGENT OR NATURAL LANGUAGE QUERY ROUTING
-    const isExplicitAgent = lower.startsWith("agent") || lower.startsWith("ask");
-    const isStandardCommand = ["help", "?", "skills", "stack", "projects", "stats", "contact", "hire"].includes(lower);
+    setIsBusy(true);
 
-    if (isExplicitAgent || (!isStandardCommand && trimmed.length > 5)) {
-      let userQuery = trimmed;
-      if (lower.startsWith("agent")) {
-        userQuery = trimmed.replace(/^agent\s*/i, "").trim() || "What are Pavan's core capabilities?";
-      } else if (lower.startsWith("ask")) {
-        userQuery = trimmed.replace(/^ask\s*/i, "").trim() || "Tell me about Pavan Kumar.";
-      }
+    const cmdId = "cmd_" + Math.random().toString(36).substring(2, 9);
+    let queryForAgent = trimmed;
 
-      // Add user input to terminal
-      setHistory((prev) => [
-        ...prev,
-        {
-          command: trimmed,
-          isAgent: true,
-          output: (
-            <div className="space-y-1.5 py-1 text-xs font-mono">
-              <div className="flex items-center gap-2 text-acc">
-                <span className="animate-spin">✦</span>
-                <span className="text-neutral-400 uppercase tracking-wider text-[11px]">
-                  Agent Reasoning & Querying Knowledge Base...
-                </span>
-              </div>
-            </div>
-          ),
-        },
-      ]);
-
-      setIsProcessing(true);
-
-      try {
-        const agentResponse = await ask(userQuery, [], undefined, 1);
-
-        setHistory((prev) => {
-          const next = [...prev];
-          next[next.length - 1] = {
-            command: trimmed,
-            isAgent: true,
-            output: (
-              <div className="space-y-2 py-1.5 text-xs font-mono">
-                <div className="flex items-center gap-2 text-acc font-semibold text-[11px] uppercase tracking-widest border-b border-white/10 pb-1">
-                  <span>🤖 AGENT DISPATCH</span>
-                  <span className="text-neutral-500">///</span>
-                  <span className="text-emerald-400">COMPLETE (200 OK)</span>
-                </div>
-                <p className="text-neutral-200 leading-relaxed pl-2 border-l-2 border-acc/40 whitespace-pre-wrap">
-                  {agentResponse}
-                </p>
-              </div>
-            ),
-          };
-          return next;
-        });
-      } catch {
-        setHistory((prev) => {
-          const next = [...prev];
-          next[next.length - 1] = {
-            command: trimmed,
-            isAgent: true,
-            output: (
-              <p className="text-xs text-red-400">
-                Agent query execution interrupted. Please retry or contact directly at pavan.aidev@gmail.com
-              </p>
-            ),
-          };
-          return next;
-        });
-      } finally {
-        setIsProcessing(false);
-      }
-      return;
+    if (lower.startsWith("agent")) {
+      queryForAgent = trimmed.replace(/^agent\s*/i, "").trim() || "What are Pavan's primary AI skills and achievements?";
+    } else if (lower.startsWith("ask")) {
+      queryForAgent = trimmed.replace(/^ask\s*/i, "").trim() || "Tell me about Pavan's portfolio.";
     }
 
-    // 3. STANDARD SYSTEM COMMANDS
-    let res: React.ReactNode;
+    // Step 1: Add command with live reasoning logs
+    const initialSteps = [
+      `[1/3] Parsing Intent: "${queryForAgent.slice(0, 45)}${queryForAgent.length > 45 ? "..." : ""}"`,
+      `[2/3] Querying Knowledge Index & Pipeline Architectures...`,
+    ];
 
-    switch (lower) {
-      case "help":
-      case "?":
-        res = (
-          <div className="space-y-1.5 text-xs text-neutral-400 font-mono">
-            <p className="text-white font-semibold uppercase tracking-wider text-[11px]">Available Commands:</p>
-            <p><span className="text-acc font-bold">agent [query]</span> — Query autonomous AI agent with any question</p>
-            <p><span className="text-acc font-bold">skills</span> — View core tech, APIs & automation stack</p>
-            <p><span className="text-acc font-bold">projects</span> — Review production systems & business impact</p>
-            <p><span className="text-acc font-bold">stats</span> — Inspect verified production milestones</p>
-            <p><span className="text-acc font-bold">contact</span> — Get direct communication channels & SLA</p>
-            <p><span className="text-acc font-bold">clear</span> — Wipe terminal output</p>
-          </div>
-        );
-        break;
+    setHistory((prev) => [
+      ...prev,
+      {
+        id: cmdId,
+        command: trimmed,
+        isAgent: true,
+        reasoningSteps: initialSteps,
+        outputText: "",
+        isTyping: true,
+      },
+    ]);
 
-      case "skills":
-      case "stack":
-        res = (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs py-1 font-mono">
-            <div className="p-3 rounded-xl bg-white/[0.03] border border-white/10 space-y-1">
-              <span className="text-acc font-bold block">🧠 AI & Voice Engineering:</span>
-              <span className="text-neutral-300">LLaMA 3.3, Groq Whisper, Pipecat, WebRTC, ElevenLabs, RAG, Prompt Engineering</span>
-            </div>
-            <div className="p-3 rounded-xl bg-white/[0.03] border border-white/10 space-y-1">
-              <span className="text-emerald-400 font-bold block">⚡ Data & Enterprise APIs:</span>
-              <span className="text-neutral-300">Python, SQL, PostgreSQL, Microsoft Graph API, Google Workspace, LHDN e-Invoice</span>
-            </div>
-          </div>
-        );
-        break;
+    // Give a brief realistic pause for step 2
+    await new Promise((r) => setTimeout(r, 220));
 
-      case "projects":
-        res = (
-          <div className="space-y-2 text-xs py-1 font-mono">
-            <div className="p-3 rounded-xl bg-white/[0.03] border border-acc/30 space-y-1">
-              <p className="text-white font-bold">01 /// Aria: Ultra-Low Latency Voice AI</p>
-              <p className="text-neutral-400">Groq STT + LLaMA 3.1 + ElevenLabs TTS over WebRTC with mid-sentence interruption handling.</p>
-            </div>
-            <div className="p-3 rounded-xl bg-white/[0.03] border border-acc/30 space-y-1">
-              <p className="text-white font-bold">02 /// Multi-Tenant e-Invoicing Platform</p>
-              <p className="text-neutral-400">Automated 2,000+ monthly documents with Malaysian LHDN regulatory schema validation.</p>
-            </div>
-          </div>
-        );
-        break;
-
-      case "stats":
-        res = (
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs font-mono py-1">
-            <div className="p-2.5 rounded-xl bg-white/[0.03] border border-white/10 text-center">
-              <span className="text-acc font-bold block text-sm">2,000+</span>
-              <span className="text-[10px] text-neutral-400">Docs / Month</span>
-            </div>
-            <div className="p-2.5 rounded-xl bg-white/[0.03] border border-white/10 text-center">
-              <span className="text-emerald-400 font-bold block text-sm">100K+</span>
-              <span className="text-[10px] text-neutral-400">ETL Records</span>
-            </div>
-            <div className="p-2.5 rounded-xl bg-white/[0.03] border border-white/10 text-center">
-              <span className="text-sky-400 font-bold block text-sm">30 Days</span>
-              <span className="text-[10px] text-neutral-400">Lead Pipeline</span>
-            </div>
-            <div className="p-2.5 rounded-xl bg-white/[0.03] border border-white/10 text-center">
-              <span className="text-purple-400 font-bold block text-sm">4+</span>
-              <span className="text-[10px] text-neutral-400">Prod Systems</span>
-            </div>
-          </div>
-        );
-        break;
-
-      case "contact":
-      case "hire":
-        res = (
-          <div className="text-xs space-y-1.5 text-neutral-200 font-mono py-1">
-            <p>📧 Email: <a href="mailto:pavan.aidev@gmail.com" className="text-acc underline font-bold">pavan.aidev@gmail.com</a></p>
-            <p>💼 LinkedIn: <a href="https://linkedin.com/in/u-pavankumar" target="_blank" rel="noreferrer" className="text-acc underline">linkedin.com/in/u-pavankumar</a></p>
-            <p>🐙 GitHub: <a href="https://github.com/UPavankumar" target="_blank" rel="noreferrer" className="text-acc underline">github.com/UPavankumar</a></p>
-            <p>⚡ Status: <span className="text-emerald-400 font-bold">🟢 Available for AI Automation & Engineering</span></p>
-          </div>
-        );
-        break;
-
-      default:
-        res = (
-          <p className="text-xs text-neutral-400 font-mono">
-            Unrecognized input: "{cmd}". Type <span className="text-acc underline font-bold">help</span> or try <span className="text-acc underline font-bold">agent [query]</span> to ask the AI agent.
-          </p>
-        );
-        break;
+    // Fetch answer from Agent / Knowledge Engine
+    let finalAnswer = "";
+    try {
+      finalAnswer = await ask(queryForAgent, [], undefined, 1);
+    } catch {
+      finalAnswer = `Mr. Pavan Kumar is a Business Analyst specializing in AI Automation, real-time Voice AI pipelines (Aria WebRTC), multi-tenant e-invoicing platforms (2,000+ docs/mo), and autonomous outbound/inbound sales agents with Python, SQL, PostgreSQL, and LLMs. Contact directly at pavan.aidev@gmail.com.`;
     }
 
-    setHistory((prev) => [...prev, { command: cmd, output: res }]);
+    // Step 2: Add 3rd step log and begin character-by-character typewriter effect
+    setHistory((prev) =>
+      prev.map((item) =>
+        item.id === cmdId
+          ? {
+              ...item,
+              reasoningSteps: [
+                ...initialSteps,
+                `[3/3] Synthesizing response stream...`,
+              ],
+            }
+          : item
+      )
+    );
+
+    await new Promise((r) => setTimeout(r, 120));
+
+    // Typewriter effect loop
+    let currentText = "";
+    const speed = Math.max(8, Math.min(22, Math.floor(1200 / finalAnswer.length)));
+
+    for (let i = 0; i < finalAnswer.length; i++) {
+      currentText += finalAnswer[i];
+
+      // Update state in small batches or per character
+      if (i % 2 === 0 || i === finalAnswer.length - 1) {
+        const textSnapshot = currentText;
+        setHistory((prev) =>
+          prev.map((item) =>
+            item.id === cmdId
+              ? {
+                  ...item,
+                  outputText: textSnapshot,
+                  isTyping: i < finalAnswer.length - 1,
+                }
+              : item
+          )
+        );
+        scrollToBottom();
+      }
+
+      await new Promise((r) => setTimeout(r, speed));
+    }
+
+    // Finish typing
+    setHistory((prev) =>
+      prev.map((item) =>
+        item.id === cmdId
+          ? {
+              ...item,
+              outputText: finalAnswer,
+              isTyping: false,
+            }
+          : item
+      )
+    );
+
+    setIsBusy(false);
   };
 
   return (
     <section className="py-16 sm:py-20 px-4 sm:px-6 max-w-5xl mx-auto">
       <div className="mb-8 text-center space-y-2">
         <span className="font-mono text-xs text-acc uppercase tracking-widest px-3 py-1 rounded-full border border-acc/30 bg-acc/10">
-          ✦ Interactive CLI & Agent
+          ✦ Interactive CLI & Autonomous Agent
         </span>
         <h2 className="text-3xl sm:text-4xl font-black text-white uppercase tracking-tight">
           Terminal & Agent Console
         </h2>
         <p className="text-neutral-400 text-xs sm:text-sm max-w-xl mx-auto">
-          Query skills, trigger autonomous agent workflows, or inspect system architecture in real-time.
+          Type any technical query or command to test Pavan's AI knowledge engine in real-time.
         </p>
       </div>
 
@@ -249,7 +172,7 @@ export default function InteractiveTerminal() {
           </div>
           <div className="text-[11px] font-mono text-neutral-500 flex items-center gap-2">
             <span className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            <span>AGENT READY</span>
+            <span>AGENT ONLINE</span>
           </div>
         </div>
 
@@ -259,10 +182,8 @@ export default function InteractiveTerminal() {
           {[
             'agent "What has Pavan built with Voice AI?"',
             'agent "Explain the e-invoicing pipeline"',
-            "skills",
-            "projects",
-            "stats",
-            "contact",
+            'agent "What is Pavan\'s full stack?"',
+            'agent "How to hire or contact Pavan?"',
             "clear",
           ].map((prompt) => (
             <button
@@ -279,15 +200,43 @@ export default function InteractiveTerminal() {
         {/* Output Window (Container scrolls internally — never touches window scroll!) */}
         <div
           ref={terminalContainerRef}
-          className="p-4 sm:p-6 min-h-[240px] max-h-[380px] overflow-y-auto space-y-4 select-text"
+          className="p-4 sm:p-6 min-h-[260px] max-h-[400px] overflow-y-auto space-y-5 select-text"
         >
-          {history.map((item, index) => (
-            <div key={index} className="space-y-1.5">
+          {history.map((item) => (
+            <div key={item.id} className="space-y-2">
               <div className="flex items-center gap-2 text-acc text-xs">
                 <span className="font-bold">&gt;</span>
                 <span className="text-white font-semibold">{item.command}</span>
               </div>
-              <div className="pl-4">{item.output}</div>
+
+              {/* Reasoning Steps (if Agent) */}
+              {item.reasoningSteps && (
+                <div className="pl-4 space-y-1 text-[11px] font-mono text-neutral-500">
+                  {item.reasoningSteps.map((step, idx) => (
+                    <div key={idx} className="flex items-center gap-2">
+                      <span className="text-acc">✦</span>
+                      <span>{step}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Live Typed Output Content */}
+              {item.outputText ? (
+                <div className="pl-4 border-l-2 border-acc/40 py-1">
+                  <p className="text-neutral-200 text-xs sm:text-[13px] leading-relaxed whitespace-pre-wrap">
+                    {item.outputText}
+                    {item.isTyping && (
+                      <span className="inline-block w-2 h-4 bg-acc animate-pulse ml-1 align-middle" />
+                    )}
+                  </p>
+                </div>
+              ) : item.isTyping ? (
+                <div className="pl-4 py-1 flex items-center gap-2 text-xs text-acc">
+                  <span className="animate-spin">✦</span>
+                  <span className="animate-pulse text-neutral-400">Agent thinking...</span>
+                </div>
+              ) : null}
             </div>
           ))}
         </div>
@@ -308,16 +257,16 @@ export default function InteractiveTerminal() {
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Type 'help', 'skills', or 'agent [ask anything]'..."
-            disabled={isProcessing}
+            placeholder="Ask anything or type 'agent [question]'..."
+            disabled={isBusy}
             className="flex-1 bg-transparent text-white outline-none placeholder:text-neutral-600 font-mono text-xs sm:text-sm disabled:opacity-50"
           />
           <button
             type="submit"
-            disabled={isProcessing || !input.trim()}
+            disabled={isBusy || !input.trim()}
             className="text-xs px-4 py-1.5 rounded-lg bg-acc text-black font-bold hover:bg-white transition-all disabled:opacity-40 cursor-pointer"
           >
-            {isProcessing ? "Thinking..." : "Run ↵"}
+            {isBusy ? "Generating..." : "Run ↵"}
           </button>
         </form>
       </div>

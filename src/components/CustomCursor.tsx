@@ -37,6 +37,7 @@ export default function CustomCursor() {
   const [isDesktopMouse, setIsDesktopMouse] = useState(false);
   const isHoverRef = useRef(false);
   const isProjectRef = useRef(false);
+  const isInputRef = useRef(false);
 
   // Strict check: only activate custom cursor for desktop with hover capability and fine pointer
   useEffect(() => {
@@ -131,6 +132,14 @@ export default function CustomCursor() {
 
       const projectTarget = target.closest('[data-cursor="project"]');
       isProjectRef.current = !!projectTarget;
+
+      const isInput =
+        target.tagName === "INPUT" ||
+        target.tagName === "TEXTAREA" ||
+        target.tagName === "SELECT" ||
+        target.isContentEditable ||
+        !!target.closest("input, textarea, select, [contenteditable='true']");
+      isInputRef.current = isInput;
     };
 
     const handleClick = (e: MouseEvent) => {
@@ -175,7 +184,7 @@ export default function CustomCursor() {
         }
       });
 
-      if (isMoved.current) {
+      if (isMoved.current && !isInputRef.current) {
         // 1. Draw Fluid Line Trail on Canvas
         ctx.lineCap = "round";
         ctx.strokeStyle = "#ffffff";

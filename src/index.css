@@ -93,7 +93,13 @@ header[id] {
 }
 
 @media (hover: hover) and (pointer: fine) {
-  * {
+  *:not(input):not(textarea):not(select):not([contenteditable="true"]) {
     cursor: none !important;
+  }
+  input,
+  textarea,
+  select,
+  [contenteditable="true"] {
+    cursor: text !important;
   }
 }
