@@ -4,33 +4,39 @@ import { useMotionValue, useSpring, useVelocity, useAnimationFrame } from "frame
 export default function CustomCursor() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   
-  // Mouse position
-  const mouseX = useMotionValue(-100);
-  const mouseY = useMotionValue(-100);
+  // Initialize with center of window to prevent (0, 0) / (-100, -100) top-left jumps
+  const initialPos = {
+    x: typeof window !== "undefined" ? window.innerWidth / 2 : 500,
+    y: typeof window !== "undefined" ? window.innerHeight / 2 : 500,
+  };
+
+  const mouseX = useMotionValue(initialPos.x);
+  const mouseY = useMotionValue(initialPos.y);
   
   const isMoved = useRef(false);
-  const mousePos = useRef({ x: -100, y: -100 });
+  const mousePos = useRef({ x: initialPos.x, y: initialPos.y });
+  const isTypingRef = useRef(false);
 
   // Floaty springs for paper plane position
-  const planeX = useSpring(mouseX, { stiffness: 160, damping: 18, mass: 0.3 });
-  const planeY = useSpring(mouseY, { stiffness: 160, damping: 18, mass: 0.3 });
+  const planeX = useSpring(mouseX, { stiffness: 180, damping: 22, mass: 0.25 });
+  const planeY = useSpring(mouseY, { stiffness: 180, damping: 22, mass: 0.25 });
 
   // Velocity for plane heading and speed scaling
   const velocityX = useVelocity(planeX);
   const velocityY = useVelocity(planeY);
 
   const speedVal = useMotionValue(1);
-  const scale = useSpring(speedVal, { stiffness: 200, damping: 18 });
+  const scale = useSpring(speedVal, { stiffness: 220, damping: 20 });
 
   // Smooth angle tracking
-  const headingAngleRad = useRef(0);
-  const prevAngleRad = useRef(0);
+  const headingAngleRad = useRef(-Math.PI / 4);
+  const prevAngleRad = useRef(-Math.PI / 4);
 
   const config = {
-    pointsNumber: 20,
-    widthFactor: 0.45,
-    spring: 0.38,
-    friction: 0.52,
+    pointsNumber: 18,
+    widthFactor: 0.4,
+    spring: 0.35,
+    friction: 0.55,
   };
 
   const points = useRef<{ x: number; y: number; dx: number; dy: number }[]>([]);
@@ -38,6 +44,7 @@ export default function CustomCursor() {
   const isHoverRef = useRef(false);
   const isProjectRef = useRef(false);
   const isInputRef = useRef(false);
+  const cursorOpacity = useRef(0);
 
   // Strict check: only activate custom cursor for desktop with hover capability and fine pointer
   useEffect(() => {
@@ -61,11 +68,12 @@ export default function CustomCursor() {
     const vy = velocityY.get();
     const speed = Math.sqrt(vx * vx + vy * vy);
 
-    // Scale up noticeably with speed
-    const targetScale = 1 + Math.min(speed / 380, 1.3);
+    // Scale up slightly with speed
+    const targetScale = 1 + Math.min(speed / 400, 1.15);
     speedVal.set(targetScale);
 
-    if (speed > 10) {
+    // Only update rotation when actively moving to avoid idle jitter / spinning
+    if (speed > 15) {
       const targetAngle = Math.atan2(vy, vx);
 
       let delta = targetAngle - prevAngleRad.current;
@@ -82,14 +90,14 @@ export default function CustomCursor() {
     if (!isDesktopMouse) return;
 
     if (points.current.length === 0) {
-      const initialX = window.innerWidth / 2;
-      const initialY = window.innerHeight / 2;
-      mousePos.current = { x: initialX, y: initialY };
-      mouseX.set(initialX);
-      mouseY.set(initialY);
+      const initX = window.innerWidth / 2;
+      const initY = window.innerHeight / 2;
+      mousePos.current = { x: initX, y: initY };
+      mouseX.set(initX);
+      mouseY.set(initY);
       points.current = new Array(config.pointsNumber).fill(null).map(() => ({
-        x: initialX,
-        y: initialY,
+        x: initX,
+        y: initY,
         dx: 0,
         dy: 0,
       }));
@@ -110,6 +118,9 @@ export default function CustomCursor() {
     };
 
     const updateMouse = (px: number, py: number) => {
+      // Reject invalid 0,0 or negative coordinates from spurious browser events
+      if (px <= 0 && py <= 0) return;
+
       mousePos.current.x = px;
       mousePos.current.y = py;
       mouseX.set(px);
@@ -118,11 +129,14 @@ export default function CustomCursor() {
 
     const handleMouseMove = (e: MouseEvent) => {
       isMoved.current = true;
+      isTypingRef.current = false;
       updateMouse(e.clientX, e.clientY);
     };
 
     const handleMouseOver = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
+      if (!target) return;
+
       const hoverTarget =
         target.closest("a") ||
         target.closest("button") ||
@@ -142,6 +156,21 @@ export default function CustomCursor() {
       isInputRef.current = isInput;
     };
 
+    // When typing on keyboard, flag typing to hide custom plane so native text caret is crystal clear
+    const handleKeyDown = () => {
+      const active = document.activeElement;
+      if (
+        active &&
+        (active.tagName === "INPUT" ||
+          active.tagName === "TEXTAREA" ||
+          active.tagName === "SELECT" ||
+          (active as HTMLElement).isContentEditable)
+      ) {
+        isTypingRef.current = true;
+        isInputRef.current = true;
+      }
+    };
+
     const handleClick = (e: MouseEvent) => {
       updateMouse(e.clientX, e.clientY);
     };
@@ -149,6 +178,7 @@ export default function CustomCursor() {
     window.addEventListener("resize", handleResize);
     window.addEventListener("mousemove", handleMouseMove);
     window.addEventListener("mouseover", handleMouseOver);
+    window.addEventListener("keydown", handleKeyDown);
     window.addEventListener("click", handleClick);
     handleResize();
 
@@ -162,11 +192,16 @@ export default function CustomCursor() {
       const angle = headingAngleRad.current;
       const currentScale = scale.get();
 
+      // Smoothly fade cursor in/out when over inputs or typing
+      const shouldHide = !isMoved.current || isInputRef.current || isTypingRef.current;
+      const targetAlpha = shouldHide ? 0 : 1;
+      cursorOpacity.current += (targetAlpha - cursorOpacity.current) * 0.2;
+
       // Tail coordinates relative to plane center
       const tailX = px + Math.cos(angle + Math.PI) * (8 * currentScale);
       const tailY = py + Math.sin(angle + Math.PI) * (8 * currentScale);
 
-      // Update trail points: point 0 IS the tail coordinates
+      // Update trail points with dead-zone to eliminate idle running/jitter
       points.current.forEach((p, index) => {
         if (index === 0) {
           p.x = tailX;
@@ -175,16 +210,29 @@ export default function CustomCursor() {
           p.dy = 0;
         } else {
           const leader = points.current[index - 1];
-          p.dx += (leader.x - p.x) * config.spring;
-          p.dy += (leader.y - p.y) * config.spring;
-          p.dx *= config.friction;
-          p.dy *= config.friction;
-          p.x += p.dx;
-          p.y += p.dy;
+          const dist = Math.hypot(leader.x - p.x, leader.y - p.y);
+
+          // Dead-zone: if very close, settle calmly without phantom movement
+          if (dist > 0.4) {
+            p.dx += (leader.x - p.x) * config.spring;
+            p.dy += (leader.y - p.y) * config.spring;
+            p.dx *= config.friction;
+            p.dy *= config.friction;
+            p.x += p.dx;
+            p.y += p.dy;
+          } else {
+            p.dx = 0;
+            p.dy = 0;
+            p.x = leader.x;
+            p.y = leader.y;
+          }
         }
       });
 
-      if (isMoved.current && !isInputRef.current) {
+      if (cursorOpacity.current > 0.02) {
+        ctx.save();
+        ctx.globalAlpha = cursorOpacity.current;
+
         // 1. Draw Fluid Line Trail on Canvas
         ctx.lineCap = "round";
         ctx.strokeStyle = "#ffffff";
@@ -207,7 +255,7 @@ export default function CustomCursor() {
         );
         ctx.stroke();
 
-        // 2. Draw Paper Plane SVG directly on Canvas (Unified with Trail!)
+        // 2. Draw Paper Plane SVG directly on Canvas
         ctx.save();
         ctx.translate(px, py);
         ctx.rotate(angle + Math.PI / 4); // +45deg to align plane vector
@@ -223,6 +271,7 @@ export default function CustomCursor() {
         ctx.stroke(linePath);
 
         ctx.restore();
+        ctx.restore();
       }
 
       animId = requestAnimationFrame(render);
@@ -234,6 +283,7 @@ export default function CustomCursor() {
       window.removeEventListener("resize", handleResize);
       window.removeEventListener("mousemove", handleMouseMove);
       window.removeEventListener("mouseover", handleMouseOver);
+      window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("click", handleClick);
       cancelAnimationFrame(animId);
     };
