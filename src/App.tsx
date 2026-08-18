@@ -10,11 +10,15 @@ import PageTransitionLoader from "./components/PageTransitionLoader";
 import FloatingDock from "./components/FloatingDock";
 import CustomCursor from "./components/CustomCursor";
 import SoundToggle from "./components/SoundToggle";
+import AskPortfolio from "./components/AskPortfolio";
+import { recordPageVisit } from "./lib/tracker";
 
 function ScrollToTop() {
   const { pathname, hash } = useLocation();
 
   useEffect(() => {
+    recordPageVisit(pathname);
+
     if (!hash) {
       window.scrollTo({ top: 0, left: 0, behavior: "instant" });
     } else {
@@ -59,6 +63,7 @@ export default function App() {
       <Preloader />
       <PageTransitionLoader />
       <FloatingDock />
+      <AskPortfolio />
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/about" element={<About />} />

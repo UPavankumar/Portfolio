@@ -3,6 +3,7 @@ import { motion, MotionConfig } from "framer-motion";
 import Nav from "../components/Nav";
 import Footer from "../components/Footer";
 import { profile } from "../data/resume";
+import { formatJourneyForEmail, getVisitorJourneyData } from "../lib/tracker";
 
 export default function Contact() {
   const [copiedType, setCopiedType] = useState<string | null>(null);
@@ -24,6 +25,9 @@ export default function Contact() {
     e.preventDefault();
     setStatus("submitting");
 
+    const journeyData = getVisitorJourneyData();
+    const journeyEmailText = formatJourneyForEmail();
+
     const webhookUrl = import.meta.env.VITE_WEBHOOK_URL;
     if (webhookUrl) {
       try {
@@ -34,6 +38,9 @@ export default function Contact() {
             ...formData,
             source: "Contact Page Form",
             timestamp: new Date().toISOString(),
+            visitorJourney: journeyData,
+            navigationPath: journeyData.pathSummary,
+            timeOnSite: journeyData.durationFormatted,
           }),
         });
         setStatus("success");
@@ -44,11 +51,12 @@ export default function Contact() {
       }
     }
 
-    // Fallback: open mail client
+    // Fallback: open mail client with full visitor navigation path attached
+    const enrichedMessage = `${formData.message}\n\n${journeyEmailText}`;
     const mailtoLink = `mailto:${profile.email}?subject=${encodeURIComponent(
       formData.subject || `Inquiry from ${formData.name}`
     )}&body=${encodeURIComponent(
-      `Name: ${formData.name}\nEmail: ${formData.email}\n\nMessage:\n${formData.message}`
+      `Name: ${formData.name}\nEmail: ${formData.email}\n\nMessage:\n${enrichedMessage}`
     )}`;
     window.location.href = mailtoLink;
     setStatus("success");

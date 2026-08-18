@@ -10,7 +10,6 @@ import Stats from "../components/Stats";
 import Experience from "../components/Experience";
 import Skills from "../components/Skills";
 import Footer from "../components/Footer";
-import AskPortfolio from "../components/AskPortfolio";
 import Interactive3DScene from "../components/Interactive3DScene";
 
 export default function Home() {
@@ -28,7 +27,6 @@ export default function Home() {
       <Experience />
       <Skills />
       <Footer />
-      <AskPortfolio />
     </MotionConfig>
   );
 }

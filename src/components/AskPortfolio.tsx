@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ask, extractName, type ChatMsg } from "../lib/ask";
+import { getVisitorJourneyData } from "../lib/tracker";
 
 const WEBHOOK_URL = import.meta.env.VITE_WEBHOOK_URL as string | undefined;
 
@@ -84,6 +85,7 @@ function sendLead(
   if (!WEBHOOK_URL || userMsgs.length < 1) return false;
 
   const details = extractVisitorDetails(msgs);
+  const journey = getVisitorJourneyData();
 
   const payload = JSON.stringify({
     name: userName || "Unknown Visitor",
@@ -95,6 +97,9 @@ function sendLead(
     transcript: buildTranscript(msgs),
     timestamp: new Date().toISOString(),
     referrer: document.referrer || "direct",
+    navigationPath: journey.pathSummary,
+    timeOnSite: journey.durationFormatted,
+    visitorJourney: journey,
   });
 
   // Use fetch with keepalive: true — preserves POST method across Google Apps Script 302 redirects
