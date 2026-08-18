@@ -134,7 +134,7 @@ export default function NotFound() {
     };
   }, []);
 
-  // Chat message stream
+  // Chat message stream (no duplicate consecutive messages)
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
     {
       id: "init",
@@ -145,6 +145,7 @@ export default function NotFound() {
   ]);
   const [chatInput, setChatInput] = useState("");
   const chatScrollRef = useRef<HTMLDivElement>(null);
+  const isChatReplyingRef = useRef(false);
 
   const [playerHandEval, setPlayerHandEval] = useState<HandEvaluation | null>(null);
   const [aiHandEval, setAiHandEval] = useState<HandEvaluation | null>(null);
@@ -170,16 +171,25 @@ export default function NotFound() {
   const BIG_BLIND = 20;
   const SMALL_BLIND = 10;
 
+  // Strict deduplicated chat message adder
   const addChatMessage = useCallback((sender: "Alfred" | "You" | "Dealer", text: string) => {
-    setChatMessages((prev) => [
-      ...prev,
-      {
-        id: Math.random().toString(36).substring(2, 9),
-        sender,
-        text,
-        time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-      },
-    ]);
+    const trimmed = text.trim();
+    if (!trimmed) return;
+    setChatMessages((prev) => {
+      const last = prev[prev.length - 1];
+      if (last && last.sender === sender && last.text === trimmed) {
+        return prev;
+      }
+      return [
+        ...prev,
+        {
+          id: Math.random().toString(36).substring(2, 9),
+          sender,
+          text: trimmed,
+          time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        },
+      ];
+    });
   }, []);
 
   const updateAiDialogue = useCallback(
@@ -290,89 +300,111 @@ export default function NotFound() {
     }
   }, [playerHole, communityCards]);
 
-  // Runout all 5 cards for ALL-IN directly and evaluate showdown
+  // Suspenseful, staggered All-In board runout (Card by Card / Street by Street)
   const runoutAllIn = useCallback(
     (currentDeck: PokerCard[], currentCommunity: PokerCard[]) => {
       playCasinoSound("allin");
-      addChatMessage("Dealer", "🔥 ALL-IN SHOWDOWN! Dealing the full 5-card board directly.");
+      addChatMessage("Dealer", "🔥 ALL-IN SHOWDOWN! Dealing the full board...");
 
       const d = [...currentDeck];
-      const remainingNeeded = 5 - currentCommunity.length;
-      const newCommunity = [...currentCommunity];
+      const startLen = currentCommunity.length;
+      let runningCommunity = [...currentCommunity];
 
-      // Deal all remaining cards to complete the 5-card board
-      for (let i = 0; i < remainingNeeded; i++) {
-        d.pop(); // Burn card
-        if (d.length > 0) {
-          newCommunity.push(d.pop()!);
-        }
-      }
+      const dealStep = (targetLen: number, delayMs: number, onDone: () => void) => {
+        setTimeout(() => {
+          d.pop(); // Burn card
+          while (runningCommunity.length < targetLen && d.length > 0) {
+            runningCommunity.push(d.pop()!);
+          }
+          setCommunityCards([...runningCommunity]);
+          playCasinoSound("deal");
+          onDone();
+        }, delayMs);
+      };
 
-      setCommunityCards(newCommunity);
-      setDeck(d);
-      setStage("showdown");
+      const finalizeShowdown = (finalCommunity: PokerCard[]) => {
+        setStage("showdown");
+        const pEval = evaluateHand(playerHole, finalCommunity);
+        const aEval = evaluateHand(aiHole, finalCommunity);
+        setPlayerHandEval(pEval);
+        setAiHandEval(aEval);
 
-      // Complete 7-card to best 5-card evaluation
-      const pEval = evaluateHand(playerHole, newCommunity);
-      const aEval = evaluateHand(aiHole, newCommunity);
-      setPlayerHandEval(pEval);
-      setAiHandEval(aEval);
+        setTimeout(() => {
+          let winnerMsg = "";
+          let resultType: "player_win" | "ai_win" | "split" = "split";
+          const awardPot = pot;
 
-      setTimeout(() => {
-        let winnerMsg = "";
-        let resultType: "player_win" | "ai_win" | "split" = "split";
-
-        // Current pot snapshot
-        const awardPot = pot;
-
-        if (pEval.score > aEval.score) {
-          // PLAYER WINS POT
-          resultType = "player_win";
-          winnerMsg = `🏆 You WIN $${awardPot.toLocaleString()}! (${pEval.description})`;
-          playCasinoSound("win");
-          
-          setPlayerChips((prev) => {
-            const nextChips = prev + awardPot;
-            // Check if AI is busted
-            setAiChips((aiPrev) => {
-              if (aiPrev <= 0) {
-                setTimeout(() => setTournamentResult("player_champion"), 1400);
-              }
-              return aiPrev;
+          if (pEval.score > aEval.score) {
+            // PLAYER WINS POT
+            resultType = "player_win";
+            winnerMsg = `🏆 You WIN $${awardPot.toLocaleString()}! (${pEval.description})`;
+            playCasinoSound("win");
+            
+            setPlayerChips((prev) => {
+              const nextChips = prev + awardPot;
+              setAiChips((aiPrev) => {
+                if (aiPrev <= 0) {
+                  setTimeout(() => setTournamentResult("player_champion"), 1400);
+                }
+                return aiPrev;
+              });
+              return nextChips;
             });
-            return nextChips;
+
+          } else if (aEval.score > pEval.score) {
+            // ALFRED WINS POT
+            resultType = "ai_win";
+            winnerMsg = `💀 Alfred WINS $${awardPot.toLocaleString()}! (${aEval.description})`;
+            playCasinoSound("fold");
+
+            setAiChips((prev) => prev + awardPot);
+            setPlayerChips((prev) => {
+              if (prev <= 0) {
+                setTimeout(() => setTournamentResult("player_busted"), 1400);
+              }
+              return prev;
+            });
+
+          } else {
+            // SPLIT POT
+            resultType = "split";
+            const half = Math.floor(awardPot / 2);
+            winnerMsg = `🤝 Split Pot! ($${half.toLocaleString()} each)`;
+            playCasinoSound("chip");
+            setPlayerChips((prev) => prev + half);
+            setAiChips((prev) => prev + half);
+          }
+
+          setHandResult(winnerMsg);
+          const commentary = getAlfredCardCommentary(playerHole, finalCommunity, pEval, resultType);
+          updateAiDialogue(commentary);
+        }, 600);
+      };
+
+      if (startLen === 0) {
+        // Preflop all-in: Deal Flop (3) -> Turn (4) -> River (5)
+        dealStep(3, 400, () => {
+          dealStep(4, 550, () => {
+            dealStep(5, 550, () => {
+              finalizeShowdown(runningCommunity);
+            });
           });
-
-        } else if (aEval.score > pEval.score) {
-          // ALFRED WINS POT
-          resultType = "ai_win";
-          winnerMsg = `💀 Alfred WINS $${awardPot.toLocaleString()}! (${aEval.description})`;
-          playCasinoSound("fold");
-
-          setAiChips((prev) => prev + awardPot);
-          setPlayerChips((prev) => {
-            if (prev <= 0) {
-              setTimeout(() => setTournamentResult("player_busted"), 1400);
-            }
-            return prev;
+        });
+      } else if (startLen === 3) {
+        // Flop all-in: Deal Turn (4) -> River (5)
+        dealStep(4, 450, () => {
+          dealStep(5, 550, () => {
+            finalizeShowdown(runningCommunity);
           });
-
-        } else {
-          // SPLIT POT
-          resultType = "split";
-          const half = Math.floor(awardPot / 2);
-          winnerMsg = `🤝 Split Pot! ($${half.toLocaleString()} each)`;
-          playCasinoSound("chip");
-          setPlayerChips((prev) => prev + half);
-          setAiChips((prev) => prev + half);
-        }
-
-        setHandResult(winnerMsg);
-
-        // Alfred card commentary on user's hand
-        const commentary = getAlfredCardCommentary(playerHole, newCommunity, pEval, resultType);
-        updateAiDialogue(commentary);
-      }, 700);
+        });
+      } else if (startLen === 4) {
+        // Turn all-in: Deal River (5)
+        dealStep(5, 450, () => {
+          finalizeShowdown(runningCommunity);
+        });
+      } else {
+        finalizeShowdown(runningCommunity);
+      }
     },
     [playerHole, aiHole, pot, updateAiDialogue, addChatMessage]
   );
@@ -466,8 +498,6 @@ export default function NotFound() {
     }
 
     setHandResult(winnerMsg);
-
-    // Alfred specific insightful card commentary
     const commentary = getAlfredCardCommentary(playerHole, communityCards, pEval, resultType);
     updateAiDialogue(commentary);
   }, [playerHole, aiHole, communityCards, pot, updateAiDialogue]);
@@ -512,7 +542,7 @@ export default function NotFound() {
       })
     );
 
-    // IF ANY PLAYER IS ALL-IN -> DEAL ALL 5 COMMUNITY CARDS DIRECTLY!
+    // IF ANY PLAYER IS ALL-IN -> DEAL ALL COMMUNITY CARDS STAGGERED!
     if (isPlayerAllIn || aiChips <= 0) {
       runoutAllIn(deck, communityCards);
       return;
@@ -661,11 +691,12 @@ export default function NotFound() {
     }, 650);
   };
 
-  // User chat submit
+  // User chat submit with lock to prevent double responses
   const handleUserSendChat = (text: string) => {
     const trimmed = text.trim();
-    if (!trimmed) return;
+    if (!trimmed || isChatReplyingRef.current) return;
 
+    isChatReplyingRef.current = true;
     addChatMessage("You", trimmed);
     setChatInput("");
 
@@ -676,8 +707,10 @@ export default function NotFound() {
       else if (lower.includes("raise") || lower.includes("all-in")) reply = "Let us see if the cards support such conviction.";
       else if (lower.includes("hi") || lower.includes("hello")) reply = "Good day! Best of luck on the felt.";
       else if (lower.includes("good") || lower.includes("nice")) reply = "Much obliged. The cards favor the bold.";
+      
       updateAiDialogue(reply);
-    }, 450);
+      isChatReplyingRef.current = false;
+    }, 400);
   };
 
   const toCall = Math.max(0, currentBet - playerRoundBet);
