@@ -109,7 +109,9 @@ export default function NotFound() {
   const [showRulesModal, setShowRulesModal] = useState(false);
   const [showChatSidebar, setShowChatSidebar] = useState(true);
   const [showWelcomeModal, setShowWelcomeModal] = useState(true);
-  const [isBustedModalOpen, setIsBustedModalOpen] = useState(false);
+  
+  // Dedicated Tournament End State: Champion vs Busted
+  const [tournamentResult, setTournamentResult] = useState<"player_champion" | "player_busted" | null>(null);
 
   // Red Dot Laser Cursor Tracking
   const [mousePos, setMousePos] = useState({ x: -100, y: -100 });
@@ -195,11 +197,9 @@ export default function NotFound() {
     }
   }, [chatMessages]);
 
-  // Restart match with fresh stacks
+  // Restart match with fresh stacks ($1,000 each)
   const handleRebuy = useCallback(() => {
-    setIsBustedModalOpen(false);
-    setPlayerChips(1000);
-    setAiChips(1000);
+    setTournamentResult(null);
     setHandResult(null);
     setCommunityCards([]);
     setStage("preflop");
@@ -230,7 +230,7 @@ export default function NotFound() {
 
   // Start fresh hand
   const startNewHand = useCallback(() => {
-    setIsBustedModalOpen(false);
+    setTournamentResult(null);
 
     if (playerChips <= 0 || aiChips <= 0) {
       handleRebuy();
@@ -290,15 +290,9 @@ export default function NotFound() {
     }
   }, [playerHole, communityCards]);
 
-  // Runout all 5 cards for ALL-IN directly and evaluate best 5-card hands + Alfred card comment
+  // Runout all 5 cards for ALL-IN directly and evaluate showdown
   const runoutAllIn = useCallback(
-    (
-      currentDeck: PokerCard[],
-      currentCommunity: PokerCard[],
-      exactPot: number,
-      exactPlayerChips: number,
-      exactAiChips: number
-    ) => {
+    (currentDeck: PokerCard[], currentCommunity: PokerCard[]) => {
       playCasinoSound("allin");
       addChatMessage("Dealer", "🔥 ALL-IN SHOWDOWN! Dealing the full 5-card board directly.");
 
@@ -326,31 +320,51 @@ export default function NotFound() {
 
       setTimeout(() => {
         let winnerMsg = "";
-        let finalPlayerChips = exactPlayerChips;
-        let finalAiChips = exactAiChips;
         let resultType: "player_win" | "ai_win" | "split" = "split";
 
+        // Current pot snapshot
+        const awardPot = pot;
+
         if (pEval.score > aEval.score) {
+          // PLAYER WINS POT
           resultType = "player_win";
-          winnerMsg = `🏆 You WIN $${exactPot}! (${pEval.description})`;
-          finalPlayerChips += exactPot;
-          setPlayerChips(finalPlayerChips);
+          winnerMsg = `🏆 You WIN $${awardPot.toLocaleString()}! (${pEval.description})`;
           playCasinoSound("win");
+          
+          setPlayerChips((prev) => {
+            const nextChips = prev + awardPot;
+            // Check if AI is busted
+            setAiChips((aiPrev) => {
+              if (aiPrev <= 0) {
+                setTimeout(() => setTournamentResult("player_champion"), 1400);
+              }
+              return aiPrev;
+            });
+            return nextChips;
+          });
+
         } else if (aEval.score > pEval.score) {
+          // ALFRED WINS POT
           resultType = "ai_win";
-          winnerMsg = `💀 Alfred WINS $${exactPot}! (${aEval.description})`;
-          finalAiChips += exactPot;
-          setAiChips(finalAiChips);
+          winnerMsg = `💀 Alfred WINS $${awardPot.toLocaleString()}! (${aEval.description})`;
           playCasinoSound("fold");
+
+          setAiChips((prev) => prev + awardPot);
+          setPlayerChips((prev) => {
+            if (prev <= 0) {
+              setTimeout(() => setTournamentResult("player_busted"), 1400);
+            }
+            return prev;
+          });
+
         } else {
+          // SPLIT POT
           resultType = "split";
-          winnerMsg = `🤝 Split Pot! ($${Math.floor(exactPot / 2)} each)`;
-          const half = Math.floor(exactPot / 2);
-          finalPlayerChips += half;
-          finalAiChips += half;
-          setPlayerChips(finalPlayerChips);
-          setAiChips(finalAiChips);
+          const half = Math.floor(awardPot / 2);
+          winnerMsg = `🤝 Split Pot! ($${half.toLocaleString()} each)`;
           playCasinoSound("chip");
+          setPlayerChips((prev) => prev + half);
+          setAiChips((prev) => prev + half);
         }
 
         setHandResult(winnerMsg);
@@ -358,15 +372,9 @@ export default function NotFound() {
         // Alfred card commentary on user's hand
         const commentary = getAlfredCardCommentary(playerHole, newCommunity, pEval, resultType);
         updateAiDialogue(commentary);
-
-        if (finalPlayerChips <= 0 || finalAiChips <= 0) {
-          setTimeout(() => {
-            setIsBustedModalOpen(true);
-          }, 1200);
-        }
       }, 700);
     },
-    [playerHole, aiHole, updateAiDialogue, addChatMessage]
+    [playerHole, aiHole, pot, updateAiDialogue, addChatMessage]
   );
 
   // Advance street (Flop, Turn, River, Showdown)
@@ -416,31 +424,45 @@ export default function NotFound() {
     setAiHandEval(aEval);
 
     let winnerMsg = "";
-    let finalPlayerChips = playerChips;
-    let finalAiChips = aiChips;
     let resultType: "player_win" | "ai_win" | "split" = "split";
+    const awardPot = pot;
 
     if (pEval.score > aEval.score) {
       resultType = "player_win";
-      winnerMsg = `🏆 You WIN $${pot}! (${pEval.description})`;
-      finalPlayerChips += pot;
-      setPlayerChips(finalPlayerChips);
+      winnerMsg = `🏆 You WIN $${awardPot.toLocaleString()}! (${pEval.description})`;
       playCasinoSound("win");
+
+      setPlayerChips((prev) => {
+        const nextChips = prev + awardPot;
+        setAiChips((aiPrev) => {
+          if (aiPrev <= 0) {
+            setTimeout(() => setTournamentResult("player_champion"), 1400);
+          }
+          return aiPrev;
+        });
+        return nextChips;
+      });
+
     } else if (aEval.score > pEval.score) {
       resultType = "ai_win";
-      winnerMsg = `💀 Alfred WINS $${pot}! (${aEval.description})`;
-      finalAiChips += pot;
-      setAiChips(finalAiChips);
+      winnerMsg = `💀 Alfred WINS $${awardPot.toLocaleString()}! (${aEval.description})`;
       playCasinoSound("fold");
+
+      setAiChips((prev) => prev + awardPot);
+      setPlayerChips((prev) => {
+        if (prev <= 0) {
+          setTimeout(() => setTournamentResult("player_busted"), 1400);
+        }
+        return prev;
+      });
+
     } else {
       resultType = "split";
-      winnerMsg = `🤝 Split Pot! ($${Math.floor(pot / 2)} each)`;
-      const half = Math.floor(pot / 2);
-      finalPlayerChips += half;
-      finalAiChips += half;
-      setPlayerChips(finalPlayerChips);
-      setAiChips(finalAiChips);
+      const half = Math.floor(awardPot / 2);
+      winnerMsg = `🤝 Split Pot! ($${half.toLocaleString()} each)`;
       playCasinoSound("chip");
+      setPlayerChips((prev) => prev + half);
+      setAiChips((prev) => prev + half);
     }
 
     setHandResult(winnerMsg);
@@ -448,13 +470,7 @@ export default function NotFound() {
     // Alfred specific insightful card commentary
     const commentary = getAlfredCardCommentary(playerHole, communityCards, pEval, resultType);
     updateAiDialogue(commentary);
-
-    if (finalPlayerChips <= 0 || finalAiChips <= 0) {
-      setTimeout(() => {
-        setIsBustedModalOpen(true);
-      }, 1200);
-    }
-  }, [playerHole, aiHole, communityCards, pot, playerChips, aiChips, updateAiDialogue]);
+  }, [playerHole, aiHole, communityCards, pot, updateAiDialogue]);
 
   // Player Actions with Texas Hold'em Round Closure
   const handlePlayerCheck = useCallback(() => {
@@ -470,7 +486,7 @@ export default function NotFound() {
       })
     );
 
-    triggerAiTurn(0, false, false);
+    triggerAiTurn(0, false);
   }, [isAiThinking, stage, addChatMessage]);
 
   // Player Calls: Matches Alfred's bet
@@ -483,10 +499,8 @@ export default function NotFound() {
     playCasinoSound(isPlayerAllIn ? "allin" : "chip");
     addChatMessage("You", isPlayerAllIn ? `Called $${actualCall} (ALL-IN!) 🔥` : `Called $${actualCall}.`);
     
-    const newPlayerChips = playerChips - actualCall;
-    const newPot = pot + actualCall;
-    setPlayerChips(newPlayerChips);
-    setPot(newPot);
+    setPlayerChips((prev) => prev - actualCall);
+    setPot((prev) => prev + actualCall);
     setPlayerRoundBet((prev) => prev + actualCall);
 
     setPlayerProfile((prev) =>
@@ -500,13 +514,13 @@ export default function NotFound() {
 
     // IF ANY PLAYER IS ALL-IN -> DEAL ALL 5 COMMUNITY CARDS DIRECTLY!
     if (isPlayerAllIn || aiChips <= 0) {
-      runoutAllIn(deck, communityCards, newPot, newPlayerChips, aiChips);
+      runoutAllIn(deck, communityCards);
       return;
     }
 
     // Pre-flop limp to Big Blind option
     if (stage === "preflop" && aiRoundBet === BIG_BLIND && currentBet === BIG_BLIND) {
-      triggerAiTurn(0, false, false);
+      triggerAiTurn(0, false);
       return;
     }
 
@@ -514,7 +528,7 @@ export default function NotFound() {
     setTimeout(() => {
       advanceStreet();
     }, 450);
-  }, [isAiThinking, stage, currentBet, playerRoundBet, playerChips, aiChips, deck, communityCards, pot, runoutAllIn, advanceStreet, addChatMessage]);
+  }, [isAiThinking, stage, currentBet, playerRoundBet, playerChips, aiChips, deck, communityCards, runoutAllIn, advanceStreet, addChatMessage]);
 
   // Player Raise / All-In
   const handlePlayerRaise = useCallback(
@@ -526,10 +540,8 @@ export default function NotFound() {
       playCasinoSound(isAllIn ? "allin" : "chip");
       addChatMessage("You", isAllIn ? `Went ALL-IN for $${totalWager}! 🔥` : `Raised to $${totalWager}.`);
 
-      const updatedPot = pot + totalWager;
-      const updatedPlayerChips = playerChips - totalWager;
-      setPlayerChips(updatedPlayerChips);
-      setPot(updatedPot);
+      setPlayerChips((prev) => prev - totalWager);
+      setPot((prev) => prev + totalWager);
       setPlayerRoundBet((prev) => prev + totalWager);
       setCurrentBet(playerRoundBet + totalWager);
 
@@ -543,7 +555,7 @@ export default function NotFound() {
         })
       );
 
-      triggerAiTurn(totalWager, isAllIn, isAllIn);
+      triggerAiTurn(totalWager, isAllIn);
     },
     [isAiThinking, stage, playerChips, playerRoundBet, pot, addChatMessage]
   );
@@ -572,10 +584,17 @@ export default function NotFound() {
       "player_folded"
     );
     updateAiDialogue(foldComment);
+
+    setPlayerChips((prev) => {
+      if (prev <= 0) {
+        setTimeout(() => setTournamentResult("player_busted"), 1400);
+      }
+      return prev;
+    });
   }, [isAiThinking, stage, pot, currentBet, playerRoundBet, playerHole, communityCards, updateAiDialogue, addChatMessage]);
 
   // AI Turn handler
-  const triggerAiTurn = (playerAddedBet: number, isPlayerAllIn = false, wasShove = false) => {
+  const triggerAiTurn = (playerAddedBet: number, isPlayerAllIn = false) => {
     setIsAiThinking(true);
 
     setTimeout(() => {
@@ -585,7 +604,7 @@ export default function NotFound() {
       const decision = getAdaptiveAIDecision(
         aiHole,
         communityCards,
-        pot + (wasShove ? playerAddedBet : 0),
+        pot,
         toCallForAi,
         aiChips,
         stage === "showdown" ? "river" : stage,
@@ -595,38 +614,45 @@ export default function NotFound() {
 
       if (decision.action === "fold") {
         playCasinoSound("fold");
-        const winningPot = pot + (wasShove ? playerAddedBet : 0);
-        setHandResult(`Alfred Folds! You WIN $${winningPot}!`);
-        setPlayerChips((prev) => prev + winningPot);
+        setHandResult(`Alfred Folds! You WIN $${pot}!`);
+        setPlayerChips((prev) => prev + pot);
         playCasinoSound("win");
         setStage("showdown");
+
+        setAiChips((aiPrev) => {
+          if (aiPrev <= 0) {
+            setTimeout(() => setTournamentResult("player_champion"), 1400);
+          }
+          return aiPrev;
+        });
+
       } else if (decision.action === "call") {
         playCasinoSound("chip");
         const callAmt = Math.min(aiChips, toCallForAi);
-        const finalAiChips = aiChips - callAmt;
-        const finalPot = pot + (wasShove ? playerAddedBet : 0) + callAmt;
-        setAiChips(finalAiChips);
-        setPot(finalPot);
+        const isAiAllIn = aiChips - callAmt <= 0;
+
+        setAiChips((prev) => prev - callAmt);
+        setPot((prev) => prev + callAmt);
         setAiRoundBet((prev) => prev + callAmt);
 
         // IF PLAYER IS ALL-IN OR ALFRED IS ALL-IN -> DIRECTLY DEAL THE 5 COMMUNITY CARDS & RUN SHOWDOWN!
-        if (isPlayerAllIn || finalAiChips <= 0 || playerChips <= 0) {
-          runoutAllIn(deck, communityCards, finalPot, isPlayerAllIn ? 0 : playerChips, finalAiChips);
+        if (isPlayerAllIn || isAiAllIn || playerChips <= 0) {
+          runoutAllIn(deck, communityCards);
         } else {
           setTimeout(advanceStreet, 450);
         }
       } else if (decision.action === "raise") {
         const raiseAmt = Math.min(aiChips, decision.raiseAmount || 40);
-        const finalAiChips = aiChips - raiseAmt;
-        const finalPot = pot + (wasShove ? playerAddedBet : 0) + raiseAmt;
-        playCasinoSound(finalAiChips <= 0 ? "allin" : "chip");
-        setAiChips(finalAiChips);
-        setPot(finalPot);
+        const isAiAllIn = aiChips - raiseAmt <= 0;
+
+        playCasinoSound(isAiAllIn ? "allin" : "chip");
+        setAiChips((prev) => prev - raiseAmt);
+        setPot((prev) => prev + raiseAmt);
         setAiRoundBet((prev) => prev + raiseAmt);
         setCurrentBet(aiRoundBet + raiseAmt);
 
-        if (finalAiChips <= 0 || isPlayerAllIn) {
-          runoutAllIn(deck, communityCards, finalPot, isPlayerAllIn ? 0 : playerChips, finalAiChips);
+        if (isAiAllIn || isPlayerAllIn) {
+          runoutAllIn(deck, communityCards);
         }
       } else {
         playCasinoSound("check");
@@ -676,11 +702,11 @@ export default function NotFound() {
       if (key === "escape") {
         setShowRulesModal(false);
         setShowWelcomeModal(false);
-        setIsBustedModalOpen(false);
+        setTournamentResult(null);
         return;
       }
 
-      if (showRulesModal || showWelcomeModal || isBustedModalOpen) return;
+      if (showRulesModal || showWelcomeModal || tournamentResult !== null) return;
 
       if (stage === "showdown") {
         if (e.code === "Enter" || e.code === "Space") {
@@ -720,7 +746,7 @@ export default function NotFound() {
   }, [
     showRulesModal,
     showWelcomeModal,
-    isBustedModalOpen,
+    tournamentResult,
     stage,
     toCall,
     playerChips,
@@ -1263,9 +1289,9 @@ export default function NotFound() {
         )}
       </AnimatePresence>
 
-      {/* GAME OVER / BUSTED REBUY MODAL */}
+      {/* 🏆 CHAMPION VICTORY MODAL (TRIGGERED ONLY WHEN ALFRED HAS $0 CHIPS) */}
       <AnimatePresence>
-        {isBustedModalOpen && (
+        {tournamentResult === "player_champion" && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -1275,20 +1301,71 @@ export default function NotFound() {
             <motion.div
               initial={{ scale: 0.9, y: 20 }}
               animate={{ scale: 1, y: 0 }}
-              className="bg-[#0b101d] border border-amber-500/40 rounded-3xl p-8 max-w-md w-full text-center space-y-6 shadow-2xl font-mono"
+              className="bg-[#091510] border-2 border-emerald-500/50 rounded-3xl p-8 max-w-md w-full text-center space-y-6 shadow-[0_0_80px_rgba(16,185,129,0.4)] font-mono"
             >
-              <div className="size-20 rounded-3xl mx-auto flex items-center justify-center text-4xl bg-amber-500/10 border border-amber-500/30">
-                {playerChips <= 0 ? "💸" : "👑"}
+              <div className="size-20 rounded-3xl mx-auto flex items-center justify-center text-4xl bg-emerald-500/20 border border-emerald-500/40 shadow-[0_0_30px_rgba(16,185,129,0.5)]">
+                👑
               </div>
 
               <div className="space-y-2">
-                <h2 className="text-2xl sm:text-3xl font-black uppercase tracking-tight text-white">
-                  {playerChips <= 0 ? "YOU ARE BUSTED!" : "CHAMPION! ALFRED BUSTED"}
+                <span className="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-400 text-xs font-bold border border-emerald-500/40 uppercase tracking-widest">
+                  TOURNAMENT VICTORY 🏆
+                </span>
+                <h2 className="text-2xl sm:text-3xl font-black uppercase tracking-tight text-white mt-2">
+                  CHAMPION! ALFRED BUSTED
+                </h2>
+                <p className="text-xs text-emerald-200/80 leading-relaxed font-sans">
+                  You cleaned Alfred out of all $1,000 chips! Flawless poker mastery and fearless conviction on the felt, sir.
+                </p>
+              </div>
+
+              <div className="flex flex-col gap-3">
+                <button
+                  type="button"
+                  onClick={handleRebuy}
+                  className="w-full py-4 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-400 text-black font-black uppercase tracking-widest text-sm shadow-[0_0_30px_rgba(16,185,129,0.6)] hover:bg-white transition-all cursor-pointer"
+                >
+                  START NEW TOURNAMENT ↵
+                </button>
+                <Link
+                  to="/"
+                  className="w-full py-3.5 rounded-2xl bg-white/10 text-white font-bold uppercase tracking-wider text-xs hover:bg-white hover:text-black transition-all"
+                >
+                  Return to Portfolio
+                </Link>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* 💸 BUSTED MODAL (TRIGGERED ONLY WHEN PLAYER HAS $0 CHIPS) */}
+      <AnimatePresence>
+        {tournamentResult === "player_busted" && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[30000] bg-black/90 backdrop-blur-lg flex items-center justify-center p-4 sm:p-6"
+          >
+            <motion.div
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              className="bg-[#190d0e] border-2 border-red-500/50 rounded-3xl p-8 max-w-md w-full text-center space-y-6 shadow-[0_0_80px_rgba(239,68,68,0.3)] font-mono"
+            >
+              <div className="size-20 rounded-3xl mx-auto flex items-center justify-center text-4xl bg-red-500/10 border border-red-500/30">
+                💸
+              </div>
+
+              <div className="space-y-2">
+                <span className="px-3 py-1 rounded-full bg-red-500/20 text-red-400 text-xs font-bold border border-red-500/40 uppercase tracking-widest">
+                  STACK DEPLETED
+                </span>
+                <h2 className="text-2xl sm:text-3xl font-black uppercase tracking-tight text-white mt-2">
+                  YOU ARE BUSTED!
                 </h2>
                 <p className="text-xs text-neutral-400 leading-relaxed font-sans">
-                  {playerChips <= 0
-                    ? "You ran out of chips after the final showdown. Re-buy $1,000 to get back in the action!"
-                    : "You cleaned Alfred out of chips! Exceptional poker mastery, sir."}
+                  You ran out of chips after the final showdown. Re-buy $1,000 to get back in the action!
                 </p>
               </div>
 

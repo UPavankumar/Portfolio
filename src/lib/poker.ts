@@ -68,6 +68,39 @@ const RANKS: { rank: Rank; value: number }[] = [
   { rank: "A", value: 14 },
 ];
 
+export function getRankName(value: number, plural = false): string {
+  switch (value) {
+    case 14:
+      return plural ? "Aces" : "Ace";
+    case 13:
+      return plural ? "Kings" : "King";
+    case 12:
+      return plural ? "Queens" : "Queen";
+    case 11:
+      return plural ? "Jacks" : "Jack";
+    case 10:
+      return plural ? "10s" : "10";
+    case 9:
+      return plural ? "9s" : "9";
+    case 8:
+      return plural ? "8s" : "8";
+    case 7:
+      return plural ? "7s" : "7";
+    case 6:
+      return plural ? "6s" : "6";
+    case 5:
+      return plural ? "5s" : "5";
+    case 4:
+      return plural ? "4s" : "4";
+    case 3:
+      return plural ? "3s" : "3";
+    case 2:
+      return plural ? "2s" : "2";
+    default:
+      return String(value);
+  }
+}
+
 export function createDeck(): Card[] {
   const deck: Card[] = [];
   for (const suit of SUITS) {
@@ -137,7 +170,7 @@ function evaluate5Cards(cards: Card[]): { rankName: HandRank; score: number; des
     values[3] === 3 &&
     values[4] === 2
   ) {
-    // Ace-low straight (A-2-3-4-5)
+    // Ace-low wheel straight (A-2-3-4-5)
     isStraight = true;
     straightHigh = 5;
   }
@@ -160,7 +193,7 @@ function evaluate5Cards(cards: Card[]): { rankName: HandRank; score: number; des
     return {
       rankName: "Straight Flush",
       score: 8000000 + straightHigh,
-      description: `Straight Flush, ${sorted[0].rank} High`,
+      description: `Straight Flush, ${getRankName(straightHigh)} High`,
     };
   }
 
@@ -171,7 +204,7 @@ function evaluate5Cards(cards: Card[]): { rankName: HandRank; score: number; des
     return {
       rankName: "Four of a Kind",
       score: 7000000 + quadVal * 100 + kicker,
-      description: `Four of a Kind, ${freq[0].value}s`,
+      description: `Four of a Kind, ${getRankName(quadVal, true)}`,
     };
   }
 
@@ -182,7 +215,7 @@ function evaluate5Cards(cards: Card[]): { rankName: HandRank; score: number; des
     return {
       rankName: "Full House",
       score: 6000000 + tripVal * 100 + pairVal,
-      description: `Full House, ${freq[0].value}s full of ${freq[1].value}s`,
+      description: `Full House, ${getRankName(tripVal, true)} full of ${getRankName(pairVal, true)}`,
     };
   }
 
@@ -195,7 +228,7 @@ function evaluate5Cards(cards: Card[]): { rankName: HandRank; score: number; des
     return {
       rankName: "Flush",
       score,
-      description: `Flush, ${sorted[0].rank} High`,
+      description: `Flush, ${getRankName(sorted[0].value)} High`,
     };
   }
 
@@ -204,7 +237,7 @@ function evaluate5Cards(cards: Card[]): { rankName: HandRank; score: number; des
     return {
       rankName: "Straight",
       score: 4000000 + straightHigh,
-      description: `Straight, ${straightHigh === 5 ? "5" : sorted[0].rank} High`,
+      description: `Straight, ${getRankName(straightHigh)} High`,
     };
   }
 
@@ -215,7 +248,7 @@ function evaluate5Cards(cards: Card[]): { rankName: HandRank; score: number; des
     return {
       rankName: "Three of a Kind",
       score: 3000000 + tripVal * 1000 + kickers[0] * 15 + kickers[1],
-      description: `Three of a Kind, ${freq[0].value}s`,
+      description: `Three of a Kind, ${getRankName(tripVal, true)}`,
     };
   }
 
@@ -227,7 +260,7 @@ function evaluate5Cards(cards: Card[]): { rankName: HandRank; score: number; des
     return {
       rankName: "Two Pair",
       score: 2000000 + highPair * 1000 + lowPair * 15 + kicker,
-      description: `Two Pair, ${highPair}s and ${lowPair}s`,
+      description: `Two Pair, ${getRankName(highPair, true)} and ${getRankName(lowPair, true)}`,
     };
   }
 
@@ -242,7 +275,7 @@ function evaluate5Cards(cards: Card[]): { rankName: HandRank; score: number; des
     return {
       rankName: "One Pair",
       score,
-      description: `One Pair, ${pairVal}s`,
+      description: `Pair of ${getRankName(pairVal, true)}`,
     };
   }
 
@@ -254,7 +287,7 @@ function evaluate5Cards(cards: Card[]): { rankName: HandRank; score: number; des
   return {
     rankName: "High Card",
     score,
-    description: `High Card, ${sorted[0].rank}`,
+    description: `High Card, ${getRankName(sorted[0].value)}`,
   };
 }
 
@@ -266,7 +299,7 @@ export function evaluateHand(holeCards: Card[], communityCards: Card[]): HandEva
     return {
       rankName: "High Card",
       score: sorted[0]?.value || 0,
-      description: sorted[0] ? `High Card: ${sorted[0].rank}` : "Evaluating...",
+      description: sorted[0] ? `High Card: ${getRankName(sorted[0].value)}` : "Evaluating...",
       bestCards: sorted,
     };
   }
@@ -620,12 +653,12 @@ export function getAlfredCardCommentary(
   }
   if (pEval.rankName === "One Pair") {
     return result === "player_win"
-      ? `A pair of ${pEval.description.split(", ")[1] || "cards"} held up! Crisp value.`
-      : `Just a pair in the end. The board offered little assistance.`;
+      ? `${pEval.description} held up! Crisp value.`
+      : `Just ${pEval.description} in the end. The board offered little assistance.`;
   }
 
   // High Card
   return result === "player_win"
-    ? `You won that pot with mere High Card (${pEval.description})?! Ice in your veins, sir.`
-    : `High Card only (${pEval.description}). A valiant attempt to contest the pot nonetheless.`;
+    ? `You won that pot with mere ${pEval.description}?! Ice in your veins, sir.`
+    : `${pEval.description} only. A valiant attempt to contest the pot nonetheless.`;
 }
