@@ -109,6 +109,7 @@ export default function NotFound() {
   const [showRulesModal, setShowRulesModal] = useState(false);
   const [showChatSidebar, setShowChatSidebar] = useState(true);
   const [showWelcomeModal, setShowWelcomeModal] = useState(true);
+  const [showExitModal, setShowExitModal] = useState(false);
   
   // Dedicated Tournament End State: Champion vs Busted
   const [tournamentResult, setTournamentResult] = useState<"player_champion" | "player_busted" | null>(null);
@@ -241,7 +242,7 @@ export default function NotFound() {
     updateAiDialogue("Fresh $1,000 bankrolls reloaded. Cards are in the air!");
   }, [updateAiDialogue]);
 
-  // Start fresh hand
+  // Start fresh hand (Without revealing player profile in-game)
   const startNewHand = useCallback(() => {
     setTournamentResult(null);
 
@@ -283,11 +284,11 @@ export default function NotFound() {
 
     playCasinoSound("deal");
     const dealMsg =
-      playerProfile.totalHands >= 2
-        ? `Hand #${playerProfile.totalHands + 1}. Profiled as: ${playerProfile.archetype}. Cards dealt.`
+      playerProfile.totalHands >= 1
+        ? `Hand #${playerProfile.totalHands + 1}. Cards are in the air. Blinds posted. What's your move, sir?`
         : "Cards are in the air. Big Blind $20 posted. What's your move?";
     updateAiDialogue(dealMsg);
-  }, [playerChips, aiChips, playerProfile.totalHands, playerProfile.archetype, updateAiDialogue, handleRebuy]);
+  }, [playerChips, aiChips, playerProfile.totalHands, updateAiDialogue, handleRebuy]);
 
   // Initial deal
   useEffect(() => {
@@ -694,11 +695,12 @@ export default function NotFound() {
       if (key === "escape") {
         setShowRulesModal(false);
         setShowWelcomeModal(false);
+        setShowExitModal(false);
         setTournamentResult(null);
         return;
       }
 
-      if (showRulesModal || showWelcomeModal || tournamentResult !== null) return;
+      if (showRulesModal || showWelcomeModal || showExitModal || tournamentResult !== null) return;
 
       if (stage === "showdown") {
         if (e.code === "Enter" || e.code === "Space") {
@@ -738,6 +740,7 @@ export default function NotFound() {
   }, [
     showRulesModal,
     showWelcomeModal,
+    showExitModal,
     tournamentResult,
     stage,
     toCall,
@@ -750,6 +753,10 @@ export default function NotFound() {
     handlePlayerRaise,
     startNewHand,
   ]);
+
+  // Compute live classified profile for exit dossier
+  const liveClassifiedProfile = classifyPlayerProfile(playerProfile);
+  const netProfit = playerChips - 1000;
 
   return (
     <div className="fixed inset-0 z-[10000] bg-[#070b14] text-white flex flex-col justify-between overflow-hidden select-none font-sans cursor-none">
@@ -823,13 +830,14 @@ export default function NotFound() {
             <span>📜 Rules [H]</span>
           </button>
 
-          {/* Exit */}
-          <Link
-            to="/"
-            className="px-3.5 py-2 rounded-xl bg-white/10 border border-white/15 text-xs font-bold hover:bg-white hover:text-black transition-all hover:scale-105"
+          {/* Exit Button with Dossier Analysis Preview */}
+          <button
+            type="button"
+            onClick={() => setShowExitModal(true)}
+            className="px-3.5 py-2 rounded-xl bg-white/10 border border-white/15 text-xs font-bold hover:bg-white hover:text-black transition-all hover:scale-105 cursor-pointer"
           >
             ← Exit
-          </Link>
+          </button>
         </div>
       </header>
 
@@ -1281,6 +1289,143 @@ export default function NotFound() {
         )}
       </AnimatePresence>
 
+      {/* 📊 ALFRED'S PLAYER PROFILE & EXIT ANALYSIS DOSSIER MODAL */}
+      <AnimatePresence>
+        {showExitModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[45000] bg-black/90 backdrop-blur-xl flex items-center justify-center p-4 sm:p-6"
+            onClick={() => setShowExitModal(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 20 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-[#090d18] border-2 border-amber-500/40 rounded-3xl p-6 sm:p-8 max-w-lg w-full space-y-6 shadow-[0_0_90px_rgba(245,158,11,0.25)] font-mono relative max-h-[90vh] overflow-y-auto"
+            >
+              {/* Close Button */}
+              <button
+                onClick={() => setShowExitModal(false)}
+                className="absolute top-4 right-4 size-8 rounded-full bg-white/10 hover:bg-white/20 text-neutral-300 hover:text-white flex items-center justify-center text-xs transition-colors cursor-pointer"
+              >
+                ✕
+              </button>
+
+              {/* Dossier Header */}
+              <div className="flex items-center gap-3 border-b border-white/10 pb-4">
+                <div className="size-12 rounded-2xl bg-gradient-to-tr from-amber-500 to-amber-300 text-black font-black flex items-center justify-center text-2xl shadow-lg">
+                  🤵
+                </div>
+                <div>
+                  <span className="text-[10px] text-amber-400 font-bold uppercase tracking-widest block">
+                    ALFRED'S SCOUTING DOSSIER
+                  </span>
+                  <h2 className="text-lg sm:text-xl font-black text-white uppercase tracking-tight">
+                    Player Performance & Analysis
+                  </h2>
+                </div>
+              </div>
+
+              {/* Archetype Badge & Alfred Read */}
+              <div className="p-4 rounded-2xl bg-gradient-to-br from-amber-500/10 via-amber-500/5 to-transparent border border-amber-500/30 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-neutral-400 uppercase">Classified Archetype:</span>
+                  <span className="px-3 py-1 rounded-full bg-amber-500 text-black font-black text-xs uppercase tracking-wider">
+                    {liveClassifiedProfile.archetype}
+                  </span>
+                </div>
+                <p className="text-xs text-amber-200 leading-relaxed font-sans pt-1 border-t border-white/10">
+                  <span className="font-bold text-amber-400">Alfred's Observation:</span> "{liveClassifiedProfile.readSummary}"
+                </p>
+              </div>
+
+              {/* Session Metrics Grid */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center">
+                <div className="p-3 rounded-2xl bg-white/5 border border-white/10">
+                  <span className="text-[9px] text-neutral-400 uppercase block">Hands Played</span>
+                  <span className="text-lg font-black text-white">{liveClassifiedProfile.totalHands}</span>
+                </div>
+
+                <div className="p-3 rounded-2xl bg-white/5 border border-white/10">
+                  <span className="text-[9px] text-neutral-400 uppercase block">Final Stack</span>
+                  <span className={`text-lg font-black ${playerChips >= 1000 ? "text-emerald-400" : "text-red-400"}`}>
+                    ${playerChips.toLocaleString()}
+                  </span>
+                </div>
+
+                <div className="p-3 rounded-2xl bg-white/5 border border-white/10">
+                  <span className="text-[9px] text-neutral-400 uppercase block">VPIP Rate</span>
+                  <span className="text-lg font-black text-amber-400">{liveClassifiedProfile.vpipPercent}%</span>
+                </div>
+
+                <div className="p-3 rounded-2xl bg-white/5 border border-white/10">
+                  <span className="text-[9px] text-neutral-400 uppercase block">Aggression</span>
+                  <span className="text-lg font-black text-emerald-400">{liveClassifiedProfile.aggressionRate}%</span>
+                </div>
+              </div>
+
+              {/* Detailed Action Tally */}
+              <div className="p-3.5 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-between text-xs text-neutral-300">
+                <div className="text-center">
+                  <span className="text-amber-400 font-black text-sm block">{liveClassifiedProfile.totalRaises}</span>
+                  <span className="text-[9px] text-neutral-400 uppercase">Raises</span>
+                </div>
+                <div className="h-6 w-px bg-white/10" />
+                <div className="text-center">
+                  <span className="text-emerald-400 font-black text-sm block">{liveClassifiedProfile.totalCalls}</span>
+                  <span className="text-[9px] text-neutral-400 uppercase">Calls</span>
+                </div>
+                <div className="h-6 w-px bg-white/10" />
+                <div className="text-center">
+                  <span className="text-neutral-300 font-black text-sm block">{liveClassifiedProfile.totalChecks}</span>
+                  <span className="text-[9px] text-neutral-400 uppercase">Checks</span>
+                </div>
+                <div className="h-6 w-px bg-white/10" />
+                <div className="text-center">
+                  <span className="text-red-400 font-black text-sm block">{liveClassifiedProfile.totalFolds}</span>
+                  <span className="text-[9px] text-neutral-400 uppercase">Folds</span>
+                </div>
+              </div>
+
+              {/* Net P&L Alert */}
+              <div className={`p-3 rounded-2xl text-center text-xs font-bold ${
+                netProfit > 0
+                  ? "bg-emerald-500/15 border border-emerald-500/30 text-emerald-300"
+                  : netProfit < 0
+                  ? "bg-red-500/15 border border-red-500/30 text-red-300"
+                  : "bg-white/5 border border-white/10 text-neutral-300"
+              }`}>
+                {netProfit > 0
+                  ? `🎉 Session Profit: +$${netProfit.toLocaleString()} chips!`
+                  : netProfit < 0
+                  ? `📉 Session Deficit: -$${Math.abs(netProfit).toLocaleString()} chips.`
+                  : "⚖️ Break-even session ($0 net change)."}
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                <Link
+                  to="/"
+                  className="flex-1 py-3.5 rounded-2xl bg-gradient-to-r from-amber-500 to-yellow-500 text-black font-black uppercase text-xs hover:bg-white transition-all flex items-center justify-center shadow-lg"
+                >
+                  ← Return to Portfolio
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => setShowExitModal(false)}
+                  className="px-5 py-3.5 rounded-2xl bg-white/10 border border-white/15 text-white font-bold uppercase text-xs hover:bg-white hover:text-black transition-all cursor-pointer"
+                >
+                  Stay & Play ♠
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* 🏆 CHAMPION VICTORY MODAL (TRIGGERED ONLY WHEN ALFRED HAS $0 CHIPS) */}
       <AnimatePresence>
         {tournamentResult === "player_champion" && (
@@ -1319,12 +1464,16 @@ export default function NotFound() {
                 >
                   START NEW TOURNAMENT ↵
                 </button>
-                <Link
-                  to="/"
-                  className="w-full py-3.5 rounded-2xl bg-white/10 text-white font-bold uppercase tracking-wider text-xs hover:bg-white hover:text-black transition-all"
+                <button
+                  type="button"
+                  onClick={() => {
+                    setTournamentResult(null);
+                    setShowExitModal(true);
+                  }}
+                  className="w-full py-3.5 rounded-2xl bg-white/10 text-white font-bold uppercase tracking-wider text-xs hover:bg-white hover:text-black transition-all cursor-pointer"
                 >
-                  Return to Portfolio
-                </Link>
+                  View Dossier & Exit
+                </button>
               </div>
             </motion.div>
           </motion.div>
@@ -1369,12 +1518,16 @@ export default function NotFound() {
                 >
                   RE-BUY $1,000 & PLAY AGAIN ↵
                 </button>
-                <Link
-                  to="/"
-                  className="w-full py-3.5 rounded-2xl bg-white/10 text-white font-bold uppercase tracking-wider text-xs hover:bg-white hover:text-black transition-all"
+                <button
+                  type="button"
+                  onClick={() => {
+                    setTournamentResult(null);
+                    setShowExitModal(true);
+                  }}
+                  className="w-full py-3.5 rounded-2xl bg-white/10 text-white font-bold uppercase tracking-wider text-xs hover:bg-white hover:text-black transition-all cursor-pointer"
                 >
-                  Return to Portfolio
-                </Link>
+                  View Dossier & Exit
+                </button>
               </div>
             </motion.div>
           </motion.div>
