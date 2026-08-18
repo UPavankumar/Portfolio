@@ -4,20 +4,10 @@ import { motion, AnimatePresence } from "framer-motion";
 
 const VALID_ROUTES = ["/", "/about", "/projects", "/skills", "/contact"];
 
-const GREETINGS = [
-  "Hello", // EN
-  "Bonjour", // FR
-  "Hola", // ES
-  "你好", // ZH
-  "안녕하세요", // KO
-  "Ciao", // IT
-  "Hallo", // DE
-  "Olá", // PT
-  "Здравствуйте", // RU
-  "ನಮಸ್ಕಾರ", // KN
-  "నమస్కారం", // TE
-  "こんにちは", // JA
-  "வணக்கம்", // TA
+const INTRO_WORDS = [
+  "PAVAN KUMAR",
+  "AI AUTOMATION",
+  "PORTFOLIO",
 ];
 
 export default function Preloader() {
@@ -35,21 +25,20 @@ export default function Preloader() {
       return;
     }
 
+    // Lock scroll during quick initial intro
     document.body.style.overflow = "hidden";
 
     if (isFinished) {
       const exitTimer = setTimeout(() => {
         setIsLoading(false);
-        setTimeout(() => {
-          document.body.style.overflow = "";
-        }, 1000);
-      }, 400);
+        document.body.style.overflow = "";
+      }, 300);
       return () => clearTimeout(exitTimer);
     }
 
     const interval = setInterval(() => {
       setIndex((prev) => {
-        if (prev === GREETINGS.length - 1) {
+        if (prev === INTRO_WORDS.length - 1) {
           clearInterval(interval);
           setIsFinished(true);
           return prev;
@@ -59,48 +48,48 @@ export default function Preloader() {
     }, 380);
 
     return () => clearInterval(interval);
-  }, [isFinished]);
+  }, [isFinished, is404Route]);
 
   return (
     <AnimatePresence>
       {isLoading && (
         <motion.div
-          key="original-preloader"
-          initial={{ y: 0 }}
+          key="minimal-preloader"
+          initial={{ opacity: 1 }}
           exit={{
             y: "-100%",
-            transition: { duration: 1.0, ease: [0.76, 0, 0.24, 1] },
+            opacity: 0.95,
+            transition: { duration: 0.6, ease: [0.76, 0, 0.24, 1] },
           }}
-          className="fixed inset-0 z-[100000] flex flex-col items-center justify-center bg-[#050505] text-white overflow-hidden select-none"
+          className="fixed inset-0 z-[100000] flex flex-col items-center justify-center bg-[#05070f] text-white overflow-hidden select-none px-6"
         >
-          {/* Subtle ambient radial mesh background */}
-          <div
-            className="absolute inset-0 opacity-[0.03] pointer-events-none"
-            style={{
-              backgroundImage:
-                "radial-gradient(circle at 1px 1px, white 1px, transparent 0)",
-              backgroundSize: "40px 40px",
-            }}
-          />
-
-          {/* Central Animated Greeting */}
-          <div className="relative z-10 flex flex-col items-center justify-center">
-            <motion.h1
-              key={index}
-              initial={{ opacity: 0, y: 15, scale: 0.95 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -15, scale: 1.05 }}
-              transition={{ duration: 0.22, ease: "easeOut" }}
-              className="text-[16vw] md:text-[10vw] font-black leading-none tracking-tighter"
+          {/* Central Animated Monogram & Text */}
+          <div className="relative z-10 flex flex-col items-center justify-center space-y-4">
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.4 }}
+              className="size-12 sm:size-14 rounded-full bg-white text-black font-black flex items-center justify-center text-base sm:text-lg shadow-2xl"
             >
-              {GREETINGS[index]}
-            </motion.h1>
+              P.
+            </motion.div>
+
+            <motion.div
+              key={index}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2 }}
+              className="font-mono text-xs sm:text-sm font-bold tracking-[0.25em] text-[#00f0ff] uppercase text-center"
+            >
+              {INTRO_WORDS[index]}
+            </motion.div>
           </div>
 
-          {/* Bottom Telemetry Bar */}
-          <div className="absolute bottom-8 left-8 right-8 flex items-center justify-between font-mono text-[10px] sm:text-xs text-neutral-500 tracking-widest uppercase">
-            <span>PAVAN KUMAR /// PORTFOLIO</span>
-            <span className="text-[#00f0ff]">INITIALIZING</span>
+          {/* Minimal Bottom Status */}
+          <div className="absolute bottom-8 flex items-center gap-2 font-mono text-[10px] text-neutral-500 tracking-widest uppercase">
+            <span className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            <span>INITIALIZING</span>
           </div>
         </motion.div>
       )}

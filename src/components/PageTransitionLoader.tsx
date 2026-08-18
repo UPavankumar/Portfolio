@@ -32,8 +32,8 @@ export default function PageTransitionLoader() {
     }
     prevPath.current = location.pathname;
 
-    // Skip loader when entering 404 page
-    if (!ROUTE_INFO[location.pathname]) {
+    // Skip loader on mobile screens (< 768px) to keep mobile navigation instant and minimal
+    if (window.innerWidth < 768 || !ROUTE_INFO[location.pathname]) {
       setLoading(false);
       return;
     }
@@ -43,7 +43,7 @@ export default function PageTransitionLoader() {
     setIsRevealing(false);
     setCount(0);
 
-    const duration = 950; // 0.95s smooth readable count
+    const duration = 400; // Snappy 400ms transition
     const startTime = performance.now();
 
     const updateCounter = (currentTime: number) => {
@@ -58,14 +58,13 @@ export default function PageTransitionLoader() {
         requestAnimationFrame(updateCounter);
       } else {
         setCount(100);
-        // Hold at 100% so user sees completion, then split open shutters
         setTimeout(() => {
           setIsRevealing(true);
           setTimeout(() => {
             setLoading(false);
             setIsRevealing(false);
-          }, 800);
-        }, 160);
+          }, 350);
+        }, 60);
       }
     };
 
@@ -79,11 +78,11 @@ export default function PageTransitionLoader() {
       {loading && (
         <div className="fixed inset-0 z-[99999] pointer-events-none flex flex-col justify-between overflow-hidden select-none bg-[#05070f]">
           
-          {/* Top Shutter Panel (STARTS AT y: 0, completely covering top half from frame 0) */}
+          {/* Top Shutter Panel */}
           <motion.div
             initial={{ y: 0 }}
             animate={isRevealing ? { y: "-100%" } : { y: 0 }}
-            transition={{ duration: 0.8, ease: [0.76, 0, 0.24, 1] }}
+            transition={{ duration: 0.35, ease: [0.76, 0, 0.24, 1] }}
             className="w-full h-1/2 bg-[#05070f] border-b border-white/10 relative flex flex-col justify-end px-6 sm:px-12 pb-8 z-10"
           >
             <div className="flex items-center justify-between text-[11px] font-mono text-neutral-500 tracking-widest uppercase">
@@ -91,15 +90,15 @@ export default function PageTransitionLoader() {
                 <span className="size-1.5 rounded-full bg-[#00f0ff] animate-pulse" />
                 <span>DESTINATION /// {targetInfo.label}</span>
               </span>
-              <span className="text-[#00f0ff] font-semibold">LOADING ASSETS</span>
+              <span className="text-[#00f0ff] font-semibold">LOADING</span>
             </div>
           </motion.div>
 
-          {/* Bottom Shutter Panel (STARTS AT y: 0, completely covering bottom half from frame 0) */}
+          {/* Bottom Shutter Panel */}
           <motion.div
             initial={{ y: 0 }}
             animate={isRevealing ? { y: "100%" } : { y: 0 }}
-            transition={{ duration: 0.8, ease: [0.76, 0, 0.24, 1] }}
+            transition={{ duration: 0.35, ease: [0.76, 0, 0.24, 1] }}
             className="w-full h-1/2 bg-[#05070f] border-t border-white/10 relative flex flex-col justify-start px-6 sm:px-12 pt-8 z-10"
           >
             <div className="flex items-center justify-between text-[11px] font-mono text-neutral-500 tracking-widest uppercase">
@@ -108,28 +107,28 @@ export default function PageTransitionLoader() {
             </div>
           </motion.div>
 
-          {/* Center Counter (starts visible, fades out as shutters split open) */}
+          {/* Center Counter */}
           <motion.div
             initial={{ opacity: 1, scale: 1 }}
             animate={isRevealing ? { opacity: 0, scale: 1.05, y: -20 } : { opacity: 1, scale: 1, y: 0 }}
-            transition={{ duration: 0.35 }}
+            transition={{ duration: 0.2 }}
             className="absolute inset-0 flex flex-col items-center justify-center z-30 pointer-events-none"
           >
-            <div className="flex flex-col items-center gap-4">
-              <div className="font-mono text-6xl sm:text-7xl font-black text-white tracking-tighter flex items-baseline select-none">
+            <div className="flex flex-col items-center gap-3">
+              <div className="font-mono text-5xl sm:text-6xl font-black text-white tracking-tighter flex items-baseline select-none">
                 <span>{String(count).padStart(2, "0")}</span>
-                <span className="text-2xl font-bold text-[#00f0ff] ml-1.5">%</span>
+                <span className="text-xl font-bold text-[#00f0ff] ml-1.5">%</span>
               </div>
 
               {/* Progress Line */}
-              <div className="w-40 sm:w-56 h-[2px] bg-white/10 rounded-full overflow-hidden">
+              <div className="w-36 sm:w-48 h-[2px] bg-white/10 rounded-full overflow-hidden">
                 <div
                   className="h-full bg-gradient-to-r from-[#00f0ff] to-white shadow-[0_0_10px_#00f0ff] transition-all"
                   style={{ width: `${count}%` }}
                 />
               </div>
 
-              <span className="text-[10px] font-mono text-neutral-400 tracking-[0.25em] uppercase">
+              <span className="text-[9px] sm:text-[10px] font-mono text-neutral-400 tracking-[0.25em] uppercase">
                 {count < 100 ? `INITIALIZING ${targetInfo.label}` : "VIEW READY"}
               </span>
             </div>
