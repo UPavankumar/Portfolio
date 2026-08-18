@@ -109,7 +109,7 @@ export default function NotFound() {
   const [handResult, setHandResult] = useState<string | null>(null);
   const [raiseSlider, setRaiseSlider] = useState(40);
   const [showRulesModal, setShowRulesModal] = useState(false);
-  const [showChatSidebar, setShowChatSidebar] = useState(true);
+  const [showChatSidebar, setShowChatSidebar] = useState(false);
   const [showWelcomeModal, setShowWelcomeModal] = useState(true);
   const [showExitModal, setShowExitModal] = useState(false);
   
@@ -703,6 +703,7 @@ export default function NotFound() {
         setShowRulesModal(false);
         setShowWelcomeModal(false);
         setShowExitModal(false);
+        setShowChatSidebar(false);
         setTournamentResult(null);
         return;
       }
@@ -771,77 +772,79 @@ export default function NotFound() {
       {/* RED DOT CASINO LASER CURSOR */}
       {isMouseInside && (
         <div
-          className="fixed pointer-events-none z-[60000] -translate-x-1/2 -translate-y-1/2 transition-transform duration-75 ease-out"
+          className="fixed pointer-events-none z-[60000] -translate-x-1/2 -translate-y-1/2 transition-transform duration-75 ease-out hidden sm:block"
           style={{ left: `${mousePos.x}px`, top: `${mousePos.y}px` }}
         >
           <div className="size-3.5 rounded-full bg-red-500 border border-white shadow-[0_0_15px_#ef4444,0_0_5px_#ffffff] animate-pulse" />
         </div>
       )}
 
-      {/* Top Header & Bankroll HUD */}
-      <header className="p-3 sm:p-4 flex items-center justify-between border-b border-white/10 bg-black/70 backdrop-blur-md z-20">
+      {/* Top Header & Bankroll HUD (Responsive for all mobile viewports) */}
+      <header className="p-2.5 sm:p-4 flex items-center justify-between border-b border-white/10 bg-black/80 backdrop-blur-md z-20 gap-2">
         
         {/* 404 Headline Badge */}
-        <div className="flex items-center gap-3">
-          <div className="size-10 rounded-2xl bg-gradient-to-tr from-amber-500 to-amber-300 text-black font-black flex items-center justify-center text-xl shadow-[0_0_20px_rgba(245,158,11,0.5)]">
+        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+          <div className="size-8 sm:size-10 rounded-xl sm:rounded-2xl bg-gradient-to-tr from-amber-500 to-amber-300 text-black font-black flex items-center justify-center text-base sm:text-xl shadow-[0_0_20px_rgba(245,158,11,0.5)]">
             ♠
           </div>
           <div>
-            <div className="flex items-center gap-2">
-              <span className="font-mono text-xs text-red-400 font-bold tracking-wider uppercase">
-                404: Page Not Found
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <span className="font-mono text-[10px] sm:text-xs text-red-400 font-bold tracking-wider uppercase">
+                404: LOUNGE
               </span>
-              <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 text-[10px] font-mono border border-emerald-500/30">
-                TEXAS HOLD'EM
+              <span className="px-1.5 py-0.2 rounded-full bg-emerald-500/20 text-emerald-400 text-[9px] font-mono border border-emerald-500/30">
+                HOLD'EM
               </span>
             </div>
-            <h1 className="text-xs sm:text-sm font-bold text-neutral-300">
+            <h1 className="text-[11px] sm:text-sm font-bold text-neutral-300 hidden md:block">
               This page is not available — but since you're here, <span className="text-amber-400 font-black">let's play poker!</span>
             </h1>
           </div>
         </div>
 
         {/* Bankroll Tracker & Actions */}
-        <div className="flex items-center gap-3 sm:gap-5 font-mono">
+        <div className="flex items-center gap-2 sm:gap-4 font-mono">
           <div className="text-right">
-            <span className="text-[10px] text-neutral-400 block uppercase">Your Bankroll</span>
-            <span className="text-base sm:text-lg font-black text-emerald-400">${playerChips.toLocaleString()}</span>
+            <span className="text-[8px] sm:text-[10px] text-neutral-400 block uppercase">You</span>
+            <span className="text-xs sm:text-base font-black text-emerald-400">${playerChips.toLocaleString()}</span>
           </div>
 
-          <div className="h-8 w-px bg-white/10" />
+          <div className="h-6 sm:h-8 w-px bg-white/10" />
 
           <div className="text-right">
-            <span className="text-[10px] text-neutral-400 block uppercase">Alfred (AI)</span>
-            <span className="text-base sm:text-lg font-bold text-neutral-300">${aiChips.toLocaleString()}</span>
+            <span className="text-[8px] sm:text-[10px] text-neutral-400 block uppercase">Alfred</span>
+            <span className="text-xs sm:text-base font-bold text-neutral-300">${aiChips.toLocaleString()}</span>
           </div>
 
           {/* Toggle Chat Button */}
           <button
             type="button"
             onClick={() => setShowChatSidebar((prev) => !prev)}
-            className={`px-3 py-2 rounded-xl border text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-md ${
+            className={`px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl border text-[11px] sm:text-xs font-bold transition-all flex items-center gap-1 cursor-pointer shadow-md ${
               showChatSidebar
                 ? "bg-amber-500 text-black border-amber-400"
                 : "bg-white/10 text-white border-white/20 hover:bg-white hover:text-black"
             }`}
           >
-            <span>💬 Dealer Chat</span>
+            <span>💬</span>
+            <span className="hidden sm:inline">Dealer Chat</span>
           </button>
 
           {/* Rules & Instructions Button */}
           <button
             type="button"
             onClick={() => setShowRulesModal(true)}
-            className="px-3 py-2 rounded-xl bg-amber-500/15 border border-amber-500/30 text-xs font-bold text-amber-300 hover:bg-amber-500 hover:text-black transition-all flex items-center gap-1.5 cursor-pointer shadow-md"
+            className="px-2 sm:px-3 py-1.5 sm:py-2 rounded-xl bg-amber-500/15 border border-amber-500/30 text-[11px] sm:text-xs font-bold text-amber-300 hover:bg-amber-500 hover:text-black transition-all flex items-center gap-1 cursor-pointer shadow-md"
           >
-            <span>📜 Rules [H]</span>
+            <span>📜</span>
+            <span className="hidden sm:inline">Rules [H]</span>
           </button>
 
           {/* Exit Button with Dossier Analysis Preview */}
           <button
             type="button"
             onClick={() => setShowExitModal(true)}
-            className="px-3.5 py-2 rounded-xl bg-white/10 border border-white/15 text-xs font-bold hover:bg-white hover:text-black transition-all hover:scale-105 cursor-pointer"
+            className="px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-xl bg-white/10 border border-white/15 text-[11px] sm:text-xs font-bold hover:bg-white hover:text-black transition-all hover:scale-105 cursor-pointer"
           >
             ← Exit
           </button>
@@ -852,13 +855,13 @@ export default function NotFound() {
       <div className="flex-1 flex overflow-hidden relative">
         
         {/* Main Poker Felt Area */}
-        <main className="relative flex-1 flex flex-col items-center justify-between p-3 sm:p-6 w-full mx-auto">
+        <main className="relative flex-1 flex flex-col items-center justify-between p-2 sm:p-6 w-full mx-auto overflow-hidden">
           
           {/* Table Felt Glow & Oval Border */}
-          <div className="absolute inset-2 sm:inset-4 rounded-[3rem] sm:rounded-[5rem] bg-gradient-to-b from-[#0b3b24] via-[#062416] to-[#04170e] border-[8px] sm:border-[14px] border-[#2a1a0f] shadow-[inset_0_0_80px_rgba(0,0,0,0.8),0_0_60px_rgba(0,0,0,0.9)] overflow-hidden pointer-events-none" />
+          <div className="absolute inset-1.5 sm:inset-4 rounded-[2rem] sm:rounded-[5rem] bg-gradient-to-b from-[#0b3b24] via-[#062416] to-[#04170e] border-[6px] sm:border-[14px] border-[#2a1a0f] shadow-[inset_0_0_80px_rgba(0,0,0,0.8),0_0_60px_rgba(0,0,0,0.9)] overflow-hidden pointer-events-none" />
 
           {/* AI Dealer Area */}
-          <div className="relative z-10 flex flex-col items-center space-y-2 pt-1">
+          <div className="relative z-10 flex flex-col items-center space-y-1.5 pt-1">
             
             {/* Alfred Speech Bubble (Rendered only when Alfred has something selective to say) */}
             {aiDialogue && (
@@ -866,7 +869,7 @@ export default function NotFound() {
                 key={aiDialogue}
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="px-4 py-2 rounded-2xl bg-black/85 border border-amber-500/30 text-amber-200 text-xs sm:text-sm font-mono max-w-lg text-center shadow-lg backdrop-blur-md"
+                className="px-3 sm:px-4 py-1.5 sm:py-2 rounded-2xl bg-black/85 border border-amber-500/30 text-amber-200 text-[11px] sm:text-sm font-mono max-w-[90vw] sm:max-w-lg text-center shadow-lg backdrop-blur-md"
               >
                 <span className="text-amber-400 font-bold mr-1">Alfred:</span> {aiDialogue}
               </motion.div>
@@ -874,24 +877,24 @@ export default function NotFound() {
 
             {/* AI Hand Evaluation Pill (Showdown only) */}
             {stage === "showdown" && aiHandEval && (
-              <div className="px-3.5 py-1 rounded-full bg-black/80 border border-amber-500/40 text-amber-300 font-mono text-xs backdrop-blur-md shadow-md">
-                Alfred's Hand: {aiHandEval.description}
+              <div className="px-3 py-0.5 rounded-full bg-black/80 border border-amber-500/40 text-amber-300 font-mono text-[10px] sm:text-xs backdrop-blur-md shadow-md">
+                Alfred: {aiHandEval.description}
               </div>
             )}
 
             {/* AI Avatar & Hole Cards */}
-            <div className="flex items-center gap-4">
-              <div className="relative size-12 sm:size-14 rounded-full border-2 border-amber-500/50 bg-[#121624] overflow-hidden flex items-center justify-center text-xl shadow-lg">
+            <div className="flex items-center gap-2.5 sm:gap-4">
+              <div className="relative size-10 sm:size-14 rounded-full border-2 border-amber-500/50 bg-[#121624] overflow-hidden flex items-center justify-center text-lg sm:text-xl shadow-lg">
                 🤵
                 {isAiThinking && (
                   <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-                    <span className="size-3 rounded-full bg-amber-400 animate-ping" />
+                    <span className="size-2.5 rounded-full bg-amber-400 animate-ping" />
                   </div>
                 )}
               </div>
 
               {/* AI Hole Cards */}
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 sm:gap-2">
                 {aiHole.map((card, i) => (
                   <CardView
                     key={i}
@@ -904,28 +907,28 @@ export default function NotFound() {
           </div>
 
           {/* Center Community Board & Pot Area */}
-          <div className="relative z-10 flex flex-col items-center space-y-3 my-auto">
+          <div className="relative z-10 flex flex-col items-center space-y-2 my-auto">
             
             {/* Main Pot Counter with Chip Piles */}
-            <div className="flex items-center gap-3 px-6 py-2 rounded-full bg-black/80 border border-amber-500/40 shadow-[0_0_30px_rgba(245,158,11,0.3)] backdrop-blur-xl">
-              <span className="text-lg">🪙</span>
+            <div className="flex items-center gap-2 sm:gap-3 px-4 sm:px-6 py-1.5 sm:py-2 rounded-full bg-black/80 border border-amber-500/40 shadow-[0_0_30px_rgba(245,158,11,0.3)] backdrop-blur-xl">
+              <span className="text-base sm:text-lg">🪙</span>
               <div>
-                <span className="text-[10px] text-amber-300 font-mono block tracking-widest uppercase">
-                  TOTAL POT
+                <span className="text-[8px] sm:text-[10px] text-amber-300 font-mono block tracking-widest uppercase">
+                  POT
                 </span>
-                <span className="text-xl sm:text-3xl font-black text-white font-mono">
+                <span className="text-base sm:text-2xl lg:text-3xl font-black text-white font-mono">
                   ${pot.toLocaleString()}
                 </span>
               </div>
               {currentBet > 0 && (
-                <span className="ml-2 px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 text-[10px] font-mono border border-amber-500/30">
-                  To Call: ${toCall}
+                <span className="ml-1 sm:ml-2 px-1.5 py-0.5 rounded-md bg-amber-500/20 text-amber-300 text-[9px] sm:text-[10px] font-mono border border-amber-500/30">
+                  Call: ${toCall}
                 </span>
               )}
             </div>
 
             {/* 5 Community Cards (Flop, Turn, River) */}
-            <div className="flex items-center gap-2 sm:gap-3 p-2.5 sm:p-3 rounded-3xl bg-black/40 border border-white/10 backdrop-blur-md shadow-2xl">
+            <div className="flex items-center gap-1.5 sm:gap-3 p-1.5 sm:p-3 rounded-2xl sm:rounded-3xl bg-black/40 border border-white/10 backdrop-blur-md shadow-2xl">
               {[0, 1, 2, 3, 4].map((index) => {
                 const card = communityCards[index];
                 return (
@@ -933,7 +936,7 @@ export default function NotFound() {
                     {card ? (
                       <CardView card={card} />
                     ) : (
-                      <div className="w-12 sm:w-16 h-16 sm:h-24 rounded-xl border-2 border-dashed border-white/15 bg-black/20 flex items-center justify-center text-neutral-600 font-mono text-xs">
+                      <div className="w-11 sm:w-16 h-15 sm:h-24 rounded-lg sm:rounded-xl border border-dashed border-white/20 bg-black/20 flex items-center justify-center text-neutral-500 font-mono text-[9px] sm:text-xs">
                         {index < 3 ? "FLOP" : index === 3 ? "TURN" : "RIVER"}
                       </div>
                     )}
@@ -949,15 +952,15 @@ export default function NotFound() {
                   initial={{ opacity: 0, scale: 0.9, y: 10 }}
                   animate={{ opacity: 1, scale: 1, y: 0 }}
                   exit={{ opacity: 0 }}
-                  className="px-6 py-3 rounded-2xl bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-500 text-black font-black font-mono text-xs sm:text-sm shadow-[0_0_40px_rgba(245,158,11,0.6)] flex items-center gap-3"
+                  className="px-4 sm:px-6 py-2 sm:py-3 rounded-2xl bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-500 text-black font-black font-mono text-xs sm:text-sm shadow-[0_0_40px_rgba(245,158,11,0.6)] flex items-center gap-2 sm:gap-3"
                 >
-                  <span>{handResult}</span>
+                  <span className="truncate max-w-[220px] sm:max-w-none">{handResult}</span>
                   <button
                     onClick={startNewHand}
-                    className="px-4 py-1.5 rounded-xl bg-black text-white font-bold hover:bg-neutral-800 transition-colors text-xs cursor-pointer ml-2 flex items-center gap-1.5"
+                    className="px-3 sm:px-4 py-1 sm:py-1.5 rounded-xl bg-black text-white font-bold hover:bg-neutral-800 transition-colors text-xs cursor-pointer ml-1 sm:ml-2 shrink-0 flex items-center gap-1"
                   >
-                    <span>Next Hand</span>
-                    <kbd className="px-1.5 py-0.5 rounded bg-white/20 text-[10px] text-white">↵ Enter</kbd>
+                    <span>Next</span>
+                    <kbd className="px-1 py-0.2 rounded bg-white/20 text-[9px] text-white hidden sm:inline">↵ Enter</kbd>
                   </button>
                 </motion.div>
               )}
@@ -966,20 +969,20 @@ export default function NotFound() {
           </div>
 
           {/* Player Hole Cards, Hand Strength & Live Win Probability % */}
-          <div className="relative z-10 flex flex-col items-center space-y-2 pb-1">
+          <div className="relative z-10 flex flex-col items-center space-y-1.5 pb-1">
             
             {/* Real-time Hand Strength & Win Probability Equity Bar */}
             <div className="flex items-center gap-2">
               {playerHandEval && (
-                <div className="px-3.5 py-1 rounded-full bg-black/80 border border-emerald-500/40 text-emerald-300 font-mono text-xs backdrop-blur-md shadow-md flex items-center gap-2">
-                  <span className="size-2 rounded-full bg-emerald-400 animate-pulse" />
+                <div className="px-2.5 sm:px-3.5 py-0.5 sm:py-1 rounded-full bg-black/80 border border-emerald-500/40 text-emerald-300 font-mono text-[10px] sm:text-xs backdrop-blur-md shadow-md flex items-center gap-1.5">
+                  <span className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
                   <span>{playerHandEval.description}</span>
                 </div>
               )}
 
               {/* Dynamic Win Equity % Pill */}
-              <div className="px-3.5 py-1 rounded-full bg-black/80 border border-white/15 font-mono text-xs backdrop-blur-md shadow-md flex items-center gap-2">
-                <span className="text-[10px] text-neutral-400 uppercase">Win Chance:</span>
+              <div className="px-2.5 sm:px-3.5 py-0.5 sm:py-1 rounded-full bg-black/80 border border-white/15 font-mono text-[10px] sm:text-xs backdrop-blur-md shadow-md flex items-center gap-1">
+                <span className="text-[9px] text-neutral-400 uppercase">Win:</span>
                 <span
                   className={`font-black ${
                     winProbability >= 65
@@ -995,7 +998,7 @@ export default function NotFound() {
             </div>
 
             {/* Player Cards */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-3">
               {playerHole.map((card, i) => (
                 <motion.div
                   key={i}
@@ -1011,32 +1014,32 @@ export default function NotFound() {
 
         </main>
 
-        {/* RIGHT SIDEBAR: CHAT INTERFACE WITH ALFRED */}
+        {/* RIGHT SIDEBAR / MOBILE DRAWER: CHAT INTERFACE WITH ALFRED */}
         <AnimatePresence>
           {showChatSidebar && (
             <motion.aside
-              initial={{ width: 0, opacity: 0 }}
-              animate={{ width: 320, opacity: 1 }}
-              exit={{ width: 0, opacity: 0 }}
+              initial={{ x: "100%", opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: "100%", opacity: 0 }}
               transition={{ duration: 0.25 }}
-              className="hidden md:flex flex-col justify-between border-l border-white/10 bg-[#040813]/90 backdrop-blur-xl w-80 h-full z-20 font-mono text-xs shadow-2xl"
+              className="fixed md:relative inset-x-0 bottom-0 top-14 md:top-0 md:w-80 flex flex-col justify-between border-l border-white/10 bg-[#040813]/95 backdrop-blur-2xl z-50 font-mono text-xs shadow-2xl"
             >
               {/* Sidebar Header */}
-              <div className="p-3.5 border-b border-white/10 flex items-center justify-between bg-black/40">
+              <div className="p-3 sm:p-3.5 border-b border-white/10 flex items-center justify-between bg-black/40">
                 <div className="flex items-center gap-2">
                   <span className="size-2 rounded-full bg-emerald-400 animate-pulse" />
                   <span className="font-bold text-white uppercase text-[11px]">Alfred's Table Chat</span>
                 </div>
                 <button
                   onClick={() => setShowChatSidebar(false)}
-                  className="text-neutral-400 hover:text-white text-xs cursor-pointer"
+                  className="px-2 py-1 rounded-lg bg-white/10 text-neutral-400 hover:text-white text-xs cursor-pointer"
                 >
-                  ✕
+                  ✕ Close
                 </button>
               </div>
 
               {/* Chat Message Stream */}
-              <div ref={chatScrollRef} className="flex-1 p-3.5 overflow-y-auto space-y-3">
+              <div ref={chatScrollRef} className="flex-1 p-3 sm:p-3.5 overflow-y-auto space-y-3">
                 {chatMessages.map((msg) => {
                   const isAlfred = msg.sender === "Alfred";
                   const isDealer = msg.sender === "Dealer";
@@ -1084,7 +1087,7 @@ export default function NotFound() {
                   <button
                     key={chip}
                     onClick={() => handleUserSendChat(chip)}
-                    className="px-2 py-0.5 rounded-full bg-white/5 border border-white/10 hover:border-amber-400/50 hover:text-amber-300 text-neutral-400 shrink-0 cursor-pointer"
+                    className="px-2.5 py-1 rounded-full bg-white/5 border border-white/10 hover:border-amber-400/50 hover:text-amber-300 text-neutral-400 shrink-0 cursor-pointer"
                   >
                     {chip}
                   </button>
@@ -1104,11 +1107,11 @@ export default function NotFound() {
                   value={chatInput}
                   onChange={(e) => setChatInput(e.target.value)}
                   placeholder="Chat with Alfred..."
-                  className="flex-1 bg-white/5 border border-white/10 rounded-xl px-3 py-1.5 text-xs text-white placeholder:text-neutral-500 outline-none focus:border-amber-500/60"
+                  className="flex-1 bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs text-white placeholder:text-neutral-500 outline-none focus:border-amber-500/60"
                 />
                 <button
                   type="submit"
-                  className="px-3 py-1.5 rounded-xl bg-amber-500 text-black font-bold text-xs hover:bg-amber-400 transition-colors cursor-pointer"
+                  className="px-3.5 py-2 rounded-xl bg-amber-500 text-black font-bold text-xs hover:bg-amber-400 transition-colors cursor-pointer shrink-0"
                 >
                   Send
                 </button>
@@ -1119,43 +1122,45 @@ export default function NotFound() {
 
       </div>
 
-      {/* Bottom Interactive Action Panel with KEY BINDINGS SHOWN */}
-      <footer className="p-3 sm:p-4 bg-[#04070e] border-t border-white/10 backdrop-blur-xl z-20">
-        <div className="max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
+      {/* Bottom Interactive Action Panel with Responsive Mobile Layout */}
+      <footer className="p-2 sm:p-4 bg-[#04070e] border-t border-white/10 backdrop-blur-xl z-20">
+        <div className="max-w-4xl mx-auto flex flex-col gap-2 sm:gap-3">
           
-          {/* Raise Slider & Quick Bets */}
-          <div className="flex items-center gap-3 w-full sm:w-auto">
-            <span className="text-xs font-mono text-neutral-400 shrink-0">Raise:</span>
-            <input
-              type="range"
-              min={toCall + 20}
-              max={playerChips}
-              step={10}
-              value={Math.min(playerChips, Math.max(toCall + 20, raiseSlider))}
-              onChange={(e) => setRaiseSlider(Number(e.target.value))}
-              disabled={isAiThinking || stage === "showdown" || playerChips <= toCall}
-              className="w-full sm:w-36 accent-amber-500"
-            />
-            <span className="font-mono font-bold text-amber-400 text-sm min-w-[50px]">
-              ${Math.min(playerChips, Math.max(toCall + 20, raiseSlider))}
-            </span>
+          {/* Row 1: Raise Slider & Quick Bets */}
+          <div className="flex flex-wrap sm:flex-nowrap items-center justify-between sm:justify-start gap-2 sm:gap-3 w-full">
+            <div className="flex items-center gap-2 flex-1 sm:flex-initial">
+              <span className="text-[11px] font-mono text-neutral-400 shrink-0">Raise:</span>
+              <input
+                type="range"
+                min={toCall + 20}
+                max={playerChips}
+                step={10}
+                value={Math.min(playerChips, Math.max(toCall + 20, raiseSlider))}
+                onChange={(e) => setRaiseSlider(Number(e.target.value))}
+                disabled={isAiThinking || stage === "showdown" || playerChips <= toCall}
+                className="w-full sm:w-36 accent-amber-500 h-1.5 sm:h-2"
+              />
+              <span className="font-mono font-bold text-amber-400 text-xs sm:text-sm min-w-[45px]">
+                ${Math.min(playerChips, Math.max(toCall + 20, raiseSlider))}
+              </span>
+            </div>
 
-            {/* Quick Presets with KEY SHORTCUTS */}
-            <div className="flex items-center gap-1.5">
+            {/* Quick Presets */}
+            <div className="flex items-center gap-1">
               {[
-                { label: "1/2 Pot", key: "1", val: Math.max(toCall + 20, Math.floor(pot / 2)) },
+                { label: "1/2", key: "1", val: Math.max(toCall + 20, Math.floor(pot / 2)) },
                 { label: "Pot", key: "2", val: Math.max(toCall + 20, pot) },
-                { label: "All-In", key: "3", val: playerChips },
+                { label: "All", key: "3", val: playerChips },
               ].map((btn) => (
                 <button
                   key={btn.label}
                   type="button"
                   onClick={() => setRaiseSlider(Math.min(playerChips, btn.val))}
                   disabled={isAiThinking || stage === "showdown" || playerChips <= 0}
-                  className="px-2 py-1 rounded-lg bg-white/5 border border-white/10 text-[10px] font-mono text-neutral-300 hover:border-amber-500/50 hover:text-amber-300 transition-colors disabled:opacity-40 flex items-center gap-1 cursor-pointer"
+                  className="px-2 py-1 rounded-lg bg-white/5 border border-white/10 text-[10px] font-mono text-neutral-300 hover:border-amber-500/50 hover:text-amber-300 transition-colors disabled:opacity-40 flex items-center gap-0.5 cursor-pointer"
                 >
                   <span>{btn.label}</span>
-                  <kbd className="px-1 py-0.2 rounded bg-black/40 text-[8px] text-neutral-400 border border-white/10">
+                  <kbd className="px-0.5 rounded bg-black/40 text-[8px] text-neutral-400 hidden sm:inline">
                     {btn.key}
                   </kbd>
                 </button>
@@ -1163,33 +1168,33 @@ export default function NotFound() {
             </div>
           </div>
 
-          {/* Action Buttons with CLEAR KEYS DISPLAYED */}
-          <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto justify-end">
+          {/* Row 2: Action Buttons */}
+          <div className="flex items-center gap-1.5 sm:gap-3 w-full">
             
-            {/* FOLD [F] */}
+            {/* FOLD */}
             <button
               type="button"
               onClick={handlePlayerFold}
               disabled={isAiThinking || stage === "showdown" || playerChips <= 0}
-              className="flex-1 sm:flex-initial px-4 sm:px-5 py-2.5 sm:py-3 rounded-2xl bg-red-500/20 border border-red-500/40 text-red-300 font-mono font-bold text-xs hover:bg-red-500 hover:text-white transition-all disabled:opacity-40 cursor-pointer shadow-lg flex items-center justify-center gap-2"
+              className="flex-1 py-2.5 sm:py-3 rounded-xl sm:rounded-2xl bg-red-500/20 border border-red-500/40 text-red-300 font-mono font-bold text-xs hover:bg-red-500 hover:text-white transition-all disabled:opacity-40 cursor-pointer shadow-lg flex items-center justify-center gap-1 sm:gap-2"
             >
               <span>FOLD</span>
-              <kbd className="px-1.5 py-0.5 rounded bg-black/40 text-[9px] text-red-200 border border-red-500/30">
+              <kbd className="px-1 py-0.2 rounded bg-black/40 text-[8px] sm:text-[9px] text-red-200 border border-red-500/30 hidden sm:inline">
                 F
               </kbd>
             </button>
 
-            {/* CHECK [C] / CALL [C / Space] */}
+            {/* CHECK / CALL */}
             {toCall === 0 ? (
               <button
                 type="button"
                 onClick={handlePlayerCheck}
                 disabled={isAiThinking || stage === "showdown" || playerChips <= 0}
-                className="flex-1 sm:flex-initial px-5 sm:px-6 py-2.5 sm:py-3 rounded-2xl bg-neutral-800 border border-white/20 text-white font-mono font-bold text-xs hover:bg-white hover:text-black transition-all disabled:opacity-40 cursor-pointer shadow-lg flex items-center justify-center gap-2"
+                className="flex-1 py-2.5 sm:py-3 rounded-xl sm:rounded-2xl bg-neutral-800 border border-white/20 text-white font-mono font-bold text-xs hover:bg-white hover:text-black transition-all disabled:opacity-40 cursor-pointer shadow-lg flex items-center justify-center gap-1 sm:gap-2"
               >
                 <span>CHECK</span>
-                <kbd className="px-1.5 py-0.5 rounded bg-black/40 text-[9px] text-neutral-300 border border-white/20">
-                  C / Space
+                <kbd className="px-1 py-0.2 rounded bg-black/40 text-[8px] sm:text-[9px] text-neutral-300 border border-white/20 hidden sm:inline">
+                  C
                 </kbd>
               </button>
             ) : (
@@ -1197,24 +1202,24 @@ export default function NotFound() {
                 type="button"
                 onClick={handlePlayerCall}
                 disabled={isAiThinking || stage === "showdown" || playerChips <= 0}
-                className="flex-1 sm:flex-initial px-5 sm:px-6 py-2.5 sm:py-3 rounded-2xl bg-emerald-500 text-black font-mono font-black text-xs hover:bg-emerald-400 transition-all disabled:opacity-40 cursor-pointer shadow-[0_0_20px_rgba(16,185,129,0.4)] flex items-center justify-center gap-2"
+                className="flex-1 py-2.5 sm:py-3 rounded-xl sm:rounded-2xl bg-emerald-500 text-black font-mono font-black text-xs hover:bg-emerald-400 transition-all disabled:opacity-40 cursor-pointer shadow-[0_0_20px_rgba(16,185,129,0.4)] flex items-center justify-center gap-1 sm:gap-2"
               >
                 <span>CALL ${toCall}</span>
-                <kbd className="px-1.5 py-0.5 rounded bg-black/30 text-[9px] text-black border border-black/20">
+                <kbd className="px-1 py-0.2 rounded bg-black/30 text-[8px] sm:text-[9px] text-black border border-black/20 hidden sm:inline">
                   C
                 </kbd>
               </button>
             )}
 
-            {/* RAISE [R] / ALL-IN [A] */}
+            {/* RAISE / ALL-IN */}
             <button
               type="button"
               onClick={() => handlePlayerRaise(raiseSlider)}
               disabled={isAiThinking || stage === "showdown" || playerChips <= toCall}
-              className="flex-1 sm:flex-initial px-5 sm:px-6 py-2.5 sm:py-3 rounded-2xl bg-gradient-to-r from-amber-500 to-yellow-500 text-black font-mono font-black text-xs hover:from-amber-400 hover:to-yellow-400 transition-all disabled:opacity-40 cursor-pointer shadow-[0_0_20px_rgba(245,158,11,0.5)] flex items-center justify-center gap-2"
+              className="flex-1 py-2.5 sm:py-3 rounded-xl sm:rounded-2xl bg-gradient-to-r from-amber-500 to-yellow-500 text-black font-mono font-black text-xs hover:from-amber-400 hover:to-yellow-400 transition-all disabled:opacity-40 cursor-pointer shadow-[0_0_20px_rgba(245,158,11,0.5)] flex items-center justify-center gap-1 sm:gap-2"
             >
               <span>{raiseSlider >= playerChips ? "ALL-IN 🔥" : `RAISE $${Math.min(playerChips, raiseSlider)}`}</span>
-              <kbd className="px-1.5 py-0.5 rounded bg-black/30 text-[9px] text-black border border-black/20">
+              <kbd className="px-1 py-0.2 rounded bg-black/30 text-[8px] sm:text-[9px] text-black border border-black/20 hidden sm:inline">
                 {raiseSlider >= playerChips ? "A" : "R"}
               </kbd>
             </button>
@@ -1224,11 +1229,11 @@ export default function NotFound() {
               <button
                 type="button"
                 onClick={startNewHand}
-                className="px-5 sm:px-6 py-2.5 sm:py-3 rounded-2xl bg-white text-black font-mono font-black text-xs hover:bg-amber-400 transition-all cursor-pointer animate-pulse flex items-center gap-2 shadow-lg"
+                className="flex-1 py-2.5 sm:py-3 rounded-xl sm:rounded-2xl bg-white text-black font-mono font-black text-xs hover:bg-amber-400 transition-all cursor-pointer animate-pulse flex items-center justify-center gap-1 shadow-lg"
               >
-                <span>NEXT HAND</span>
-                <kbd className="px-1.5 py-0.5 rounded bg-black text-[9px] text-white">
-                  ↵ Enter
+                <span>NEXT</span>
+                <kbd className="px-1 py-0.2 rounded bg-black text-[8px] sm:text-[9px] text-white hidden sm:inline">
+                  ↵
                 </kbd>
               </button>
             )}
@@ -1245,7 +1250,7 @@ export default function NotFound() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[40000] bg-black/85 backdrop-blur-md flex items-center justify-center p-4 sm:p-6"
+            className="fixed inset-0 z-[40000] bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-6"
             onClick={() => setShowWelcomeModal(false)}
           >
             <motion.div
@@ -1253,7 +1258,7 @@ export default function NotFound() {
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.9, y: 20 }}
               onClick={(e) => e.stopPropagation()}
-              className="bg-[#0b101d] border border-amber-500/40 rounded-3xl p-6 sm:p-8 max-w-lg w-full text-center space-y-6 shadow-[0_0_80px_rgba(245,158,11,0.3)] font-mono relative"
+              className="bg-[#0b101d] border border-amber-500/40 rounded-3xl p-5 sm:p-8 max-w-lg w-full text-center space-y-4 sm:space-y-6 shadow-[0_0_80px_rgba(245,158,11,0.3)] font-mono relative max-h-[90vh] overflow-y-auto"
             >
               <button
                 onClick={() => setShowWelcomeModal(false)}
@@ -1262,15 +1267,15 @@ export default function NotFound() {
                 ✕
               </button>
 
-              <div className="size-16 rounded-2xl bg-amber-500 text-black font-black flex items-center justify-center text-3xl mx-auto shadow-lg">
+              <div className="size-12 sm:size-16 rounded-2xl bg-amber-500 text-black font-black flex items-center justify-center text-2xl sm:text-3xl mx-auto shadow-lg">
                 ♠
               </div>
 
-              <div className="space-y-2">
-                <span className="text-red-400 text-xs font-bold tracking-widest uppercase">
+              <div className="space-y-1.5 sm:space-y-2">
+                <span className="text-red-400 text-[10px] sm:text-xs font-bold tracking-widest uppercase">
                   ERROR 404 /// ROUTE NOT FOUND
                 </span>
-                <h2 className="text-xl sm:text-2xl font-black text-white uppercase tracking-tight">
+                <h2 className="text-lg sm:text-2xl font-black text-white uppercase tracking-tight">
                   This page is not available.
                 </h2>
                 <p className="text-xs text-neutral-300 leading-relaxed font-sans mt-2">
@@ -1278,17 +1283,17 @@ export default function NotFound() {
                 </p>
               </div>
 
-              <div className="flex flex-col sm:flex-row gap-3">
+              <div className="flex flex-col sm:flex-row gap-2.5 sm:gap-3">
                 <button
                   type="button"
                   onClick={() => setShowWelcomeModal(false)}
-                  className="flex-1 py-3.5 rounded-2xl bg-gradient-to-r from-amber-500 to-yellow-500 text-black font-black uppercase text-xs hover:bg-amber-400 transition-all cursor-pointer shadow-[0_0_20px_rgba(245,158,11,0.4)]"
+                  className="flex-1 py-3 sm:py-3.5 rounded-2xl bg-gradient-to-r from-amber-500 to-yellow-500 text-black font-black uppercase text-xs hover:bg-amber-400 transition-all cursor-pointer shadow-[0_0_20px_rgba(245,158,11,0.4)]"
                 >
                   ♠ LET'S PLAY POKER [ESC]
                 </button>
                 <Link
                   to="/"
-                  className="px-5 py-3.5 rounded-2xl bg-white/10 border border-white/15 text-white font-bold uppercase text-xs hover:bg-white hover:text-black transition-all flex items-center justify-center"
+                  className="px-4 sm:px-5 py-3 sm:py-3.5 rounded-2xl bg-white/10 border border-white/15 text-white font-bold uppercase text-xs hover:bg-white hover:text-black transition-all flex items-center justify-center"
                 >
                   ← Return to Portfolio
                 </Link>
@@ -1305,7 +1310,7 @@ export default function NotFound() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[45000] bg-black/90 backdrop-blur-xl flex items-center justify-center p-4 sm:p-6"
+            className="fixed inset-0 z-[45000] bg-black/90 backdrop-blur-xl flex items-center justify-center p-3 sm:p-6"
             onClick={() => setShowExitModal(false)}
           >
             <motion.div
@@ -1313,7 +1318,7 @@ export default function NotFound() {
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.9, y: 20 }}
               onClick={(e) => e.stopPropagation()}
-              className="bg-[#090d18] border-2 border-amber-500/40 rounded-3xl p-6 sm:p-8 max-w-lg w-full space-y-6 shadow-[0_0_90px_rgba(245,158,11,0.25)] font-mono relative max-h-[90vh] overflow-y-auto"
+              className="bg-[#090d18] border-2 border-amber-500/40 rounded-3xl p-5 sm:p-8 max-w-lg w-full space-y-4 sm:space-y-6 shadow-[0_0_90px_rgba(245,158,11,0.25)] font-mono relative max-h-[90vh] overflow-y-auto"
             >
               {/* Close Button */}
               <button
@@ -1324,83 +1329,83 @@ export default function NotFound() {
               </button>
 
               {/* Dossier Header */}
-              <div className="flex items-center gap-3 border-b border-white/10 pb-4">
-                <div className="size-12 rounded-2xl bg-gradient-to-tr from-amber-500 to-amber-300 text-black font-black flex items-center justify-center text-2xl shadow-lg">
+              <div className="flex items-center gap-3 border-b border-white/10 pb-3 sm:pb-4">
+                <div className="size-10 sm:size-12 rounded-2xl bg-gradient-to-tr from-amber-500 to-amber-300 text-black font-black flex items-center justify-center text-xl sm:text-2xl shadow-lg">
                   🤵
                 </div>
                 <div>
-                  <span className="text-[10px] text-amber-400 font-bold uppercase tracking-widest block">
+                  <span className="text-[9px] sm:text-[10px] text-amber-400 font-bold uppercase tracking-widest block">
                     ALFRED'S SCOUTING DOSSIER
                   </span>
-                  <h2 className="text-lg sm:text-xl font-black text-white uppercase tracking-tight">
+                  <h2 className="text-base sm:text-xl font-black text-white uppercase tracking-tight">
                     Player Performance & Analysis
                   </h2>
                 </div>
               </div>
 
               {/* Archetype Badge & Alfred Read */}
-              <div className="p-4 rounded-2xl bg-gradient-to-br from-amber-500/10 via-amber-500/5 to-transparent border border-amber-500/30 space-y-2">
+              <div className="p-3.5 sm:p-4 rounded-2xl bg-gradient-to-br from-amber-500/10 via-amber-500/5 to-transparent border border-amber-500/30 space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-neutral-400 uppercase">Classified Archetype:</span>
-                  <span className="px-3 py-1 rounded-full bg-amber-500 text-black font-black text-xs uppercase tracking-wider">
+                  <span className="text-[11px] sm:text-xs text-neutral-400 uppercase">Archetype:</span>
+                  <span className="px-2.5 py-0.5 rounded-full bg-amber-500 text-black font-black text-[11px] sm:text-xs uppercase tracking-wider">
                     {liveClassifiedProfile.archetype}
                   </span>
                 </div>
-                <p className="text-xs text-amber-200 leading-relaxed font-sans pt-1 border-t border-white/10">
-                  <span className="font-bold text-amber-400">Alfred's Observation:</span> "{liveClassifiedProfile.readSummary}"
+                <p className="text-[11px] sm:text-xs text-amber-200 leading-relaxed font-sans pt-1 border-t border-white/10">
+                  <span className="font-bold text-amber-400">Alfred:</span> "{liveClassifiedProfile.readSummary}"
                 </p>
               </div>
 
               {/* Session Metrics Grid */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center">
-                <div className="p-3 rounded-2xl bg-white/5 border border-white/10">
-                  <span className="text-[9px] text-neutral-400 uppercase block">Hands Played</span>
-                  <span className="text-lg font-black text-white">{liveClassifiedProfile.totalHands}</span>
+                <div className="p-2.5 sm:p-3 rounded-2xl bg-white/5 border border-white/10">
+                  <span className="text-[8px] sm:text-[9px] text-neutral-400 uppercase block">Hands</span>
+                  <span className="text-base sm:text-lg font-black text-white">{liveClassifiedProfile.totalHands}</span>
                 </div>
 
-                <div className="p-3 rounded-2xl bg-white/5 border border-white/10">
-                  <span className="text-[9px] text-neutral-400 uppercase block">Final Stack</span>
-                  <span className={`text-lg font-black ${playerChips >= 1000 ? "text-emerald-400" : "text-red-400"}`}>
+                <div className="p-2.5 sm:p-3 rounded-2xl bg-white/5 border border-white/10">
+                  <span className="text-[8px] sm:text-[9px] text-neutral-400 uppercase block">Stack</span>
+                  <span className={`text-base sm:text-lg font-black ${playerChips >= 1000 ? "text-emerald-400" : "text-red-400"}`}>
                     ${playerChips.toLocaleString()}
                   </span>
                 </div>
 
-                <div className="p-3 rounded-2xl bg-white/5 border border-white/10">
-                  <span className="text-[9px] text-neutral-400 uppercase block">VPIP Rate</span>
-                  <span className="text-lg font-black text-amber-400">{liveClassifiedProfile.vpipPercent}%</span>
+                <div className="p-2.5 sm:p-3 rounded-2xl bg-white/5 border border-white/10">
+                  <span className="text-[8px] sm:text-[9px] text-neutral-400 uppercase block">VPIP</span>
+                  <span className="text-base sm:text-lg font-black text-amber-400">{liveClassifiedProfile.vpipPercent}%</span>
                 </div>
 
-                <div className="p-3 rounded-2xl bg-white/5 border border-white/10">
-                  <span className="text-[9px] text-neutral-400 uppercase block">Aggression</span>
-                  <span className="text-lg font-black text-emerald-400">{liveClassifiedProfile.aggressionRate}%</span>
+                <div className="p-2.5 sm:p-3 rounded-2xl bg-white/5 border border-white/10">
+                  <span className="text-[8px] sm:text-[9px] text-neutral-400 uppercase block">Aggression</span>
+                  <span className="text-base sm:text-lg font-black text-emerald-400">{liveClassifiedProfile.aggressionRate}%</span>
                 </div>
               </div>
 
-              {/* Detailed Action Tally */}
-              <div className="p-3.5 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-between text-xs text-neutral-300">
+              {/* Action Tally */}
+              <div className="p-3 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-between text-xs text-neutral-300">
                 <div className="text-center">
-                  <span className="text-amber-400 font-black text-sm block">{liveClassifiedProfile.totalRaises}</span>
-                  <span className="text-[9px] text-neutral-400 uppercase">Raises</span>
+                  <span className="text-amber-400 font-black text-xs sm:text-sm block">{liveClassifiedProfile.totalRaises}</span>
+                  <span className="text-[8px] sm:text-[9px] text-neutral-400 uppercase">Raises</span>
                 </div>
-                <div className="h-6 w-px bg-white/10" />
+                <div className="h-5 w-px bg-white/10" />
                 <div className="text-center">
-                  <span className="text-emerald-400 font-black text-sm block">{liveClassifiedProfile.totalCalls}</span>
-                  <span className="text-[9px] text-neutral-400 uppercase">Calls</span>
+                  <span className="text-emerald-400 font-black text-xs sm:text-sm block">{liveClassifiedProfile.totalCalls}</span>
+                  <span className="text-[8px] sm:text-[9px] text-neutral-400 uppercase">Calls</span>
                 </div>
-                <div className="h-6 w-px bg-white/10" />
+                <div className="h-5 w-px bg-white/10" />
                 <div className="text-center">
-                  <span className="text-neutral-300 font-black text-sm block">{liveClassifiedProfile.totalChecks}</span>
-                  <span className="text-[9px] text-neutral-400 uppercase">Checks</span>
+                  <span className="text-neutral-300 font-black text-xs sm:text-sm block">{liveClassifiedProfile.totalChecks}</span>
+                  <span className="text-[8px] sm:text-[9px] text-neutral-400 uppercase">Checks</span>
                 </div>
-                <div className="h-6 w-px bg-white/10" />
+                <div className="h-5 w-px bg-white/10" />
                 <div className="text-center">
-                  <span className="text-red-400 font-black text-sm block">{liveClassifiedProfile.totalFolds}</span>
-                  <span className="text-[9px] text-neutral-400 uppercase">Folds</span>
+                  <span className="text-red-400 font-black text-xs sm:text-sm block">{liveClassifiedProfile.totalFolds}</span>
+                  <span className="text-[8px] sm:text-[9px] text-neutral-400 uppercase">Folds</span>
                 </div>
               </div>
 
               {/* Net P&L Alert */}
-              <div className={`p-3 rounded-2xl text-center text-xs font-bold ${
+              <div className={`p-2.5 sm:p-3 rounded-2xl text-center text-xs font-bold ${
                 netProfit > 0
                   ? "bg-emerald-500/15 border border-emerald-500/30 text-emerald-300"
                   : netProfit < 0
@@ -1415,17 +1420,17 @@ export default function NotFound() {
               </div>
 
               {/* Action Buttons */}
-              <div className="flex flex-col sm:flex-row gap-3 pt-2">
+              <div className="flex flex-col sm:flex-row gap-2.5 sm:gap-3 pt-1 sm:pt-2">
                 <Link
                   to="/"
-                  className="flex-1 py-3.5 rounded-2xl bg-gradient-to-r from-amber-500 to-yellow-500 text-black font-black uppercase text-xs hover:bg-white transition-all flex items-center justify-center shadow-lg"
+                  className="flex-1 py-3 sm:py-3.5 rounded-2xl bg-gradient-to-r from-amber-500 to-yellow-500 text-black font-black uppercase text-xs hover:bg-white transition-all flex items-center justify-center shadow-lg"
                 >
                   ← Return to Portfolio
                 </Link>
                 <button
                   type="button"
                   onClick={() => setShowExitModal(false)}
-                  className="px-5 py-3.5 rounded-2xl bg-white/10 border border-white/15 text-white font-bold uppercase text-xs hover:bg-white hover:text-black transition-all cursor-pointer"
+                  className="px-4 sm:px-5 py-3 sm:py-3.5 rounded-2xl bg-white/10 border border-white/15 text-white font-bold uppercase text-xs hover:bg-white hover:text-black transition-all cursor-pointer"
                 >
                   Stay & Play ♠
                 </button>
@@ -1442,22 +1447,22 @@ export default function NotFound() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[30000] bg-black/90 backdrop-blur-lg flex items-center justify-center p-4 sm:p-6"
+            className="fixed inset-0 z-[30000] bg-black/90 backdrop-blur-lg flex items-center justify-center p-3 sm:p-6"
           >
             <motion.div
               initial={{ scale: 0.9, y: 20 }}
               animate={{ scale: 1, y: 0 }}
-              className="bg-[#091510] border-2 border-emerald-500/50 rounded-3xl p-8 max-w-md w-full text-center space-y-6 shadow-[0_0_80px_rgba(16,185,129,0.4)] font-mono"
+              className="bg-[#091510] border-2 border-emerald-500/50 rounded-3xl p-5 sm:p-8 max-w-md w-full text-center space-y-4 sm:space-y-6 shadow-[0_0_80px_rgba(16,185,129,0.4)] font-mono max-h-[90vh] overflow-y-auto"
             >
-              <div className="size-20 rounded-3xl mx-auto flex items-center justify-center text-4xl bg-emerald-500/20 border border-emerald-500/40 shadow-[0_0_30px_rgba(16,185,129,0.5)]">
+              <div className="size-16 sm:size-20 rounded-3xl mx-auto flex items-center justify-center text-3xl sm:text-4xl bg-emerald-500/20 border border-emerald-500/40 shadow-[0_0_30px_rgba(16,185,129,0.5)]">
                 👑
               </div>
 
-              <div className="space-y-2">
-                <span className="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-400 text-xs font-bold border border-emerald-500/40 uppercase tracking-widest">
+              <div className="space-y-1.5 sm:space-y-2">
+                <span className="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-400 text-[10px] sm:text-xs font-bold border border-emerald-500/40 uppercase tracking-widest">
                   TOURNAMENT VICTORY 🏆
                 </span>
-                <h2 className="text-2xl sm:text-3xl font-black uppercase tracking-tight text-white mt-2">
+                <h2 className="text-xl sm:text-3xl font-black uppercase tracking-tight text-white mt-1">
                   CHAMPION! ALFRED BUSTED
                 </h2>
                 <p className="text-xs text-emerald-200/80 leading-relaxed font-sans">
@@ -1465,11 +1470,11 @@ export default function NotFound() {
                 </p>
               </div>
 
-              <div className="flex flex-col gap-3">
+              <div className="flex flex-col gap-2.5 sm:gap-3">
                 <button
                   type="button"
                   onClick={handleRebuy}
-                  className="w-full py-4 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-400 text-black font-black uppercase tracking-widest text-sm shadow-[0_0_30px_rgba(16,185,129,0.6)] hover:bg-white transition-all cursor-pointer"
+                  className="w-full py-3.5 sm:py-4 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-400 text-black font-black uppercase tracking-widest text-xs sm:text-sm shadow-[0_0_30px_rgba(16,185,129,0.6)] hover:bg-white transition-all cursor-pointer"
                 >
                   START NEW TOURNAMENT ↵
                 </button>
@@ -1479,7 +1484,7 @@ export default function NotFound() {
                     setTournamentResult(null);
                     setShowExitModal(true);
                   }}
-                  className="w-full py-3.5 rounded-2xl bg-white/10 text-white font-bold uppercase tracking-wider text-xs hover:bg-white hover:text-black transition-all cursor-pointer"
+                  className="w-full py-3 sm:py-3.5 rounded-2xl bg-white/10 text-white font-bold uppercase tracking-wider text-xs hover:bg-white hover:text-black transition-all cursor-pointer"
                 >
                   View Dossier & Exit
                 </button>
@@ -1496,22 +1501,22 @@ export default function NotFound() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[30000] bg-black/90 backdrop-blur-lg flex items-center justify-center p-4 sm:p-6"
+            className="fixed inset-0 z-[30000] bg-black/90 backdrop-blur-lg flex items-center justify-center p-3 sm:p-6"
           >
             <motion.div
               initial={{ scale: 0.9, y: 20 }}
               animate={{ scale: 1, y: 0 }}
-              className="bg-[#190d0e] border-2 border-red-500/50 rounded-3xl p-8 max-w-md w-full text-center space-y-6 shadow-[0_0_80px_rgba(239,68,68,0.3)] font-mono"
+              className="bg-[#190d0e] border-2 border-red-500/50 rounded-3xl p-5 sm:p-8 max-w-md w-full text-center space-y-4 sm:space-y-6 shadow-[0_0_80px_rgba(239,68,68,0.3)] font-mono max-h-[90vh] overflow-y-auto"
             >
-              <div className="size-20 rounded-3xl mx-auto flex items-center justify-center text-4xl bg-red-500/10 border border-red-500/30">
+              <div className="size-16 sm:size-20 rounded-3xl mx-auto flex items-center justify-center text-3xl sm:text-4xl bg-red-500/10 border border-red-500/30">
                 💸
               </div>
 
-              <div className="space-y-2">
-                <span className="px-3 py-1 rounded-full bg-red-500/20 text-red-400 text-xs font-bold border border-red-500/40 uppercase tracking-widest">
+              <div className="space-y-1.5 sm:space-y-2">
+                <span className="px-3 py-1 rounded-full bg-red-500/20 text-red-400 text-[10px] sm:text-xs font-bold border border-red-500/40 uppercase tracking-widest">
                   STACK DEPLETED
                 </span>
-                <h2 className="text-2xl sm:text-3xl font-black uppercase tracking-tight text-white mt-2">
+                <h2 className="text-xl sm:text-3xl font-black uppercase tracking-tight text-white mt-1">
                   YOU ARE BUSTED!
                 </h2>
                 <p className="text-xs text-neutral-400 leading-relaxed font-sans">
@@ -1519,11 +1524,11 @@ export default function NotFound() {
                 </p>
               </div>
 
-              <div className="flex flex-col gap-3">
+              <div className="flex flex-col gap-2.5 sm:gap-3">
                 <button
                   type="button"
                   onClick={handleRebuy}
-                  className="w-full py-4 rounded-2xl bg-gradient-to-r from-amber-500 to-yellow-500 text-black font-black uppercase tracking-widest text-sm shadow-[0_0_30px_rgba(245,158,11,0.6)] hover:bg-white transition-all cursor-pointer"
+                  className="w-full py-3.5 sm:py-4 rounded-2xl bg-gradient-to-r from-amber-500 to-yellow-500 text-black font-black uppercase tracking-widest text-xs sm:text-sm shadow-[0_0_30px_rgba(245,158,11,0.6)] hover:bg-white transition-all cursor-pointer"
                 >
                   RE-BUY $1,000 & PLAY AGAIN ↵
                 </button>
@@ -1533,7 +1538,7 @@ export default function NotFound() {
                     setTournamentResult(null);
                     setShowExitModal(true);
                   }}
-                  className="w-full py-3.5 rounded-2xl bg-white/10 text-white font-bold uppercase tracking-wider text-xs hover:bg-white hover:text-black transition-all cursor-pointer"
+                  className="w-full py-3 sm:py-3.5 rounded-2xl bg-white/10 text-white font-bold uppercase tracking-wider text-xs hover:bg-white hover:text-black transition-all cursor-pointer"
                 >
                   View Dossier & Exit
                 </button>
@@ -1550,7 +1555,7 @@ export default function NotFound() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[20000] bg-black/85 backdrop-blur-md flex items-center justify-center p-4 sm:p-6"
+            className="fixed inset-0 z-[20000] bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-6"
             onClick={() => setShowRulesModal(false)}
           >
             <motion.div
@@ -1558,19 +1563,19 @@ export default function NotFound() {
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.95, y: 20 }}
               onClick={(e) => e.stopPropagation()}
-              className="bg-[#0b101d] border border-amber-500/40 rounded-3xl p-6 sm:p-8 max-w-2xl w-full shadow-[0_0_60px_rgba(245,158,11,0.25)] space-y-6 font-sans max-h-[90vh] overflow-y-auto"
+              className="bg-[#0b101d] border border-amber-500/40 rounded-3xl p-5 sm:p-8 max-w-2xl w-full shadow-[0_0_60px_rgba(245,158,11,0.25)] space-y-4 sm:space-y-6 font-sans max-h-[90vh] overflow-y-auto"
             >
               {/* Modal Header */}
-              <div className="flex items-center justify-between border-b border-white/10 pb-4">
-                <div className="flex items-center gap-3">
-                  <div className="size-10 rounded-2xl bg-amber-500 text-black font-black flex items-center justify-center text-xl">
+              <div className="flex items-center justify-between border-b border-white/10 pb-3 sm:pb-4">
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <div className="size-8 sm:size-10 rounded-2xl bg-amber-500 text-black font-black flex items-center justify-center text-lg sm:text-xl">
                     ♠
                   </div>
                   <div>
-                    <span className="text-amber-400 text-xs font-mono font-bold tracking-widest uppercase">
+                    <span className="text-amber-400 text-[10px] sm:text-xs font-mono font-bold tracking-widest uppercase">
                       404 LOUNGE
                     </span>
-                    <h2 className="text-xl sm:text-2xl font-black text-white uppercase tracking-tight">
+                    <h2 className="text-base sm:text-2xl font-black text-white uppercase tracking-tight">
                       Poker Rules & Adaptive AI
                     </h2>
                   </div>
@@ -1584,46 +1589,46 @@ export default function NotFound() {
               </div>
 
               {/* 404 Mission Statement */}
-              <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 space-y-2 font-mono text-xs">
+              <div className="p-3.5 sm:p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 space-y-1.5 font-mono text-xs">
                 <h3 className="text-amber-300 font-bold uppercase tracking-wider flex items-center gap-2">
                   <span>♠</span> 404: Route Not Found
                 </h3>
-                <p className="text-neutral-300 leading-relaxed font-sans text-sm">
+                <p className="text-neutral-300 leading-relaxed font-sans text-xs sm:text-sm">
                   This page is not available. But since you've stumbled into the high-stakes lounge... <strong>let's play poker!</strong>
                 </p>
               </div>
 
               {/* Keyboard Shortcuts Table */}
-              <div className="space-y-3 font-mono text-xs">
+              <div className="space-y-2.5 sm:space-y-3 font-mono text-xs">
                 <h3 className="text-emerald-400 font-bold uppercase tracking-wider flex items-center gap-2">
-                  <span>⌨️</span> Keyboard Shortcuts
+                  <span>⌨️</span> Controls & Shortcuts
                 </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-neutral-300">
-                  <div className="flex items-center justify-between p-2.5 rounded-xl bg-white/5 border border-white/10">
+                  <div className="flex items-center justify-between p-2 sm:p-2.5 rounded-xl bg-white/5 border border-white/10">
                     <span>Check / Call</span>
-                    <kbd className="px-2 py-0.5 rounded bg-black/60 text-emerald-400 border border-emerald-500/40 text-[11px] font-bold">
+                    <kbd className="px-2 py-0.5 rounded bg-black/60 text-emerald-400 border border-emerald-500/40 text-[10px] sm:text-[11px] font-bold">
                       C / Space
                     </kbd>
                   </div>
-                  <div className="flex items-center justify-between p-2.5 rounded-xl bg-white/5 border border-white/10">
+                  <div className="flex items-center justify-between p-2 sm:p-2.5 rounded-xl bg-white/5 border border-white/10">
                     <span>Fold Hand</span>
-                    <kbd className="px-2 py-0.5 rounded bg-black/60 text-red-400 border border-red-500/40 text-[11px] font-bold">
+                    <kbd className="px-2 py-0.5 rounded bg-black/60 text-red-400 border border-red-500/40 text-[10px] sm:text-[11px] font-bold">
                       F
                     </kbd>
                   </div>
-                  <div className="flex items-center justify-between p-2.5 rounded-xl bg-white/5 border border-white/10">
+                  <div className="flex items-center justify-between p-2 sm:p-2.5 rounded-xl bg-white/5 border border-white/10">
                     <span>Raise Bet</span>
-                    <kbd className="px-2 py-0.5 rounded bg-black/60 text-amber-400 border border-amber-500/40 text-[11px] font-bold">
+                    <kbd className="px-2 py-0.5 rounded bg-black/60 text-amber-400 border border-amber-500/40 text-[10px] sm:text-[11px] font-bold">
                       R
                     </kbd>
                   </div>
-                  <div className="flex items-center justify-between p-2.5 rounded-xl bg-white/5 border border-white/10">
+                  <div className="flex items-center justify-between p-2 sm:p-2.5 rounded-xl bg-white/5 border border-white/10">
                     <span>Go All-In</span>
-                    <kbd className="px-2 py-0.5 rounded bg-black/60 text-amber-400 border border-amber-500/40 text-[11px] font-bold">
+                    <kbd className="px-2 py-0.5 rounded bg-black/60 text-amber-400 border border-amber-500/40 text-[10px] sm:text-[11px] font-bold">
                       A
                     </kbd>
                   </div>
-                  <div className="flex items-center justify-between p-2.5 rounded-xl bg-white/5 border border-white/10">
+                  <div className="flex items-center justify-between p-2 sm:p-2.5 rounded-xl bg-white/5 border border-white/10">
                     <span>Quick Bets (1/2, Pot, All)</span>
                     <div className="flex gap-1">
                       <kbd className="px-1.5 py-0.5 rounded bg-black/60 text-neutral-300 border border-white/20 text-[10px]">1</kbd>
@@ -1631,9 +1636,9 @@ export default function NotFound() {
                       <kbd className="px-1.5 py-0.5 rounded bg-black/60 text-neutral-300 border border-white/20 text-[10px]">3</kbd>
                     </div>
                   </div>
-                  <div className="flex items-center justify-between p-2.5 rounded-xl bg-white/5 border border-white/10">
+                  <div className="flex items-center justify-between p-2 sm:p-2.5 rounded-xl bg-white/5 border border-white/10">
                     <span>Deal Next Hand</span>
-                    <kbd className="px-2 py-0.5 rounded bg-black/60 text-white border border-white/40 text-[11px] font-bold">
+                    <kbd className="px-2 py-0.5 rounded bg-black/60 text-white border border-white/40 text-[10px] sm:text-[11px] font-bold">
                       Enter ↵
                     </kbd>
                   </div>
@@ -1641,14 +1646,14 @@ export default function NotFound() {
               </div>
 
               {/* Playful Disclaimer Notice */}
-              <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-start gap-3 text-xs text-amber-200 font-mono">
-                <span className="text-lg">⚠️</span>
+              <div className="p-3 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-start gap-2.5 text-xs text-amber-200 font-mono">
+                <span className="text-base">⚠️</span>
                 <div>
-                  <span className="font-bold text-amber-300 block uppercase tracking-wider text-[11px]">
+                  <span className="font-bold text-amber-300 block uppercase tracking-wider text-[10px] sm:text-[11px]">
                     CASINO ENTERTAINMENT NOTICE:
                   </span>
-                  <p className="text-[11px] text-neutral-300 mt-1 leading-relaxed font-sans">
-                    This Texas Hold'em engine is built <strong>just for fun</strong> on this 404 page! Minor experimental quirks, edge cases, or wild AI bluffs might occasionally happen — take it easy, enjoy the game, and test your poker face!
+                  <p className="text-[10px] sm:text-[11px] text-neutral-300 mt-0.5 leading-relaxed font-sans">
+                    This Texas Hold'em engine is built <strong>just for fun</strong> on this 404 page! Test your poker face, enjoy the game, and have fun!
                   </p>
                 </div>
               </div>
@@ -1657,7 +1662,7 @@ export default function NotFound() {
               <button
                 type="button"
                 onClick={() => setShowRulesModal(false)}
-                className="w-full py-3.5 rounded-2xl bg-amber-500 text-black font-black uppercase tracking-wider font-mono text-xs hover:bg-amber-400 transition-all cursor-pointer shadow-lg"
+                className="w-full py-3 sm:py-3.5 rounded-2xl bg-amber-500 text-black font-black uppercase tracking-wider font-mono text-xs hover:bg-amber-400 transition-all cursor-pointer shadow-lg"
               >
                 GOT IT, LET'S PLAY ♠ [ESC]
               </button>
@@ -1670,12 +1675,12 @@ export default function NotFound() {
   );
 }
 
-// Crisp High-Res Casino Card Component
+// Crisp High-Res Casino Card Component (Responsive Card View for all mobile displays)
 function CardView({ card, hidden = false, isPlayer = false }: { card: PokerCard; hidden?: boolean; isPlayer?: boolean }) {
   if (hidden) {
     return (
-      <div className="w-12 sm:w-16 h-16 sm:h-24 rounded-xl border border-amber-500/40 bg-gradient-to-br from-[#1a1c29] via-[#0e101a] to-[#080910] shadow-xl flex items-center justify-center select-none transform hover:-translate-y-1 transition-transform">
-        <div className="size-8 rounded-lg border border-amber-500/30 flex items-center justify-center text-amber-500 font-bold text-xs">
+      <div className="w-11 sm:w-16 h-15 sm:h-24 rounded-lg sm:rounded-xl border border-amber-500/40 bg-gradient-to-br from-[#1a1c29] via-[#0e101a] to-[#080910] shadow-xl flex items-center justify-center select-none transform hover:-translate-y-1 transition-transform">
+        <div className="size-6 sm:size-8 rounded-lg border border-amber-500/30 flex items-center justify-center text-amber-500 font-bold text-[10px] sm:text-xs">
           ♠
         </div>
       </div>
@@ -1687,25 +1692,25 @@ function CardView({ card, hidden = false, isPlayer = false }: { card: PokerCard;
   return (
     <motion.div
       whileHover={isPlayer ? { y: -8, scale: 1.05 } : {}}
-      className={`w-12 sm:w-16 h-16 sm:h-24 rounded-xl border border-white/20 bg-gradient-to-b from-white via-neutral-100 to-neutral-200 shadow-2xl p-1.5 flex flex-col justify-between select-none ${
+      className={`w-11 sm:w-16 h-15 sm:h-24 rounded-lg sm:rounded-xl border border-white/20 bg-gradient-to-b from-white via-neutral-100 to-neutral-200 shadow-2xl p-1 sm:p-1.5 flex flex-col justify-between select-none ${
         isPlayer ? "ring-2 ring-emerald-400/40" : ""
       }`}
     >
       {/* Top Left Rank + Suit */}
       <div className={`flex flex-col items-center leading-none ${isRed ? "text-red-600" : "text-black"}`}>
-        <span className="text-xs sm:text-sm font-black font-mono">{card.rank}</span>
-        <span className="text-[10px] sm:text-xs">{card.suit}</span>
+        <span className="text-[11px] sm:text-sm font-black font-mono">{card.rank}</span>
+        <span className="text-[8px] sm:text-xs">{card.suit}</span>
       </div>
 
       {/* Center Large Suit Watermark */}
-      <div className={`self-center text-lg sm:text-2xl font-black ${isRed ? "text-red-600" : "text-black"} opacity-90`}>
+      <div className={`self-center text-base sm:text-2xl font-black ${isRed ? "text-red-600" : "text-black"} opacity-90`}>
         {card.suit}
       </div>
 
       {/* Bottom Right Inverted Rank */}
       <div className={`flex flex-col items-center leading-none rotate-180 ${isRed ? "text-red-600" : "text-black"}`}>
-        <span className="text-xs sm:text-sm font-black font-mono">{card.rank}</span>
-        <span className="text-[10px] sm:text-xs">{card.suit}</span>
+        <span className="text-[11px] sm:text-sm font-black font-mono">{card.rank}</span>
+        <span className="text-[8px] sm:text-xs">{card.suit}</span>
       </div>
     </motion.div>
   );
