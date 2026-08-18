@@ -81,7 +81,7 @@ type Stage = "preflop" | "flop" | "turn" | "river" | "showdown";
 
 interface ChatMessage {
   id: string;
-  sender: "Alfred" | "You";
+  sender: "Alfred" | "You" | "Dealer";
   text: string;
   time: string;
 }
@@ -106,6 +106,24 @@ export default function NotFound() {
   const [raiseSlider, setRaiseSlider] = useState(40);
   const [showRulesModal, setShowRulesModal] = useState(false);
   const [showChatSidebar, setShowChatSidebar] = useState(true);
+
+  // Red Dot Laser Cursor Tracking
+  const [mousePos, setMousePos] = useState({ x: -100, y: -100 });
+  const [isMouseInside, setIsMouseInside] = useState(false);
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      setMousePos({ x: e.clientX, y: e.clientY });
+      setIsMouseInside(true);
+    };
+    const handleMouseLeave = () => setIsMouseInside(false);
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseleave", handleMouseLeave);
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseleave", handleMouseLeave);
+    };
+  }, []);
 
   // Chat message stream
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
@@ -143,7 +161,7 @@ export default function NotFound() {
   const BIG_BLIND = 20;
   const SMALL_BLIND = 10;
 
-  const addChatMessage = useCallback((sender: "Alfred" | "You", text: string) => {
+  const addChatMessage = useCallback((sender: "Alfred" | "You" | "Dealer", text: string) => {
     setChatMessages((prev) => [
       ...prev,
       {
@@ -204,7 +222,6 @@ export default function NotFound() {
 
   // Start fresh hand
   const startNewHand = useCallback(() => {
-    // If either is busted, do not start hand silently — require rebuy
     if (playerChips <= 0 || aiChips <= 0) {
       handleRebuy();
       return;
@@ -220,7 +237,6 @@ export default function NotFound() {
     const pCards = [newDeck.pop()!, newDeck.pop()!];
     const aiCards = [newDeck.pop()!, newDeck.pop()!];
 
-    // Blinds post strictly capped by available chips
     const pBlind = Math.min(playerChips, SMALL_BLIND);
     const aBlind = Math.min(aiChips, BIG_BLIND);
 
@@ -266,7 +282,7 @@ export default function NotFound() {
   const runoutAllIn = useCallback(
     (currentDeck: PokerCard[], currentCommunity: PokerCard[]) => {
       playCasinoSound("allin");
-      updateAiDialogue("ALL-IN! Dealing all remaining community cards directly for the showdown.");
+      addChatMessage("Dealer", "🔥 ALL-IN! Dealing all community cards directly to the board.");
 
       const d = [...currentDeck];
       const remainingNeeded = 5 - currentCommunity.length;
@@ -312,7 +328,7 @@ export default function NotFound() {
         setHandResult(winnerMsg);
       }, 500);
     },
-    [playerHole, aiHole, pot, updateAiDialogue]
+    [playerHole, aiHole, pot, updateAiDialogue, addChatMessage]
   );
 
   // Advance street (Flop, Turn, River, Showdown)
@@ -384,10 +400,11 @@ export default function NotFound() {
     setHandResult(winnerMsg);
   }, [playerHole, aiHole, communityCards, pot, updateAiDialogue]);
 
-  // Player Actions
+  // Player Actions with Chat Logging
   const handlePlayerCheck = useCallback(() => {
     if (isAiThinking || stage === "showdown") return;
     playCasinoSound("check");
+    addChatMessage("You", "Checked.");
 
     setPlayerProfile((prev) =>
       classifyPlayerProfile({
@@ -398,7 +415,7 @@ export default function NotFound() {
     );
 
     triggerAiTurn(0);
-  }, [isAiThinking, stage]);
+  }, [isAiThinking, stage, addChatMessage]);
 
   const handlePlayerCall = useCallback(() => {
     if (isAiThinking || stage === "showdown") return;
@@ -406,6 +423,7 @@ export default function NotFound() {
     const actualCall = Math.min(playerChips, toCall);
 
     playCasinoSound("chip");
+    addChatMessage("You", `Called $${actualCall}.`);
     setPlayerChips((prev) => prev - actualCall);
     setPot((prev) => prev + actualCall);
     setPlayerRoundBet((prev) => prev + actualCall);
@@ -425,15 +443,18 @@ export default function NotFound() {
     } else {
       triggerAiTurn(0, true);
     }
-  }, [isAiThinking, stage, currentBet, playerRoundBet, playerChips, aiChips, deck, communityCards, runoutAllIn]);
+  }, [isAiThinking, stage, currentBet, playerRoundBet, playerChips, aiChips, deck, communityCards, runoutAllIn, addChatMessage]);
 
-  // MANDATED: Alfred FOLDS THE MOMENT USER RAISES!
+  // Player Raise: Intelligent Adaptive AI response (no longer auto-folds every single time!)
   const handlePlayerRaise = useCallback(
     (amount: number) => {
       if (isAiThinking || stage === "showdown" || playerChips <= 0) return;
       const totalWager = Math.min(playerChips, amount);
+      const isAllIn = totalWager === playerChips;
 
-      playCasinoSound(totalWager === playerChips ? "allin" : "chip");
+      playCasinoSound(isAllIn ? "allin" : "chip");
+      addChatMessage("You", isAllIn ? `Went ALL-IN for $${totalWager}! 🔥` : `Raised to $${totalWager}.`);
+
       const updatedPot = pot + totalWager;
       setPlayerChips((prev) => prev - totalWager);
       setPot(updatedPot);
@@ -446,35 +467,19 @@ export default function NotFound() {
           totalRaises: prev.totalRaises + 1,
           handsEntered: prev.handsEntered + 1,
           timesRaisedRiver: stage === "river" ? prev.timesRaisedRiver + 1 : prev.timesRaisedRiver,
-          lastActions: [...prev.lastActions.slice(-6), totalWager === playerChips ? "ALL-IN" : "Raise"],
+          lastActions: [...prev.lastActions.slice(-6), isAllIn ? "ALL-IN" : "Raise"],
         })
       );
 
-      // Alfred folds immediately on any user raise!
-      setIsAiThinking(true);
-      setTimeout(() => {
-        setIsAiThinking(false);
-        playCasinoSound("fold");
-
-        const isAllIn = totalWager === playerChips;
-        const foldDialogue = isAllIn
-          ? "A fearless All-In! That raise is far too dangerous — I fold immediately!"
-          : `You raised to $${totalWager}! A formidable raise, sir. I fold! The pot is yours.`;
-
-        updateAiDialogue(foldDialogue);
-        setHandResult(`Alfred Folds to your raise! You WIN $${updatedPot}!`);
-        // Award pot accurately (zero double counting!)
-        setPlayerChips((prev) => prev + updatedPot);
-        playCasinoSound("win");
-        setStage("showdown");
-      }, 500);
+      triggerAiTurn(totalWager);
     },
-    [isAiThinking, stage, playerChips, playerRoundBet, pot, updateAiDialogue]
+    [isAiThinking, stage, playerChips, playerRoundBet, pot, addChatMessage]
   );
 
   const handlePlayerFold = useCallback(() => {
     if (isAiThinking || stage === "showdown") return;
     playCasinoSound("fold");
+    addChatMessage("You", "Folded hand.");
     setHandResult(`You Folded. Alfred collects $${pot}.`);
     setAiChips((prev) => prev + pot);
     setStage("showdown");
@@ -489,9 +494,9 @@ export default function NotFound() {
     );
 
     updateAiDialogue("Prudence is the better part of valour. I collect the pot.");
-  }, [isAiThinking, stage, pot, currentBet, playerRoundBet, updateAiDialogue]);
+  }, [isAiThinking, stage, pot, currentBet, playerRoundBet, updateAiDialogue, addChatMessage]);
 
-  // AI Turn handler for Checks and Calls
+  // AI Turn handler with Intelligent Adaptive Call/Raise/Fold decision
   const triggerAiTurn = (playerAddedBet: number, wasPlayerCall = false) => {
     setIsAiThinking(true);
 
@@ -540,6 +545,10 @@ export default function NotFound() {
         setPot((prev) => prev + raiseAmt);
         setAiRoundBet((prev) => prev + raiseAmt);
         setCurrentBet(aiRoundBet + raiseAmt);
+
+        if (aiChips - raiseAmt <= 0 || playerChips <= 0) {
+          runoutAllIn(deck, communityCards);
+        }
       } else {
         playCasinoSound("check");
         if (playerRoundBet === aiRoundBet) {
@@ -561,7 +570,7 @@ export default function NotFound() {
       const lower = trimmed.toLowerCase();
       let reply = "A fascinating comment, sir. Keep your focus on the cards.";
       if (lower.includes("bluff")) reply = "A gentleman never reveals his secrets until the showdown.";
-      else if (lower.includes("raise") || lower.includes("all-in")) reply = "If you raise, I shall have no choice but to fold!";
+      else if (lower.includes("raise") || lower.includes("all-in")) reply = "Let us see if the cards support such conviction.";
       else if (lower.includes("hi") || lower.includes("hello")) reply = "Good day! Best of luck on the felt.";
       else if (lower.includes("good") || lower.includes("nice")) reply = "Much obliged. The cards favor the bold.";
       updateAiDialogue(reply);
@@ -646,8 +655,18 @@ export default function NotFound() {
   const isGameOver = playerChips <= 0 || aiChips <= 0;
 
   return (
-    <div className="fixed inset-0 z-[10000] bg-[#070b14] text-white flex flex-col justify-between overflow-hidden select-none font-sans">
+    <div className="fixed inset-0 z-[10000] bg-[#070b14] text-white flex flex-col justify-between overflow-hidden select-none font-sans cursor-none">
       
+      {/* RED DOT CASINO LASER CURSOR */}
+      {isMouseInside && (
+        <div
+          className="fixed pointer-events-none z-[60000] -translate-x-1/2 -translate-y-1/2 transition-transform duration-75 ease-out"
+          style={{ left: `${mousePos.x}px`, top: `${mousePos.y}px` }}
+        >
+          <div className="size-3.5 rounded-full bg-red-500 border border-white shadow-[0_0_15px_#ef4444,0_0_5px_#ffffff] animate-pulse" />
+        </div>
+      )}
+
       {/* Top Header & Bankroll HUD */}
       <header className="p-3 sm:p-4 flex items-center justify-between border-b border-white/10 bg-black/70 backdrop-blur-md z-20">
         
@@ -888,13 +907,24 @@ export default function NotFound() {
               <div ref={chatScrollRef} className="flex-1 p-3.5 overflow-y-auto space-y-3">
                 {chatMessages.map((msg) => {
                   const isAlfred = msg.sender === "Alfred";
+                  const isDealer = msg.sender === "Dealer";
                   return (
                     <div
                       key={msg.id}
-                      className={`flex flex-col space-y-1 ${isAlfred ? "items-start" : "items-end"}`}
+                      className={`flex flex-col space-y-1 ${
+                        isDealer ? "items-center text-center" : isAlfred ? "items-start" : "items-end"
+                      }`}
                     >
                       <div className="flex items-center gap-1.5 text-[10px] text-neutral-400">
-                        <span className={isAlfred ? "text-amber-400 font-bold" : "text-emerald-400 font-bold"}>
+                        <span
+                          className={
+                            isDealer
+                              ? "text-amber-400 font-bold"
+                              : isAlfred
+                              ? "text-amber-400 font-bold"
+                              : "text-emerald-400 font-bold"
+                          }
+                        >
                           {msg.sender}
                         </span>
                         <span>•</span>
@@ -902,7 +932,9 @@ export default function NotFound() {
                       </div>
                       <div
                         className={`p-2.5 rounded-2xl text-xs max-w-[90%] leading-relaxed ${
-                          isAlfred
+                          isDealer
+                            ? "bg-amber-500/20 border border-amber-500/40 text-amber-300 text-center font-bold"
+                            : isAlfred
                             ? "bg-amber-500/10 border border-amber-500/20 text-amber-200"
                             : "bg-emerald-500/15 border border-emerald-500/25 text-emerald-200"
                         }`}
@@ -1042,7 +1074,7 @@ export default function NotFound() {
               </button>
             )}
 
-            {/* RAISE [R] / ALL-IN [A] (TRIGGERS ALFRED IMMEDIATE FOLD) */}
+            {/* RAISE [R] / ALL-IN [A] (Intelligent AI response) */}
             <button
               type="button"
               onClick={() => handlePlayerRaise(raiseSlider)}
