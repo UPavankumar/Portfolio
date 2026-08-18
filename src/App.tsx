@@ -5,6 +5,7 @@ import About from "./pages/About";
 import Projects from "./pages/Projects";
 import SkillsPage from "./pages/SkillsPage";
 import Contact from "./pages/Contact";
+import NotFound from "./pages/NotFound";
 import Preloader from "./components/Preloader";
 import PageTransitionLoader from "./components/PageTransitionLoader";
 import FloatingDock from "./components/FloatingDock";
@@ -13,11 +14,20 @@ import SoundToggle from "./components/SoundToggle";
 import AskPortfolio from "./components/AskPortfolio";
 import { recordPageVisit } from "./lib/tracker";
 
+const PAGE_TITLES: Record<string, string> = {
+  "/": "Pavan Kumar — Business Analyst · AI Automation",
+  "/about": "About & Career Story | Pavan Kumar",
+  "/projects": "Production Architectures & Case Studies | Pavan Kumar",
+  "/skills": "Tools & Engineering Matrix | Pavan Kumar",
+  "/contact": "Get in Touch & Consult | Pavan Kumar",
+};
+
 function ScrollToTop() {
   const { pathname, hash } = useLocation();
 
   useEffect(() => {
     recordPageVisit(pathname);
+    document.title = PAGE_TITLES[pathname] || "Pavan Kumar — Portfolio";
 
     if (!hash) {
       window.scrollTo({ top: 0, left: 0, behavior: "instant" });
@@ -46,7 +56,7 @@ export default function App() {
       if (document.hidden) {
         document.title = "Come back! 🥺";
       } else {
-        document.title = originalTitle;
+        document.title = PAGE_TITLES[window.location.pathname] || originalTitle;
       }
     };
     document.addEventListener("visibilitychange", handleVisibilityChange);
@@ -70,6 +80,7 @@ export default function App() {
         <Route path="/projects" element={<Projects />} />
         <Route path="/skills" element={<SkillsPage />} />
         <Route path="/contact" element={<Contact />} />
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </BrowserRouter>
   );
