@@ -103,7 +103,9 @@ export default function NotFound() {
 
   const [stage, setStage] = useState<Stage>("preflop");
   const [isAiThinking, setIsAiThinking] = useState(false);
-  const [aiDialogue, setAiDialogue] = useState("404: This page is not available. But since you're here... let's play poker!");
+  const [aiDialogue, setAiDialogue] = useState<string | null>(
+    "404: This page is not available. But since you're here... let's play poker!"
+  );
   const [handResult, setHandResult] = useState<string | null>(null);
   const [raiseSlider, setRaiseSlider] = useState(40);
   const [showRulesModal, setShowRulesModal] = useState(false);
@@ -167,7 +169,7 @@ export default function NotFound() {
     timesRaisedRiver: 0,
     lastActions: [],
     archetype: "Observing...",
-    readSummary: "Calibrating baseline tendencies...",
+    readSummary: "Calibrating baseline tendencies over opening hands...",
     vpipPercent: 50,
     aggressionRate: 50,
   });
@@ -196,8 +198,10 @@ export default function NotFound() {
     });
   }, []);
 
+  // Update Alfred's dialogue only when meaningful text is passed
   const updateAiDialogue = useCallback(
-    (text: string) => {
+    (text?: string | null) => {
+      if (!text || !text.trim()) return;
       setAiDialogue(text);
       addChatMessage("Alfred", text);
     },
@@ -242,7 +246,7 @@ export default function NotFound() {
     updateAiDialogue("Fresh $1,000 bankrolls reloaded. Cards are in the air!");
   }, [updateAiDialogue]);
 
-  // Start fresh hand (Without revealing player profile in-game)
+  // Start fresh hand
   const startNewHand = useCallback(() => {
     setTournamentResult(null);
 
@@ -283,12 +287,7 @@ export default function NotFound() {
     );
 
     playCasinoSound("deal");
-    const dealMsg =
-      playerProfile.totalHands >= 1
-        ? `Hand #${playerProfile.totalHands + 1}. Cards are in the air. Blinds posted. What's your move, sir?`
-        : "Cards are in the air. Big Blind $20 posted. What's your move?";
-    updateAiDialogue(dealMsg);
-  }, [playerChips, aiChips, playerProfile.totalHands, updateAiDialogue, handleRebuy]);
+  }, [playerChips, aiChips, handleRebuy]);
 
   // Initial deal
   useEffect(() => {
@@ -304,7 +303,7 @@ export default function NotFound() {
     }
   }, [playerHole, communityCards]);
 
-  // Showdown hand resolution with Alfred card commentary
+  // Showdown hand resolution with selective Alfred card commentary
   const handleShowdown = useCallback((finalCommunity?: PokerCard[]) => {
     const board = finalCommunity || communityCards;
     if (playerHole.length < 2 || aiHole.length < 2) return;
@@ -358,8 +357,12 @@ export default function NotFound() {
     }
 
     setHandResult(winnerMsg);
+    
+    // Selective meaningful commentary
     const commentary = getAlfredCardCommentary(playerHole, board, pEval, resultType);
-    updateAiDialogue(commentary);
+    if (commentary) {
+      updateAiDialogue(commentary);
+    }
   }, [playerHole, aiHole, communityCards, pot, updateAiDialogue]);
 
   // Robust, single-transition street advancement based on exact board card count
@@ -381,7 +384,7 @@ export default function NotFound() {
           const flop = [d.pop()!, d.pop()!, d.pop()!];
           setStage("flop");
           playCasinoSound("deal");
-          updateAiDialogue("Flop is dealt (3 cards). Your turn to act, sir.");
+          addChatMessage("Dealer", "Flop dealt.");
           return flop;
         } else if (len === 3) {
           // Flop -> Turn: Deal exactly 1 card (total 4)
@@ -389,7 +392,7 @@ export default function NotFound() {
           const turn = d.pop()!;
           setStage("turn");
           playCasinoSound("deal");
-          updateAiDialogue("Turn card is dealt (4th card). Your turn to act.");
+          addChatMessage("Dealer", "Turn card dealt.");
           return [...prevComm, turn];
         } else if (len === 4) {
           // Turn -> River: Deal exactly 1 card (total 5)
@@ -397,7 +400,7 @@ export default function NotFound() {
           const river = d.pop()!;
           setStage("river");
           playCasinoSound("deal");
-          updateAiDialogue("River is dealt (5th card). Final betting round.");
+          addChatMessage("Dealer", "River card dealt.");
           return [...prevComm, river];
         } else {
           // River -> Showdown
@@ -411,7 +414,7 @@ export default function NotFound() {
     setTimeout(() => {
       isAdvancingStreetRef.current = false;
     }, 400);
-  }, [updateAiDialogue, handleShowdown]);
+  }, [handleShowdown, addChatMessage]);
 
   // Suspenseful, staggered All-In board runout (Card by Card / Street by Street)
   const runoutAllIn = useCallback(
@@ -574,7 +577,9 @@ export default function NotFound() {
       evaluateHand(playerHole, communityCards),
       "player_folded"
     );
-    updateAiDialogue(foldComment);
+    if (foldComment) {
+      updateAiDialogue(foldComment);
+    }
 
     setPlayerChips((prev) => {
       if (prev <= 0) {
@@ -601,7 +606,9 @@ export default function NotFound() {
         stage === "showdown" ? "river" : stage,
         playerProfile
       );
-      updateAiDialogue(decision.dialogue);
+      if (decision.dialogue) {
+        updateAiDialogue(decision.dialogue);
+      }
 
       if (decision.action === "fold") {
         playCasinoSound("fold");
@@ -853,15 +860,17 @@ export default function NotFound() {
           {/* AI Dealer Area */}
           <div className="relative z-10 flex flex-col items-center space-y-2 pt-1">
             
-            {/* Alfred Speech Bubble with Specific Card Commentary */}
-            <motion.div
-              key={aiDialogue}
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="px-4 py-2 rounded-2xl bg-black/85 border border-amber-500/30 text-amber-200 text-xs sm:text-sm font-mono max-w-lg text-center shadow-lg backdrop-blur-md"
-            >
-              <span className="text-amber-400 font-bold mr-1">Alfred:</span> {aiDialogue}
-            </motion.div>
+            {/* Alfred Speech Bubble (Rendered only when Alfred has something selective to say) */}
+            {aiDialogue && (
+              <motion.div
+                key={aiDialogue}
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="px-4 py-2 rounded-2xl bg-black/85 border border-amber-500/30 text-amber-200 text-xs sm:text-sm font-mono max-w-lg text-center shadow-lg backdrop-blur-md"
+              >
+                <span className="text-amber-400 font-bold mr-1">Alfred:</span> {aiDialogue}
+              </motion.div>
+            )}
 
             {/* AI Hand Evaluation Pill (Showdown only) */}
             {stage === "showdown" && aiHandEval && (

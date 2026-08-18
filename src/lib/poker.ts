@@ -390,7 +390,7 @@ export function classifyPlayerProfile(profile: PlayerProfile): PlayerProfile {
     return {
       ...profile,
       archetype: "Observing...",
-      readSummary: "Observing initial baseline betting frequency...",
+      readSummary: "Calibrating baseline tendencies over opening hands...",
       vpipPercent: 50,
       aggressionRate: 50,
     };
@@ -426,11 +426,11 @@ export function classifyPlayerProfile(profile: PlayerProfile): PlayerProfile {
   };
 }
 
-// Intelligent Adaptive AI Decision Engine
+// Intelligent Adaptive AI Decision Engine (Selective & Impactful Dialogue)
 export interface AIDecision {
   action: "fold" | "call" | "raise" | "check";
   raiseAmount?: number;
-  dialogue: string;
+  dialogue?: string;
 }
 
 export function getAdaptiveAIDecision(
@@ -464,7 +464,6 @@ export function getAdaptiveAIDecision(
     if (isBluffer && Math.random() < 0.4 && stage !== "river") {
       return {
         action: toCall > 0 ? "call" : "check",
-        dialogue: "A cautious stance for the moment. Let us see what unfolds.",
       };
     }
 
@@ -475,7 +474,7 @@ export function getAdaptiveAIDecision(
     return {
       action: "raise",
       raiseAmount: toCall + valueRaise,
-      dialogue: "A commanding position. I must raise the stakes.",
+      dialogue: Math.random() < 0.45 ? "A commanding position. I must raise." : undefined,
     };
   }
 
@@ -486,10 +485,10 @@ export function getAdaptiveAIDecision(
         return {
           action: "raise",
           raiseAmount: Math.min(aiChips, Math.max(30, Math.floor(pot * 0.5))),
-          dialogue: "I fancy my holdings on this texture. A modest raise.",
+          dialogue: Math.random() < 0.35 ? "I fancy my holdings on this board. A modest raise." : undefined,
         };
       }
-      return { action: toCall > 0 ? "call" : "check", dialogue: toCall > 0 ? "I call your wager." : "Check." };
+      return { action: toCall > 0 ? "call" : "check" };
     }
   }
 
@@ -500,14 +499,13 @@ export function getAdaptiveAIDecision(
         return {
           action: "raise",
           raiseAmount: Math.min(aiChips, Math.max(30, Math.floor(pot * 0.45))),
-          dialogue: "A testing wager to probe your strength.",
         };
       }
-      return { action: "check", dialogue: "Check." };
+      return { action: "check" };
     }
 
     if (toCall <= pot * 0.6 || toCall <= aiChips * 0.4) {
-      return { action: "call", dialogue: "I shall see the next street with my pair." };
+      return { action: "call" };
     }
 
     if (stage === "river" && Math.random() < 0.22 && aiChips >= toCall + 60 && !isCallingStation) {
@@ -518,7 +516,7 @@ export function getAdaptiveAIDecision(
       };
     }
 
-    return { action: "fold", dialogue: "I yield this hand to your wager." };
+    return { action: "fold" };
   }
 
   // 4. Pure Air / High Card — ACTIVE BLUFF ENGINE
@@ -527,16 +525,16 @@ export function getAdaptiveAIDecision(
       return {
         action: "raise",
         raiseAmount: Math.min(aiChips, Math.max(40, Math.floor(pot * 0.5))),
-        dialogue: "The board favors my range. I raise.",
+        dialogue: Math.random() < 0.5 ? "The board favors my range. I raise." : undefined,
       };
     }
-    return { action: "check", dialogue: "Check." };
+    return { action: "check" };
   }
 
   if (highCard >= 12 && toCall <= 40 && Math.random() < 0.3) {
     return {
       action: "call",
-      dialogue: "Holding overcards. I shall float this street.",
+      dialogue: Math.random() < 0.35 ? "Holding overcards. I shall float this street." : undefined,
     };
   }
 
@@ -548,17 +546,17 @@ export function getAdaptiveAIDecision(
     };
   }
 
-  return { action: "fold", dialogue: "Nothing of note in my hand. Folded." };
+  return { action: "fold" };
 }
 
-// Alfred's Witty & Articulate Card Commentary Engine
+// Alfred's Witty & Articulate Card Commentary Engine (Selective on Notable Holdings)
 export function getAlfredCardCommentary(
   playerHole: Card[],
   _communityCards: Card[],
   pEval: HandEvaluation,
   result: "player_win" | "ai_win" | "split" | "player_folded"
-): string {
-  if (!playerHole || playerHole.length < 2) return "A curious hand, sir.";
+): string | null {
+  if (!playerHole || playerHole.length < 2) return null;
 
   const c1 = playerHole[0];
   const c2 = playerHole[1];
@@ -567,15 +565,15 @@ export function getAlfredCardCommentary(
   const highRank = Math.max(c1.value, c2.value);
   const isConnected = Math.abs(c1.value - c2.value) === 1;
 
-  // 1. If player folded
+  // 1. If player folded notable holdings
   if (result === "player_folded") {
-    if (isPocketPair) {
+    if (isPocketPair && (c1.rank === "A" || c1.rank === "K" || c1.rank === "Q")) {
       return `Folding pocket ${c1.rank}s? A very cautious release, sir.`;
     }
     if (highRank === 14 && isSuited) {
       return `Releasing suited Ace-${c2.rank}? Prudence over bravado.`;
     }
-    return "A disciplined fold. Live to fight another hand.";
+    return null; // Don't speak on ordinary folds
   }
 
   // 2. Specific notable pocket card combinations
@@ -590,43 +588,31 @@ export function getAlfredCardCommentary(
   if (isPocketPair && c1.rank === "K") {
     return result === "player_win"
       ? "Pocket Kings ('Cowboys')! You wielded the crown with authority, sir."
-      : "Kings in the hole, yet the runout proved unkind. Tough break, sir.";
+      : "Kings in the hole, yet the runout proved unkind.";
   }
 
-  // Pocket Queens / Jacks
-  if (isPocketPair && (c1.rank === "Q" || c1.rank === "J")) {
-    return result === "player_win"
-      ? `Pocket ${c1.rank}s! High-caliber paint in the pocket, beautifully navigated.`
-      : `Pocket ${c1.rank}s didn't survive the showdown.`;
-  }
-
-  // Low/Mid Pocket Pairs
-  if (isPocketPair) {
-    return result === "player_win"
-      ? `Pocket ${c1.rank}s! Small pair, but deadly when handled with care.`
-      : `Pocket ${c1.rank}s — brave effort holding the small pair to the end.`;
-  }
-
-  // Big Slick (A-K)
-  if ((c1.rank === "A" && c2.rank === "K") || (c1.rank === "K" && c2.rank === "A")) {
-    return isSuited
-      ? "Big Slick suited (A-K)! The quintessential drawing powerhouse."
-      : "Ace-King offsuit! Classic high-stakes artillery.";
-  }
-
-  // 7-2 Offsuit (The Hammer / Worst hand)
+  // The Infamous 7-2 Offsuit (The Hammer)
   if (!isSuited && ((c1.rank === "7" && c2.rank === "2") || (c1.rank === "2" && c2.rank === "7"))) {
     return result === "player_win"
       ? "7-2 offsuit?! Winning with the statistical worst hand in Texas Hold'em is sheer psychological genius."
       : "Ah, the infamous 7-2 offsuit. Truly playing on veteran difficulty, sir.";
   }
 
-  // Suited Connectors
-  if (isSuited && isConnected) {
-    return `Suited connectors (${c1.rank}${c1.suit} ${c2.rank}${c2.suit})! A connoisseur's choice for hidden straights and flushes.`;
+  // Big Slick (A-K)
+  if ((c1.rank === "A" && c2.rank === "K") || (c1.rank === "K" && c2.rank === "A")) {
+    if (Math.random() < 0.6) {
+      return isSuited
+        ? "Big Slick suited (A-K)! The quintessential drawing powerhouse."
+        : "Ace-King offsuit! Classic high-stakes artillery.";
+    }
   }
 
-  // 3. Made hands commentary
+  // Suited Connectors
+  if (isSuited && isConnected && Math.random() < 0.5) {
+    return `Suited connectors (${c1.rank}${c1.suit} ${c2.rank}${c2.suit})! A connoisseur's choice.`;
+  }
+
+  // 3. Rare Made hands commentary
   if (pEval.rankName === "Royal Flush") {
     return "A Royal Flush! In all my years at the felt, I have seldom witnessed such absolute perfection. Splendid!";
   }
@@ -639,26 +625,20 @@ export function getAlfredCardCommentary(
   if (pEval.rankName === "Full House") {
     return `A full boat! (${pEval.description}). Impeccable board texture connection.`;
   }
-  if (pEval.rankName === "Flush") {
+  if (pEval.rankName === "Flush" && Math.random() < 0.65) {
     return `A pristine flush in ${c1.suit}! Beautiful monochrome board connection.`;
   }
-  if (pEval.rankName === "Straight") {
-    return `A 5-card sequence straight (${pEval.description})! You connected the dots flawlessly.`;
+  if (pEval.rankName === "Straight" && Math.random() < 0.65) {
+    return `A 5-card straight (${pEval.description})! You connected the dots flawlessly.`;
   }
-  if (pEval.rankName === "Three of a Kind") {
+  if (pEval.rankName === "Three of a Kind" && Math.random() < 0.4) {
     return `Trips! (${pEval.description}). A concealed weapon on this board.`;
   }
-  if (pEval.rankName === "Two Pair") {
-    return `Two pair (${pEval.description}). Solid and disciplined execution.`;
-  }
-  if (pEval.rankName === "One Pair") {
-    return result === "player_win"
-      ? `${pEval.description} held up! Crisp value.`
-      : `Just ${pEval.description} in the end. The board offered little assistance.`;
+
+  // High Card hero win
+  if (pEval.rankName === "High Card" && result === "player_win") {
+    return `You won that pot with mere ${pEval.description}?! Ice in your veins, sir.`;
   }
 
-  // High Card
-  return result === "player_win"
-    ? `You won that pot with mere ${pEval.description}?! Ice in your veins, sir.`
-    : `${pEval.description} only. A valiant attempt to contest the pot nonetheless.`;
+  return null; // Remain composed and quiet on routine mundane outcomes
 }
