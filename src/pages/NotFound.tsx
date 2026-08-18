@@ -120,6 +120,9 @@ export default function NotFound() {
   // Live Win Probability Equity %
   const [winProbability, setWinProbability] = useState(50);
 
+  // Guard ref to strictly prevent duplicate street advancements
+  const isAdvancingStreetRef = useRef(false);
+
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       setMousePos({ x: e.clientX, y: e.clientY });
@@ -300,158 +303,14 @@ export default function NotFound() {
     }
   }, [playerHole, communityCards]);
 
-  // Suspenseful, staggered All-In board runout (Card by Card / Street by Street)
-  const runoutAllIn = useCallback(
-    (currentDeck: PokerCard[], currentCommunity: PokerCard[]) => {
-      playCasinoSound("allin");
-      addChatMessage("Dealer", "🔥 ALL-IN SHOWDOWN! Dealing the full board...");
-
-      const d = [...currentDeck];
-      const startLen = currentCommunity.length;
-      let runningCommunity = [...currentCommunity];
-
-      const dealStep = (targetLen: number, delayMs: number, onDone: () => void) => {
-        setTimeout(() => {
-          d.pop(); // Burn card
-          while (runningCommunity.length < targetLen && d.length > 0) {
-            runningCommunity.push(d.pop()!);
-          }
-          setCommunityCards([...runningCommunity]);
-          playCasinoSound("deal");
-          onDone();
-        }, delayMs);
-      };
-
-      const finalizeShowdown = (finalCommunity: PokerCard[]) => {
-        setStage("showdown");
-        const pEval = evaluateHand(playerHole, finalCommunity);
-        const aEval = evaluateHand(aiHole, finalCommunity);
-        setPlayerHandEval(pEval);
-        setAiHandEval(aEval);
-
-        setTimeout(() => {
-          let winnerMsg = "";
-          let resultType: "player_win" | "ai_win" | "split" = "split";
-          const awardPot = pot;
-
-          if (pEval.score > aEval.score) {
-            // PLAYER WINS POT
-            resultType = "player_win";
-            winnerMsg = `🏆 You WIN $${awardPot.toLocaleString()}! (${pEval.description})`;
-            playCasinoSound("win");
-            
-            setPlayerChips((prev) => {
-              const nextChips = prev + awardPot;
-              setAiChips((aiPrev) => {
-                if (aiPrev <= 0) {
-                  setTimeout(() => setTournamentResult("player_champion"), 1400);
-                }
-                return aiPrev;
-              });
-              return nextChips;
-            });
-
-          } else if (aEval.score > pEval.score) {
-            // ALFRED WINS POT
-            resultType = "ai_win";
-            winnerMsg = `💀 Alfred WINS $${awardPot.toLocaleString()}! (${aEval.description})`;
-            playCasinoSound("fold");
-
-            setAiChips((prev) => prev + awardPot);
-            setPlayerChips((prev) => {
-              if (prev <= 0) {
-                setTimeout(() => setTournamentResult("player_busted"), 1400);
-              }
-              return prev;
-            });
-
-          } else {
-            // SPLIT POT
-            resultType = "split";
-            const half = Math.floor(awardPot / 2);
-            winnerMsg = `🤝 Split Pot! ($${half.toLocaleString()} each)`;
-            playCasinoSound("chip");
-            setPlayerChips((prev) => prev + half);
-            setAiChips((prev) => prev + half);
-          }
-
-          setHandResult(winnerMsg);
-          const commentary = getAlfredCardCommentary(playerHole, finalCommunity, pEval, resultType);
-          updateAiDialogue(commentary);
-        }, 600);
-      };
-
-      if (startLen === 0) {
-        // Preflop all-in: Deal Flop (3) -> Turn (4) -> River (5)
-        dealStep(3, 400, () => {
-          dealStep(4, 550, () => {
-            dealStep(5, 550, () => {
-              finalizeShowdown(runningCommunity);
-            });
-          });
-        });
-      } else if (startLen === 3) {
-        // Flop all-in: Deal Turn (4) -> River (5)
-        dealStep(4, 450, () => {
-          dealStep(5, 550, () => {
-            finalizeShowdown(runningCommunity);
-          });
-        });
-      } else if (startLen === 4) {
-        // Turn all-in: Deal River (5)
-        dealStep(5, 450, () => {
-          finalizeShowdown(runningCommunity);
-        });
-      } else {
-        finalizeShowdown(runningCommunity);
-      }
-    },
-    [playerHole, aiHole, pot, updateAiDialogue, addChatMessage]
-  );
-
-  // Advance street (Flop, Turn, River, Showdown)
-  const advanceStreet = useCallback(() => {
-    setPlayerRoundBet(0);
-    setAiRoundBet(0);
-    setCurrentBet(0);
-
-    setDeck((prevDeck) => {
-      const d = [...prevDeck];
-      if (stage === "preflop") {
-        d.pop();
-        const flop = [d.pop()!, d.pop()!, d.pop()!];
-        setCommunityCards(flop);
-        setStage("flop");
-        playCasinoSound("deal");
-        updateAiDialogue("Flop is dealt. What is your move?");
-      } else if (stage === "flop") {
-        d.pop();
-        const turn = d.pop()!;
-        setCommunityCards((prev) => [...prev, turn]);
-        setStage("turn");
-        playCasinoSound("deal");
-        updateAiDialogue("Turn card is out. The pot grows thicker.");
-      } else if (stage === "turn") {
-        d.pop();
-        const river = d.pop()!;
-        setCommunityCards((prev) => [...prev, river]);
-        setStage("river");
-        playCasinoSound("deal");
-        updateAiDialogue("River is dealt. The moment of truth.");
-      } else if (stage === "river") {
-        setStage("showdown");
-        handleShowdown();
-      }
-      return d;
-    });
-  }, [stage, updateAiDialogue]);
-
   // Showdown hand resolution with Alfred card commentary
-  const handleShowdown = useCallback(() => {
+  const handleShowdown = useCallback((finalCommunity?: PokerCard[]) => {
+    const board = finalCommunity || communityCards;
     if (playerHole.length < 2 || aiHole.length < 2) return;
 
-    const pEval = evaluateHand(playerHole, communityCards);
-    const aEval = evaluateHand(aiHole, communityCards);
+    setStage("showdown");
+    const pEval = evaluateHand(playerHole, board);
+    const aEval = evaluateHand(aiHole, board);
     setPlayerHandEval(pEval);
     setAiHandEval(aEval);
 
@@ -498,9 +357,110 @@ export default function NotFound() {
     }
 
     setHandResult(winnerMsg);
-    const commentary = getAlfredCardCommentary(playerHole, communityCards, pEval, resultType);
+    const commentary = getAlfredCardCommentary(playerHole, board, pEval, resultType);
     updateAiDialogue(commentary);
   }, [playerHole, aiHole, communityCards, pot, updateAiDialogue]);
+
+  // Robust, single-transition street advancement based on exact board card count
+  const advanceStreet = useCallback(() => {
+    if (isAdvancingStreetRef.current) return;
+    isAdvancingStreetRef.current = true;
+
+    setPlayerRoundBet(0);
+    setAiRoundBet(0);
+    setCurrentBet(0);
+
+    setDeck((prevDeck) => {
+      const d = [...prevDeck];
+      setCommunityCards((prevComm) => {
+        const len = prevComm.length;
+        if (len === 0) {
+          // Preflop -> Flop: Deal exactly 3 cards
+          d.pop(); // Burn card
+          const flop = [d.pop()!, d.pop()!, d.pop()!];
+          setStage("flop");
+          playCasinoSound("deal");
+          updateAiDialogue("Flop is dealt (3 cards). Your turn to act, sir.");
+          return flop;
+        } else if (len === 3) {
+          // Flop -> Turn: Deal exactly 1 card (total 4)
+          d.pop(); // Burn card
+          const turn = d.pop()!;
+          setStage("turn");
+          playCasinoSound("deal");
+          updateAiDialogue("Turn card is dealt (4th card). Your turn to act.");
+          return [...prevComm, turn];
+        } else if (len === 4) {
+          // Turn -> River: Deal exactly 1 card (total 5)
+          d.pop(); // Burn card
+          const river = d.pop()!;
+          setStage("river");
+          playCasinoSound("deal");
+          updateAiDialogue("River is dealt (5th card). Final betting round.");
+          return [...prevComm, river];
+        } else {
+          // River -> Showdown
+          setTimeout(() => handleShowdown(prevComm), 100);
+          return prevComm;
+        }
+      });
+      return d;
+    });
+
+    setTimeout(() => {
+      isAdvancingStreetRef.current = false;
+    }, 400);
+  }, [updateAiDialogue, handleShowdown]);
+
+  // Suspenseful, staggered All-In board runout (Card by Card / Street by Street)
+  const runoutAllIn = useCallback(
+    (currentDeck: PokerCard[], currentCommunity: PokerCard[]) => {
+      playCasinoSound("allin");
+      addChatMessage("Dealer", "🔥 ALL-IN SHOWDOWN! Dealing the board...");
+
+      const d = [...currentDeck];
+      const startLen = currentCommunity.length;
+      let runningCommunity = [...currentCommunity];
+
+      const dealStep = (targetLen: number, delayMs: number, onDone: () => void) => {
+        setTimeout(() => {
+          d.pop(); // Burn card
+          while (runningCommunity.length < targetLen && d.length > 0) {
+            runningCommunity.push(d.pop()!);
+          }
+          setCommunityCards([...runningCommunity]);
+          playCasinoSound("deal");
+          onDone();
+        }, delayMs);
+      };
+
+      if (startLen === 0) {
+        // Preflop all-in: Deal Flop (3) -> Turn (4) -> River (5)
+        dealStep(3, 400, () => {
+          dealStep(4, 550, () => {
+            dealStep(5, 550, () => {
+              handleShowdown(runningCommunity);
+            });
+          });
+        });
+      } else if (startLen === 3) {
+        // Flop all-in: Deal Turn (4) -> River (5)
+        dealStep(4, 450, () => {
+          dealStep(5, 550, () => {
+            handleShowdown(runningCommunity);
+          });
+        });
+      } else if (startLen === 4) {
+        // Turn all-in: Deal River (5)
+        dealStep(5, 450, () => {
+          handleShowdown(runningCommunity);
+        });
+      } else {
+        handleShowdown(runningCommunity);
+      }
+    },
+    [handleShowdown, addChatMessage]
+  );
 
   // Player Actions with Texas Hold'em Round Closure
   const handlePlayerCheck = useCallback(() => {
@@ -554,7 +514,7 @@ export default function NotFound() {
       return;
     }
 
-    // Standard call closes street
+    // Standard call closes street -> advance to next street
     setTimeout(() => {
       advanceStreet();
     }, 450);
@@ -665,7 +625,6 @@ export default function NotFound() {
         setPot((prev) => prev + callAmt);
         setAiRoundBet((prev) => prev + callAmt);
 
-        // IF PLAYER IS ALL-IN OR ALFRED IS ALL-IN -> DIRECTLY DEAL THE 5 COMMUNITY CARDS & RUN SHOWDOWN!
         if (isPlayerAllIn || isAiAllIn || playerChips <= 0) {
           runoutAllIn(deck, communityCards);
         } else {
