@@ -269,10 +269,10 @@ export default function AskPortfolio() {
             exit={{ opacity: 0, scale: 0.9 }}
             whileHover={{ scale: 1.06 }}
             whileTap={{ scale: 0.95 }}
-            className="fixed right-5 bottom-5 z-50 flex items-center gap-2 rounded-full bg-acc px-5 py-3 font-mono text-sm font-semibold text-ink shadow-lg shadow-acc/20"
+            className="fixed right-4 bottom-4 sm:right-6 sm:bottom-6 z-[9995] flex items-center gap-2 rounded-full bg-acc px-4 py-2.5 sm:px-5 sm:py-3 font-mono text-xs sm:text-sm font-bold text-ink shadow-[0_10px_30px_rgba(56,189,248,0.35)] cursor-pointer hover:bg-white transition-all"
             aria-expanded={open}
           >
-            ask alfred
+            <span>ask alfred</span>
             <span className="relative flex size-2">
               <span className="absolute inline-flex size-full animate-ping rounded-full bg-ink/60" />
               <span className="relative inline-flex size-2 rounded-full bg-ink" />
@@ -281,18 +281,26 @@ export default function AskPortfolio() {
         )}
       </AnimatePresence>
 
-      {/* Chat panel */}
+      {/* Chat panel & Mobile Backdrop */}
       <AnimatePresence>
         {open && (
-          <motion.div
-            initial={{ opacity: 0, y: 24, scale: 0.97 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 24, scale: 0.97 }}
-            transition={{ duration: 0.2 }}
-            className="fixed right-5 bottom-5 z-50 flex h-[28rem] max-h-[75svh] w-[calc(100vw-2.5rem)] max-w-sm flex-col overflow-hidden rounded-2xl border border-line bg-panel shadow-2xl"
-            role="dialog"
-            aria-label="Alfred, the portfolio assistant"
-          >
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => { triggerLeadCapture(); setOpen(false); }}
+              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[99998] sm:hidden pointer-events-auto"
+            />
+            <motion.div
+              initial={{ opacity: 0, y: 20, scale: 0.97 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 20, scale: 0.97 }}
+              transition={{ duration: 0.2 }}
+              className="fixed right-3.5 left-3.5 sm:left-auto sm:right-6 bottom-3.5 sm:bottom-6 z-[99999] flex h-[30rem] max-h-[82svh] sm:w-96 flex-col overflow-hidden rounded-3xl border border-line bg-panel/95 backdrop-blur-2xl shadow-2xl"
+              role="dialog"
+              aria-label="Alfred, the portfolio assistant"
+            >
             {/* Header */}
             <div className="flex items-center justify-between gap-2 border-b border-line py-2 pr-2 pl-4">
               <div className="flex items-center gap-2 min-w-0">
@@ -419,6 +427,7 @@ export default function AskPortfolio() {
               </button>
             </form>
           </motion.div>
+          </>
         )}
       </AnimatePresence>
     </>

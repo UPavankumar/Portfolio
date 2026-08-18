@@ -17,7 +17,7 @@ export default function FloatingDock() {
   };
 
   return (
-    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[9990] pointer-events-none">
+    <div className="hidden md:block fixed bottom-6 left-1/2 -translate-x-1/2 z-[9990] pointer-events-none">
       <motion.div
         initial={{ y: 50, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
@@ -56,8 +56,7 @@ export default function FloatingDock() {
             <rect width="20" height="16" x="2" y="4" rx="2" />
             <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
           </svg>
-          <span className="hidden sm:inline text-[11px]">{profile.email}</span>
-          <span className="sm:hidden text-[11px]">Email</span>
+          <span className="text-[11px]">{profile.email}</span>
 
           <AnimatePresence>
             {copied && (

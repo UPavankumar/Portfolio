@@ -17,34 +17,6 @@ export default function Nav() {
   const [activePath, setActivePath] = useState("/");
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-
-  // Preloader check
-  useEffect(() => {
-    const checkLoading = () => {
-      if (document.body.style.overflow === "hidden") {
-        setIsLoading(true);
-      } else {
-        setIsLoading(false);
-      }
-    };
-
-    checkLoading();
-    const interval = setInterval(checkLoading, 150);
-    return () => clearInterval(interval);
-  }, []);
-
-  // Lock body scroll when mobile menu is open
-  useEffect(() => {
-    if (isMobileMenuOpen) {
-      document.body.style.overflow = "hidden";
-    } else if (!isLoading) {
-      document.body.style.overflow = "";
-    }
-    return () => {
-      document.body.style.overflow = "";
-    };
-  }, [isMobileMenuOpen, isLoading]);
 
   // Route & Scroll detection
   useEffect(() => {
@@ -85,11 +57,8 @@ export default function Nav() {
     navigate(path);
   };
 
-  // Hide Navbar completely while initial Preloader is active
-  if (isLoading) return null;
-
   return (
-    <header className="fixed top-0 md:top-6 w-full z-[9999] px-4 md:px-6 pointer-events-none flex justify-between items-center h-20 md:h-[72px] overflow-visible">
+    <header className="fixed top-0 md:top-6 w-full z-[9999] px-4 md:px-6 pointer-events-none flex justify-between items-center h-16 md:h-[72px] overflow-visible">
       
       {/* Brand Logo */}
       <Link
@@ -102,22 +71,22 @@ export default function Nav() {
           }
         }}
         onMouseEnter={playHoverSound}
-        className="flex items-center gap-3 group pointer-events-auto transition-all duration-300 hover:scale-105 z-[10002]"
+        className="flex items-center gap-2.5 sm:gap-3 group pointer-events-auto transition-all duration-300 hover:scale-105 z-[10002]"
       >
-        <div className="w-10 h-10 rounded-full bg-white text-black flex items-center justify-center font-black text-sm group-hover:rotate-12 transition-all shadow-xl">
+        <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-white text-black flex items-center justify-center font-black text-xs sm:text-sm group-hover:rotate-12 transition-all shadow-xl">
           P.
         </div>
         <div className="flex flex-col">
-          <span className="text-[13px] font-black tracking-[0.2em] text-white uppercase block">
+          <span className="text-xs sm:text-[13px] font-black tracking-[0.2em] text-white uppercase block">
             Pavan Kumar
           </span>
-          <span className="text-[9px] font-mono text-neutral-400 tracking-wider hidden sm:block">
+          <span className="text-[8px] sm:text-[9px] font-mono text-neutral-400 tracking-wider hidden sm:block">
             AI Automation & Analytics
           </span>
         </div>
       </Link>
 
-      {/* Desktop Floating Center Navbar (No 'More' - 5 Clean Dedicated Page Links) */}
+      {/* Desktop Floating Center Navbar (Clean Dedicated Page Links) */}
       <div className="absolute inset-0 px-4 md:px-6 pointer-events-none hidden lg:block">
         <motion.nav
           initial={false}
@@ -167,30 +136,30 @@ export default function Nav() {
           type="button"
           onClick={() => {
             playClickSound();
-            setIsMobileMenuOpen(!isMobileMenuOpen);
+            setIsMobileMenuOpen((prev) => !prev);
           }}
           aria-label="Toggle navigation menu"
-          className="w-11 h-11 rounded-full bg-neutral-900/90 border border-white/15 backdrop-blur-xl flex flex-col items-center justify-center gap-1.5 shadow-xl transition-transform active:scale-95 cursor-pointer"
+          className="w-10 h-10 rounded-full bg-neutral-900/90 border border-white/20 backdrop-blur-xl flex flex-col items-center justify-center gap-1.5 shadow-xl transition-transform active:scale-95 cursor-pointer"
         >
           <motion.span
-            animate={isMobileMenuOpen ? { rotate: 45, y: 7.5 } : { rotate: 0, y: 0 }}
+            animate={isMobileMenuOpen ? { rotate: 45, y: 6.5 } : { rotate: 0, y: 0 }}
             transition={{ duration: 0.2 }}
-            className="w-5 h-0.5 bg-white rounded-full block origin-center"
+            className="w-4 h-0.5 bg-white rounded-full block origin-center"
           />
           <motion.span
             animate={isMobileMenuOpen ? { opacity: 0 } : { opacity: 1 }}
             transition={{ duration: 0.2 }}
-            className="w-5 h-0.5 bg-white rounded-full block origin-center"
+            className="w-4 h-0.5 bg-white rounded-full block origin-center"
           />
           <motion.span
-            animate={isMobileMenuOpen ? { rotate: -45, y: -7.5 } : { rotate: 0, y: 0 }}
+            animate={isMobileMenuOpen ? { rotate: -45, y: -6.5 } : { rotate: 0, y: 0 }}
             transition={{ duration: 0.2 }}
-            className="w-5 h-0.5 bg-white rounded-full block origin-center"
+            className="w-4 h-0.5 bg-white rounded-full block origin-center"
           />
         </button>
       </div>
 
-      {/* Mobile Menu Overlay & Drawer */}
+      {/* Mobile Menu Overlay & Minimal Drawer */}
       <AnimatePresence>
         {isMobileMenuOpen && (
           <>
@@ -200,21 +169,21 @@ export default function Nav() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setIsMobileMenuOpen(false)}
-              className="fixed inset-0 bg-black/80 backdrop-blur-xl z-[10000] lg:hidden pointer-events-auto"
+              className="fixed inset-0 bg-black/85 backdrop-blur-xl z-[10000] lg:hidden pointer-events-auto"
             />
 
             {/* Mobile Drawer */}
             <motion.div
-              initial={{ opacity: 0, y: -20, scale: 0.98 }}
+              initial={{ opacity: 0, y: -15, scale: 0.98 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -20, scale: 0.98 }}
-              transition={{ type: "spring", stiffness: 200, damping: 25 }}
-              className="fixed top-20 left-4 right-4 max-h-[calc(100vh-6rem)] overflow-y-auto bg-neutral-950/95 border border-white/15 rounded-3xl p-6 shadow-2xl z-[10001] lg:hidden pointer-events-auto flex flex-col gap-6"
+              exit={{ opacity: 0, y: -15, scale: 0.98 }}
+              transition={{ type: "spring", stiffness: 220, damping: 25 }}
+              className="fixed top-16 left-3.5 right-3.5 max-h-[calc(100vh-5rem)] overflow-y-auto bg-neutral-950/98 border border-white/15 rounded-3xl p-5 shadow-2xl z-[10001] lg:hidden pointer-events-auto flex flex-col gap-4 font-sans"
             >
               {/* Main Nav Links */}
-              <div className="flex flex-col gap-2">
-                <span className="text-[10px] font-mono tracking-widest text-neutral-500 uppercase px-2">
-                  Navigation
+              <div className="flex flex-col gap-1.5">
+                <span className="text-[10px] font-mono tracking-widest text-neutral-500 uppercase px-2 mb-1">
+                  Menu
                 </span>
                 {NAV_LINKS.map((link) => {
                   const isActive = activePath === link.path;
@@ -224,7 +193,7 @@ export default function Nav() {
                       key={link.name}
                       type="button"
                       onClick={() => handleNavClick(link.path)}
-                      className={`flex items-center justify-between p-3.5 rounded-2xl text-left transition-all cursor-pointer ${
+                      className={`flex items-center justify-between p-3 rounded-2xl text-left transition-all cursor-pointer ${
                         isActive
                           ? "bg-white text-black font-bold"
                           : "text-neutral-200 hover:bg-neutral-900 font-medium"
@@ -232,8 +201,8 @@ export default function Nav() {
                     >
                       <span className="text-base">{link.name}</span>
                       {isActive && (
-                        <span className="text-xs font-mono px-2 py-0.5 rounded-full bg-black text-white">
-                          Current
+                        <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-black text-white">
+                          ● Current
                         </span>
                       )}
                     </button>
@@ -243,56 +212,22 @@ export default function Nav() {
 
               <div className="h-px bg-white/10" />
 
-              {/* Quick Actions */}
-              <div className="flex flex-col gap-2">
-                <span className="text-[10px] font-mono tracking-widest text-neutral-500 uppercase px-2">
-                  Quick Actions
-                </span>
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => handleNavClick("/about")}
-                    className="p-3 rounded-2xl bg-neutral-900/70 border border-white/5 text-left hover:border-white/20 transition-all cursor-pointer"
-                  >
-                    <span className="text-xs font-bold text-white block mb-0.5">Bio & Resume</span>
-                    <span className="text-[10px] text-neutral-400">Career & education</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => handleNavClick("/contact")}
-                    className="p-3 rounded-2xl bg-neutral-900/70 border border-white/5 text-left hover:border-white/20 transition-all cursor-pointer"
-                  >
-                    <span className="text-xs font-bold text-white block mb-0.5">Hire / Contact</span>
-                    <span className="text-[10px] text-[#38bdf8]">Get in touch →</span>
-                  </button>
-                </div>
-              </div>
-
-              {/* Social links row */}
-              <div className="flex items-center justify-between pt-2 border-t border-white/10 font-mono text-xs text-neutral-400">
-                <a
-                  href="https://linkedin.com/in/u-pavankumar"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="hover:text-white transition-colors"
+              {/* Minimal Quick Actions */}
+              <div className="flex items-center justify-between gap-2 pt-1 font-mono text-xs">
+                <button
+                  type="button"
+                  onClick={() => handleNavClick("/about")}
+                  className="flex-1 py-2.5 px-3 rounded-xl bg-white/5 border border-white/10 text-neutral-300 text-center hover:text-white"
                 >
-                  LinkedIn ↗
-                </a>
-                <a
-                  href="https://github.com/UPavankumar"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="hover:text-white transition-colors"
+                  Bio & Resume
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleNavClick("/contact")}
+                  className="flex-1 py-2.5 px-3 rounded-xl bg-[#38bdf8]/15 border border-[#38bdf8]/30 text-[#38bdf8] text-center font-bold"
                 >
-                  GitHub ↗
-                </a>
-                <a
-                  href="mailto:pavan.aidev@gmail.com"
-                  className="hover:text-[#38bdf8] transition-colors"
-                >
-                  pavan.aidev@gmail.com
-                </a>
+                  Contact →
+                </button>
               </div>
             </motion.div>
           </>
