@@ -99,6 +99,7 @@ export default function NotFound() {
   const [aiDialogue, setAiDialogue] = useState("Welcome to the 404 High-Stakes Lounge. Let's see if your bluff holds.");
   const [handResult, setHandResult] = useState<string | null>(null);
   const [raiseSlider, setRaiseSlider] = useState(40);
+  const [showRulesModal, setShowRulesModal] = useState(false);
 
   const [playerHandEval, setPlayerHandEval] = useState<HandEvaluation | null>(null);
   const [aiHandEval, setAiHandEval] = useState<HandEvaluation | null>(null);
@@ -225,15 +226,15 @@ export default function NotFound() {
   }, [playerHole, aiHole, communityCards, pot]);
 
   // Player Actions
-  const handlePlayerCheck = () => {
+  const handlePlayerCheck = useCallback(() => {
     if (isAiThinking || stage === "showdown") return;
     playCasinoSound("check");
 
     // Pass action to AI
     triggerAiTurn(0);
-  };
+  }, [isAiThinking, stage]);
 
-  const handlePlayerCall = () => {
+  const handlePlayerCall = useCallback(() => {
     if (isAiThinking || stage === "showdown") return;
     const toCall = currentBet - playerRoundBet;
     const actualCall = Math.min(playerChips, toCall);
@@ -244,9 +245,9 @@ export default function NotFound() {
     setPlayerRoundBet((prev) => prev + actualCall);
 
     triggerAiTurn(0, true);
-  };
+  }, [isAiThinking, stage, currentBet, playerRoundBet, playerChips]);
 
-  const handlePlayerRaise = (amount: number) => {
+  const handlePlayerRaise = useCallback((amount: number) => {
     if (isAiThinking || stage === "showdown") return;
     const totalWager = Math.min(playerChips, amount);
 
@@ -257,16 +258,16 @@ export default function NotFound() {
     setCurrentBet(playerRoundBet + totalWager);
 
     triggerAiTurn(totalWager);
-  };
+  }, [isAiThinking, stage, playerChips, playerRoundBet]);
 
-  const handlePlayerFold = () => {
+  const handlePlayerFold = useCallback(() => {
     if (isAiThinking || stage === "showdown") return;
     playCasinoSound("fold");
     setHandResult(`You Folded. Alfred collects $${pot}.`);
     setAiChips((prev) => prev + pot);
     setAiDialogue("Prudence is the better part of valour.");
     setStage("showdown");
-  };
+  }, [isAiThinking, stage, pot]);
 
   // AI Turn handler with realistic latency
   const triggerAiTurn = (playerAddedBet: number, wasPlayerCall = false) => {
@@ -319,6 +320,83 @@ export default function NotFound() {
 
   const toCall = Math.max(0, currentBet - playerRoundBet);
 
+  // Global Keyboard Shortcuts Listener
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't intercept if user is inside an input/textarea
+      if (
+        document.activeElement?.tagName === "INPUT" ||
+        document.activeElement?.tagName === "TEXTAREA"
+      ) {
+        return;
+      }
+
+      const key = e.key.toLowerCase();
+
+      // Modal toggle
+      if (key === "h" || key === "?") {
+        setShowRulesModal((prev) => !prev);
+        return;
+      }
+
+      if (key === "escape") {
+        setShowRulesModal(false);
+        return;
+      }
+
+      if (showRulesModal) return;
+
+      // Deal Next Hand on Showdown
+      if (stage === "showdown") {
+        if (e.code === "Enter" || e.code === "Space") {
+          e.preventDefault();
+          startNewHand();
+        }
+        return;
+      }
+
+      // In-Game Action Hotkeys
+      if (key === "f") {
+        e.preventDefault();
+        handlePlayerFold();
+      } else if (key === "c" || e.code === "Space") {
+        e.preventDefault();
+        if (toCall === 0) handlePlayerCheck();
+        else handlePlayerCall();
+      } else if (key === "r") {
+        e.preventDefault();
+        if (playerChips > toCall) handlePlayerRaise(raiseSlider);
+      } else if (key === "a") {
+        e.preventDefault();
+        handlePlayerRaise(playerChips);
+      } else if (key === "1") {
+        e.preventDefault();
+        setRaiseSlider(Math.min(playerChips, Math.max(toCall + 20, Math.floor(pot / 2))));
+      } else if (key === "2") {
+        e.preventDefault();
+        setRaiseSlider(Math.min(playerChips, Math.max(toCall + 20, pot)));
+      } else if (key === "3") {
+        e.preventDefault();
+        setRaiseSlider(playerChips);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [
+    showRulesModal,
+    stage,
+    toCall,
+    playerChips,
+    raiseSlider,
+    pot,
+    handlePlayerFold,
+    handlePlayerCheck,
+    handlePlayerCall,
+    handlePlayerRaise,
+    startNewHand,
+  ]);
+
   return (
     <div className="fixed inset-0 z-[10000] bg-[#070b14] text-white flex flex-col justify-between overflow-hidden select-none font-sans">
       
@@ -345,8 +423,8 @@ export default function NotFound() {
           </div>
         </div>
 
-        {/* Chip Bankroll Tracker */}
-        <div className="flex items-center gap-4 sm:gap-6 font-mono">
+        {/* Chip Bankroll Tracker & Actions */}
+        <div className="flex items-center gap-3 sm:gap-6 font-mono">
           <div className="text-right">
             <span className="text-[10px] text-neutral-400 block uppercase">Your Bankroll</span>
             <span className="text-lg sm:text-xl font-black text-emerald-400">${playerChips.toLocaleString()}</span>
@@ -359,12 +437,22 @@ export default function NotFound() {
             <span className="text-base sm:text-lg font-bold text-neutral-300">${aiChips.toLocaleString()}</span>
           </div>
 
+          {/* Rules & Instructions Button */}
+          <button
+            type="button"
+            onClick={() => setShowRulesModal(true)}
+            className="px-3 py-2 rounded-xl bg-amber-500/15 border border-amber-500/30 text-xs font-bold text-amber-300 hover:bg-amber-500 hover:text-black transition-all flex items-center gap-1.5 cursor-pointer shadow-md"
+          >
+            <span>📜 Rules & Keys</span>
+            <kbd className="px-1.5 py-0.5 rounded bg-black/40 text-[9px] text-amber-200 border border-amber-500/30">H</kbd>
+          </button>
+
           {/* Quick Exit Links */}
           <Link
             to="/"
-            className="px-4 py-2 rounded-xl bg-white/10 border border-white/15 text-xs font-bold hover:bg-white hover:text-black transition-all hover:scale-105 ml-2"
+            className="px-4 py-2 rounded-xl bg-white/10 border border-white/15 text-xs font-bold hover:bg-white hover:text-black transition-all hover:scale-105 ml-1"
           >
-            ← Cash Out & Exit
+            ← Exit
           </Link>
         </div>
       </header>
@@ -470,9 +558,10 @@ export default function NotFound() {
                 <span>{handResult}</span>
                 <button
                   onClick={startNewHand}
-                  className="px-4 py-1.5 rounded-xl bg-black text-white font-bold hover:bg-neutral-800 transition-colors text-xs cursor-pointer ml-2"
+                  className="px-4 py-1.5 rounded-xl bg-black text-white font-bold hover:bg-neutral-800 transition-colors text-xs cursor-pointer ml-2 flex items-center gap-1.5"
                 >
-                  Next Hand ↵
+                  <span>Next Hand</span>
+                  <kbd className="px-1.5 py-0.5 rounded bg-white/20 text-[10px] text-white">↵ Enter</kbd>
                 </button>
               </motion.div>
             )}
@@ -508,7 +597,7 @@ export default function NotFound() {
 
       </main>
 
-      {/* Bottom Interactive Action Panel */}
+      {/* Bottom Interactive Action Panel with KEY BINDINGS SHOWN */}
       <footer className="p-4 sm:p-6 bg-[#04070e] border-t border-white/10 backdrop-blur-xl z-20">
         <div className="max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           
@@ -523,74 +612,89 @@ export default function NotFound() {
               value={raiseSlider}
               onChange={(e) => setRaiseSlider(Number(e.target.value))}
               disabled={isAiThinking || stage === "showdown" || playerChips <= toCall}
-              className="w-full sm:w-40 accent-amber-500"
+              className="w-full sm:w-36 accent-amber-500"
             />
             <span className="font-mono font-bold text-amber-400 text-sm min-w-[50px]">
               ${raiseSlider}
             </span>
 
-            {/* Quick Presets */}
+            {/* Quick Presets with KEY SHORTCUTS */}
             <div className="flex items-center gap-1.5">
               {[
-                { label: "1/2 Pot", val: Math.max(toCall + 20, Math.floor(pot / 2)) },
-                { label: "Pot", val: Math.max(toCall + 20, pot) },
-                { label: "All-In", val: playerChips },
+                { label: "1/2 Pot", key: "1", val: Math.max(toCall + 20, Math.floor(pot / 2)) },
+                { label: "Pot", key: "2", val: Math.max(toCall + 20, pot) },
+                { label: "All-In", key: "3", val: playerChips },
               ].map((btn) => (
                 <button
                   key={btn.label}
                   type="button"
                   onClick={() => setRaiseSlider(Math.min(playerChips, btn.val))}
                   disabled={isAiThinking || stage === "showdown"}
-                  className="px-2.5 py-1 rounded-lg bg-white/5 border border-white/10 text-[10px] font-mono text-neutral-300 hover:border-amber-500/50 hover:text-amber-300 transition-colors disabled:opacity-40"
+                  className="px-2.5 py-1 rounded-lg bg-white/5 border border-white/10 text-[10px] font-mono text-neutral-300 hover:border-amber-500/50 hover:text-amber-300 transition-colors disabled:opacity-40 flex items-center gap-1 cursor-pointer"
                 >
-                  {btn.label}
+                  <span>{btn.label}</span>
+                  <kbd className="px-1 py-0.2 rounded bg-black/40 text-[8px] text-neutral-400 border border-white/10">
+                    {btn.key}
+                  </kbd>
                 </button>
               ))}
             </div>
           </div>
 
-          {/* Action Buttons */}
+          {/* Action Buttons with CLEAR KEYS DISPLAYED */}
           <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto justify-end">
             
-            {/* FOLD */}
+            {/* FOLD [F] */}
             <button
               type="button"
               onClick={handlePlayerFold}
               disabled={isAiThinking || stage === "showdown"}
-              className="flex-1 sm:flex-initial px-5 py-3 rounded-2xl bg-red-500/20 border border-red-500/40 text-red-300 font-mono font-bold text-xs hover:bg-red-500 hover:text-white transition-all disabled:opacity-40 cursor-pointer shadow-lg"
+              className="flex-1 sm:flex-initial px-4 sm:px-5 py-3 rounded-2xl bg-red-500/20 border border-red-500/40 text-red-300 font-mono font-bold text-xs hover:bg-red-500 hover:text-white transition-all disabled:opacity-40 cursor-pointer shadow-lg flex items-center justify-center gap-2"
             >
-              FOLD
+              <span>FOLD</span>
+              <kbd className="px-1.5 py-0.5 rounded bg-black/40 text-[9px] text-red-200 border border-red-500/30">
+                F
+              </kbd>
             </button>
 
-            {/* CHECK / CALL */}
+            {/* CHECK [C] / CALL [C / Space] */}
             {toCall === 0 ? (
               <button
                 type="button"
                 onClick={handlePlayerCheck}
                 disabled={isAiThinking || stage === "showdown"}
-                className="flex-1 sm:flex-initial px-6 py-3 rounded-2xl bg-neutral-800 border border-white/20 text-white font-mono font-bold text-xs hover:bg-white hover:text-black transition-all disabled:opacity-40 cursor-pointer shadow-lg"
+                className="flex-1 sm:flex-initial px-5 sm:px-6 py-3 rounded-2xl bg-neutral-800 border border-white/20 text-white font-mono font-bold text-xs hover:bg-white hover:text-black transition-all disabled:opacity-40 cursor-pointer shadow-lg flex items-center justify-center gap-2"
               >
-                CHECK
+                <span>CHECK</span>
+                <kbd className="px-1.5 py-0.5 rounded bg-black/40 text-[9px] text-neutral-300 border border-white/20">
+                  C / Space
+                </kbd>
               </button>
             ) : (
               <button
                 type="button"
                 onClick={handlePlayerCall}
                 disabled={isAiThinking || stage === "showdown"}
-                className="flex-1 sm:flex-initial px-6 py-3 rounded-2xl bg-emerald-500 text-black font-mono font-black text-xs hover:bg-emerald-400 transition-all disabled:opacity-40 cursor-pointer shadow-[0_0_20px_rgba(16,185,129,0.4)]"
+                className="flex-1 sm:flex-initial px-5 sm:px-6 py-3 rounded-2xl bg-emerald-500 text-black font-mono font-black text-xs hover:bg-emerald-400 transition-all disabled:opacity-40 cursor-pointer shadow-[0_0_20px_rgba(16,185,129,0.4)] flex items-center justify-center gap-2"
               >
-                CALL ${toCall}
+                <span>CALL ${toCall}</span>
+                <kbd className="px-1.5 py-0.5 rounded bg-black/30 text-[9px] text-black border border-black/20">
+                  C
+                </kbd>
               </button>
             )}
 
-            {/* RAISE */}
+            {/* RAISE [R] / ALL-IN [A] */}
             <button
               type="button"
               onClick={() => handlePlayerRaise(raiseSlider)}
               disabled={isAiThinking || stage === "showdown" || playerChips <= toCall}
-              className="flex-1 sm:flex-initial px-6 py-3 rounded-2xl bg-gradient-to-r from-amber-500 to-yellow-500 text-black font-mono font-black text-xs hover:from-amber-400 hover:to-yellow-400 transition-all disabled:opacity-40 cursor-pointer shadow-[0_0_20px_rgba(245,158,11,0.5)]"
+              className="flex-1 sm:flex-initial px-5 sm:px-6 py-3 rounded-2xl bg-gradient-to-r from-amber-500 to-yellow-500 text-black font-mono font-black text-xs hover:from-amber-400 hover:to-yellow-400 transition-all disabled:opacity-40 cursor-pointer shadow-[0_0_20px_rgba(245,158,11,0.5)] flex items-center justify-center gap-2"
             >
-              {raiseSlider >= playerChips ? "ALL-IN 🔥" : `RAISE TO $${raiseSlider}`}
+              <span>{raiseSlider >= playerChips ? "ALL-IN 🔥" : `RAISE $${raiseSlider}`}</span>
+              <kbd className="px-1.5 py-0.5 rounded bg-black/30 text-[9px] text-black border border-black/20">
+                {raiseSlider >= playerChips ? "A" : "R"}
+              </kbd>
             </button>
 
             {/* NEXT HAND BUTTON (when showdown) */}
@@ -598,9 +702,12 @@ export default function NotFound() {
               <button
                 type="button"
                 onClick={startNewHand}
-                className="px-6 py-3 rounded-2xl bg-white text-black font-mono font-black text-xs hover:bg-amber-400 transition-all cursor-pointer animate-pulse"
+                className="px-5 sm:px-6 py-3 rounded-2xl bg-white text-black font-mono font-black text-xs hover:bg-amber-400 transition-all cursor-pointer animate-pulse flex items-center gap-2 shadow-lg"
               >
-                DEAL NEW HAND ↵
+                <span>NEXT HAND</span>
+                <kbd className="px-1.5 py-0.5 rounded bg-black text-[9px] text-white">
+                  ↵ Enter
+                </kbd>
               </button>
             )}
 
@@ -608,6 +715,146 @@ export default function NotFound() {
 
         </div>
       </footer>
+
+      {/* POP-UP INSTRUCTIONS & KEYBINDINGS MODAL */}
+      <AnimatePresence>
+        {showRulesModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[20000] bg-black/85 backdrop-blur-md flex items-center justify-center p-4 sm:p-6"
+            onClick={() => setShowRulesModal(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.95, y: 20 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-[#0b101d] border border-amber-500/40 rounded-3xl p-6 sm:p-8 max-w-2xl w-full shadow-[0_0_60px_rgba(245,158,11,0.25)] space-y-6 font-sans max-h-[90vh] overflow-y-auto"
+            >
+              {/* Modal Header */}
+              <div className="flex items-center justify-between border-b border-white/10 pb-4">
+                <div className="flex items-center gap-3">
+                  <div className="size-10 rounded-2xl bg-amber-500 text-black font-black flex items-center justify-center text-xl">
+                    ♠
+                  </div>
+                  <div>
+                    <span className="text-amber-400 text-xs font-mono font-bold tracking-widest uppercase">
+                      404 LOUNGE
+                    </span>
+                    <h2 className="text-xl sm:text-2xl font-black text-white uppercase tracking-tight">
+                      Poker Rules & Keybindings
+                    </h2>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowRulesModal(false)}
+                  className="size-8 rounded-full bg-white/10 hover:bg-white/20 text-neutral-300 hover:text-white flex items-center justify-center text-xs font-mono transition-colors"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {/* Quick Game Rules */}
+              <div className="space-y-3 font-mono text-xs">
+                <h3 className="text-amber-300 font-bold uppercase tracking-wider flex items-center gap-2">
+                  <span>🎲</span> How to Play Texas Hold'em
+                </h3>
+                <p className="text-neutral-300 leading-relaxed font-sans text-sm">
+                  You and Alfred (AI) each receive <strong>2 private hole cards</strong>. Five community cards are dealt across 4 betting rounds: <strong>Pre-Flop ➔ Flop (3 cards) ➔ Turn (1 card) ➔ River (1 card)</strong>.
+                  Form the <strong>best 5-card poker hand</strong> to win the pot!
+                </p>
+              </div>
+
+              {/* Keyboard Shortcuts Table */}
+              <div className="space-y-3 font-mono text-xs">
+                <h3 className="text-emerald-400 font-bold uppercase tracking-wider flex items-center gap-2">
+                  <span>⌨️</span> Keyboard Shortcuts
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-neutral-300">
+                  <div className="flex items-center justify-between p-2.5 rounded-xl bg-white/5 border border-white/10">
+                    <span>Check / Call</span>
+                    <kbd className="px-2 py-0.5 rounded bg-black/60 text-emerald-400 border border-emerald-500/40 text-[11px] font-bold">
+                      C / Space
+                    </kbd>
+                  </div>
+                  <div className="flex items-center justify-between p-2.5 rounded-xl bg-white/5 border border-white/10">
+                    <span>Fold Hand</span>
+                    <kbd className="px-2 py-0.5 rounded bg-black/60 text-red-400 border border-red-500/40 text-[11px] font-bold">
+                      F
+                    </kbd>
+                  </div>
+                  <div className="flex items-center justify-between p-2.5 rounded-xl bg-white/5 border border-white/10">
+                    <span>Raise Bet</span>
+                    <kbd className="px-2 py-0.5 rounded bg-black/60 text-amber-400 border border-amber-500/40 text-[11px] font-bold">
+                      R
+                    </kbd>
+                  </div>
+                  <div className="flex items-center justify-between p-2.5 rounded-xl bg-white/5 border border-white/10">
+                    <span>Go All-In</span>
+                    <kbd className="px-2 py-0.5 rounded bg-black/60 text-amber-400 border border-amber-500/40 text-[11px] font-bold">
+                      A
+                    </kbd>
+                  </div>
+                  <div className="flex items-center justify-between p-2.5 rounded-xl bg-white/5 border border-white/10">
+                    <span>Quick Bets (1/2, Pot, All)</span>
+                    <div className="flex gap-1">
+                      <kbd className="px-1.5 py-0.5 rounded bg-black/60 text-neutral-300 border border-white/20 text-[10px]">1</kbd>
+                      <kbd className="px-1.5 py-0.5 rounded bg-black/60 text-neutral-300 border border-white/20 text-[10px]">2</kbd>
+                      <kbd className="px-1.5 py-0.5 rounded bg-black/60 text-neutral-300 border border-white/20 text-[10px]">3</kbd>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between p-2.5 rounded-xl bg-white/5 border border-white/10">
+                    <span>Deal Next Hand</span>
+                    <kbd className="px-2 py-0.5 rounded bg-black/60 text-white border border-white/40 text-[11px] font-bold">
+                      Enter ↵
+                    </kbd>
+                  </div>
+                </div>
+              </div>
+
+              {/* Hand Rankings Hierarchy */}
+              <div className="space-y-2 font-mono text-xs">
+                <h3 className="text-amber-300 font-bold uppercase tracking-wider flex items-center gap-2">
+                  <span>🏆</span> Hand Rankings (Highest to Lowest)
+                </h3>
+                <div className="p-3 rounded-2xl bg-black/50 border border-white/10 text-[11px] text-neutral-400 space-y-1">
+                  <p><span className="text-amber-400 font-bold">1. Royal Flush:</span> A, K, Q, J, 10 same suit</p>
+                  <p><span className="text-amber-400 font-bold">2. Straight Flush:</span> 5 sequential cards same suit</p>
+                  <p><span className="text-white font-bold">3. Four of a Kind:</span> 4 cards same rank</p>
+                  <p><span className="text-white font-bold">4. Full House:</span> Three of a kind + One pair</p>
+                  <p><span className="text-white font-bold">5. Flush:</span> 5 cards same suit</p>
+                  <p><span className="text-white font-bold">6. Straight:</span> 5 sequential ranks</p>
+                  <p><span className="text-neutral-300">7. Three of a Kind / Two Pair / One Pair / High Card</span></p>
+                </div>
+              </div>
+
+              {/* Playful Disclaimer Notice */}
+              <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-start gap-3 text-xs text-amber-200 font-mono">
+                <span className="text-lg">⚠️</span>
+                <div>
+                  <span className="font-bold text-amber-300 block uppercase tracking-wider text-[11px]">
+                    CASINO ENTERTAINMENT NOTICE:
+                  </span>
+                  <p className="text-[11px] text-neutral-300 mt-1 leading-relaxed font-sans">
+                    This Texas Hold'em engine is built <strong>just for fun</strong> on this 404 page! Minor experimental quirks, edge cases, or wild AI bluffs might occasionally happen — take it easy, enjoy the game, and test your poker face!
+                  </p>
+                </div>
+              </div>
+
+              {/* Close Button */}
+              <button
+                type="button"
+                onClick={() => setShowRulesModal(false)}
+                className="w-full py-3.5 rounded-2xl bg-amber-500 text-black font-black uppercase tracking-wider font-mono text-xs hover:bg-amber-400 transition-all cursor-pointer shadow-lg"
+              >
+                GOT IT, LET'S PLAY ♠ [ESC]
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
     </div>
   );
