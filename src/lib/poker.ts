@@ -27,6 +27,30 @@ export interface HandEvaluation {
   bestCards: Card[];
 }
 
+export type PlayerArchetype =
+  | "Observing..."
+  | "Aggressive Bluffer"
+  | "Calling Station"
+  | "Tight Rock"
+  | "Balanced Shark";
+
+export interface PlayerProfile {
+  totalHands: number;
+  handsEntered: number; // VPIP
+  totalRaises: number;
+  totalCalls: number;
+  totalFolds: number;
+  totalChecks: number;
+  timesBluffedCaught: number;
+  timesFoldedToAiRaise: number;
+  timesRaisedRiver: number;
+  lastActions: string[];
+  archetype: PlayerArchetype;
+  readSummary: string;
+  vpipPercent: number;
+  aggressionRate: number;
+}
+
 const SUITS: Suit[] = ["♠", "♥", "♦", "♣"];
 const RANKS: { rank: Rank; value: number }[] = [
   { rank: "2", value: 2 },
@@ -69,7 +93,6 @@ export function shuffle(deck: Card[]): Card[] {
   return shuffled;
 }
 
-// Generate all 5-card combinations from 7 cards
 function getCombinations(cards: Card[], k = 5): Card[][] {
   const result: Card[][] = [];
   function backtrack(start: number, combo: Card[]) {
@@ -87,7 +110,6 @@ function getCombinations(cards: Card[], k = 5): Card[][] {
   return result;
 }
 
-// Evaluate single 5-card hand
 function evaluate5CardHand(hand: Card[]): { rankName: HandRank; score: number; description: string } {
   const sorted = [...hand].sort((a, b) => b.value - a.value);
   const values = sorted.map((c) => c.value);
@@ -95,7 +117,6 @@ function evaluate5CardHand(hand: Card[]): { rankName: HandRank; score: number; d
 
   const isFlush = suits.every((s) => s === suits[0]);
 
-  // Check straight (including A-2-3-4-5 wheel)
   let isStraight = false;
   let straightHigh = 0;
   if (
@@ -114,10 +135,9 @@ function evaluate5CardHand(hand: Card[]): { rankName: HandRank; score: number; d
     values[4] === 2
   ) {
     isStraight = true;
-    straightHigh = 5; // 5-high straight
+    straightHigh = 5;
   }
 
-  // Count frequencies
   const counts: Record<number, number> = {};
   for (const v of values) {
     counts[v] = (counts[v] || 0) + 1;
@@ -127,7 +147,6 @@ function evaluate5CardHand(hand: Card[]): { rankName: HandRank; score: number; d
     .map(([val, count]) => ({ val: Number(val), count }))
     .sort((a, b) => b.count - a.count || b.val - a.val);
 
-  // 1. Royal Flush & Straight Flush
   if (isFlush && isStraight) {
     if (straightHigh === 14) {
       return { rankName: "Royal Flush", score: 9000000, description: "Royal Flush" };
@@ -139,7 +158,6 @@ function evaluate5CardHand(hand: Card[]): { rankName: HandRank; score: number; d
     };
   }
 
-  // 2. Four of a Kind
   if (freqEntries[0].count === 4) {
     const quad = freqEntries[0].val;
     const kicker = freqEntries[1].val;
@@ -150,7 +168,6 @@ function evaluate5CardHand(hand: Card[]): { rankName: HandRank; score: number; d
     };
   }
 
-  // 3. Full House
   if (freqEntries[0].count === 3 && freqEntries[1].count === 2) {
     const trip = freqEntries[0].val;
     const pair = freqEntries[1].val;
@@ -161,7 +178,6 @@ function evaluate5CardHand(hand: Card[]): { rankName: HandRank; score: number; d
     };
   }
 
-  // 4. Flush
   if (isFlush) {
     const tieScore = values.reduce((acc, v, idx) => acc + v * Math.pow(15, 4 - idx), 0);
     return {
@@ -171,7 +187,6 @@ function evaluate5CardHand(hand: Card[]): { rankName: HandRank; score: number; d
     };
   }
 
-  // 5. Straight
   if (isStraight) {
     return {
       rankName: "Straight",
@@ -180,7 +195,6 @@ function evaluate5CardHand(hand: Card[]): { rankName: HandRank; score: number; d
     };
   }
 
-  // 6. Three of a Kind
   if (freqEntries[0].count === 3) {
     const trip = freqEntries[0].val;
     const kickers = [freqEntries[1].val, freqEntries[2].val];
@@ -191,7 +205,6 @@ function evaluate5CardHand(hand: Card[]): { rankName: HandRank; score: number; d
     };
   }
 
-  // 7. Two Pair
   if (freqEntries[0].count === 2 && freqEntries[1].count === 2) {
     const highPair = Math.max(freqEntries[0].val, freqEntries[1].val);
     const lowPair = Math.min(freqEntries[0].val, freqEntries[1].val);
@@ -203,7 +216,6 @@ function evaluate5CardHand(hand: Card[]): { rankName: HandRank; score: number; d
     };
   }
 
-  // 8. One Pair
   if (freqEntries[0].count === 2) {
     const pair = freqEntries[0].val;
     const kickers = [freqEntries[1].val, freqEntries[2].val, freqEntries[3].val];
@@ -215,7 +227,6 @@ function evaluate5CardHand(hand: Card[]): { rankName: HandRank; score: number; d
     };
   }
 
-  // 9. High Card
   const tieScore = values.reduce((acc, v, idx) => acc + v * Math.pow(15, 4 - idx), 0);
   return {
     rankName: "High Card",
@@ -232,14 +243,13 @@ function getRankName(val: number): string {
   return val.toString();
 }
 
-// Evaluate 7 cards and return the best 5-card hand
 export function evaluateHand(holeCards: Card[], communityCards: Card[]): HandEvaluation {
   const allCards = [...holeCards, ...communityCards];
   if (allCards.length < 5) {
     return {
       rankName: "High Card",
       score: 0,
-      description: "Waiting for cards...",
+      description: "Waiting for board cards...",
       bestCards: holeCards,
     };
   }
@@ -266,14 +276,58 @@ export function evaluateHand(holeCards: Card[], communityCards: Card[]): HandEva
   };
 }
 
-// AI Poker Bot Decision Logic (Alfred / Pro Casino AI)
-export function getAIDecision(
+// Classify player pattern into actionable archetype
+export function classifyPlayerProfile(profile: PlayerProfile): PlayerProfile {
+  const total = profile.totalHands;
+  if (total < 2) {
+    return {
+      ...profile,
+      archetype: "Observing...",
+      readSummary: "Calibrating baseline tendencies...",
+      vpipPercent: 50,
+      aggressionRate: 50,
+    };
+  }
+
+  const vpip = Math.round((profile.handsEntered / total) * 100);
+  const totalActions = profile.totalRaises + profile.totalCalls + profile.totalChecks + profile.totalFolds;
+  const aggRate = totalActions > 0 ? Math.round((profile.totalRaises / Math.max(1, profile.totalRaises + profile.totalCalls)) * 100) : 40;
+
+  let archetype: PlayerArchetype = "Balanced Shark";
+  let summary = "Balanced, versatile opponent.";
+
+  if (aggRate >= 65 || profile.timesBluffedCaught >= 2) {
+    archetype = "Aggressive Bluffer";
+    summary = `High aggression (${aggRate}%) & bluff frequency. Susceptible to check-traps and light call-downs.`;
+  } else if (vpip >= 70 && aggRate <= 35) {
+    archetype = "Calling Station";
+    summary = `High VPIP (${vpip}%) with low fold rate. Value-bet big; avoid bluffing.`;
+  } else if (vpip <= 40 && profile.totalFolds >= total * 0.4) {
+    archetype = "Tight Rock";
+    summary = `Disciplined (${vpip}% VPIP). Steal unchecked pots; respect sudden raises.`;
+  } else {
+    archetype = "Balanced Shark";
+    summary = `Calculated player (${vpip}% VPIP, ${aggRate}% Agg). Using standard GTO mixed strategy.`;
+  }
+
+  return {
+    ...profile,
+    vpipPercent: vpip,
+    aggressionRate: aggRate,
+    archetype,
+    readSummary: summary,
+  };
+}
+
+// Adaptive Pattern-Recognition AI Poker Decision Engine
+export function getAdaptiveAIDecision(
   aiHole: Card[],
   community: Card[],
   pot: number,
   toCall: number,
   aiChips: number,
-  stage: "preflop" | "flop" | "turn" | "river"
+  stage: "preflop" | "flop" | "turn" | "river",
+  playerProfile: PlayerProfile
 ): { action: "fold" | "check" | "call" | "raise"; raiseAmount?: number; dialogue: string } {
   const evaluation = evaluateHand(aiHole, community);
   const v1 = aiHole[0].value;
@@ -281,45 +335,73 @@ export function getAIDecision(
   const isPocketPair = v1 === v2;
   const highCard = Math.max(v1, v2);
   const isSuited = aiHole[0].suit === aiHole[1].suit;
+  const rank = evaluation.rankName;
 
-  // Pre-flop logic
+  const { archetype, totalHands } = playerProfile;
+  const isAggressive = archetype === "Aggressive Bluffer";
+  const isCallingStation = archetype === "Calling Station";
+  const isTight = archetype === "Tight Rock";
+
+  // Pre-Flop Street
   if (stage === "preflop") {
-    // Monster hands: AA, KK, QQ, JJ, AK
-    if ((isPocketPair && v1 >= 11) || (v1 >= 13 && v2 >= 13)) {
-      if (aiChips >= toCall + 60 && Math.random() < 0.8) {
+    // Monster pockets
+    if ((isPocketPair && v1 >= 10) || (v1 >= 13 && v2 >= 13)) {
+      if (aiChips >= toCall + 60) {
         return {
           action: "raise",
-          raiseAmount: Math.min(aiChips, toCall + 60),
-          dialogue: "A fine starting position. Let us test your resolve.",
+          raiseAmount: Math.min(aiChips, toCall + (isCallingStation ? 80 : 50)),
+          dialogue: isCallingStation
+            ? "A commanding starting hand. Since you rarely fold pre-flop, let us make it worthwhile."
+            : isAggressive
+            ? "An exceptional starting holding. Let us test your habitual aggression, sir."
+            : "A fine starting position. I raise.",
         };
       }
-      return { action: "call", dialogue: "I shall match your entry." };
+      return { action: "call", dialogue: "I shall match your wager." };
     }
 
-    // Decent hands: pairs, suited connectors, high broadways
-    if (isPocketPair || (highCard >= 10 && (isSuited || Math.abs(v1 - v2) <= 2))) {
-      if (toCall <= 40 || toCall <= aiChips * 0.15) {
-        return { action: "call", dialogue: "Very well, let us see the flop." };
+    // Playable hands: pairs, connectors, high broadways
+    if (isPocketPair || (highCard >= 9 && (isSuited || Math.abs(v1 - v2) <= 2))) {
+      if (toCall <= 40 || toCall <= aiChips * 0.2) {
+        return {
+          action: "call",
+          dialogue: isTight
+            ? "You entered the pot, which implies strength. Let us see the flop."
+            : "Very well, cards on the felt.",
+        };
       }
     }
 
-    // Weak cards
+    // Free check
     if (toCall === 0) {
       return { action: "check", dialogue: "Check to you, sir." };
     }
 
-    // Cheap call
-    if (toCall <= 20 && Math.random() < 0.7) {
-      return { action: "call", dialogue: "I shall see this through." };
+    // Steal against tight players
+    if (isTight && totalHands >= 3 && Math.random() < 0.35 && aiChips >= 50) {
+      return {
+        action: "raise",
+        raiseAmount: Math.min(aiChips, toCall + 40),
+        dialogue: "You fold often under pre-flop pressure. Let us test that discipline.",
+      };
     }
 
-    return { action: "fold", dialogue: "Prudence dictates a fold. Your pot." };
+    // Cheap call
+    if (toCall <= 20) {
+      return { action: "call", dialogue: "A modest price to pay. I shall call." };
+    }
+
+    return {
+      action: "fold",
+      dialogue: isTight
+        ? "Given how rarely you raise, sir, I must respect your pocket. Folded."
+        : "Prudence dictates a fold. Your pot.",
+    };
   }
 
-  // Post-flop (Flop, Turn, River)
-  const rank = evaluation.rankName;
+  // Post-Flop Streets (Flop, Turn, River)
 
-  // Monsters: Straight or better
+  // 1. Monster Hands: Straight, Flush, Full House, Quads, Straight Flush
   if (
     rank === "Royal Flush" ||
     rank === "Straight Flush" ||
@@ -328,63 +410,129 @@ export function getAIDecision(
     rank === "Flush" ||
     rank === "Straight"
   ) {
-    if (aiChips >= toCall + 80 && Math.random() < 0.75) {
+    // TRAP AGGRESSIVE PLAYERS by checking monster
+    if (isAggressive && toCall === 0 && (stage === "flop" || stage === "turn") && Math.random() < 0.75) {
+      return {
+        action: "check",
+        dialogue: "Check. (I anticipate your customary attack, sir.)",
+      };
+    }
+
+    // Charge Calling Stations MAXIMUM value
+    if (isCallingStation) {
+      const hugeRaise = Math.min(aiChips, toCall + Math.max(90, Math.floor(pot * 0.85)));
       return {
         action: "raise",
-        raiseAmount: Math.min(aiChips, toCall + Math.max(80, Math.floor(pot * 0.6))),
-        dialogue: "A rather formidable board. I raise.",
+        raiseAmount: hugeRaise,
+        dialogue: `My analysis shows you rarely fold post-flop. Allow me to price this ${rank} accordingly.`,
+      };
+    }
+
+    // Standard Value Raise
+    if (aiChips >= toCall + 60) {
+      return {
+        action: "raise",
+        raiseAmount: Math.min(aiChips, toCall + Math.max(60, Math.floor(pot * 0.6))),
+        dialogue: `A formidable board. My holding is well ahead.`,
       };
     }
     return { action: "call", dialogue: "I shall call." };
   }
 
-  // Strong: Three of a Kind or Two Pair
+  // 2. Strong Hands: Three of a Kind or Two Pair
   if (rank === "Three of a Kind" || rank === "Two Pair") {
     if (toCall === 0) {
-      if (Math.random() < 0.6) {
+      if (isAggressive && Math.random() < 0.55) {
+        return {
+          action: "check",
+          dialogue: "Check to you. Let us see if you attempt to buy this pot.",
+        };
+      }
+      return {
+        action: "raise",
+        raiseAmount: Math.min(aiChips, Math.max(40, Math.floor(pot * 0.5))),
+        dialogue: isCallingStation
+          ? "Value bet for Two Pair+. You'll call, of course."
+          : "Pressing the statistical advantage.",
+      };
+    }
+
+    // Call aggressive raises with Two Pair / Trips
+    if (isAggressive) {
+      return {
+        action: "call",
+        dialogue: `I have profiled your high raise frequency (${playerProfile.aggressionRate}%). My ${rank} is more than sufficient to call.`,
+      };
+    }
+
+    // If Tight player pushes ALL-IN, proceed with caution
+    if (isTight && toCall >= aiChips * 0.7 && rank === "Two Pair") {
+      return {
+        action: "fold",
+        dialogue: "You only push this hard when holding an unbeatable hand. I concede.",
+      };
+    }
+
+    return { action: "call", dialogue: "An intriguing wager. I call." };
+  }
+
+  // 3. Medium Hands: One Pair
+  if (rank === "One Pair") {
+    if (toCall === 0) {
+      // Steal against Tight players
+      if (isTight && Math.random() < 0.65) {
         return {
           action: "raise",
-          raiseAmount: Math.min(aiChips, Math.max(40, Math.floor(pot * 0.4))),
-          dialogue: "Pressing the advantage.",
+          raiseAmount: Math.min(aiChips, Math.max(30, Math.floor(pot * 0.45))),
+          dialogue: "You concede easily on check. I shall take the initiative.",
         };
       }
       return { action: "check", dialogue: "Check." };
     }
-    if (toCall <= aiChips * 0.6) {
-      return { action: "call", dialogue: "An intriguing wager. I call." };
-    }
-  }
 
-  // Moderate: One Pair
-  if (rank === "One Pair") {
-    if (toCall === 0) {
-      return { action: "check", dialogue: "Check." };
+    // Catch habitual bluffers with One Pair
+    if (isAggressive && (playerProfile.timesBluffedCaught >= 1 || playerProfile.aggressionRate >= 60)) {
+      if (toCall <= aiChips * 0.5) {
+        return {
+          action: "call",
+          dialogue: `I've caught you bluffing with air before. My ${evaluation.description} is calling you down.`,
+        };
+      }
     }
-    if (toCall <= pot * 0.5 || toCall <= 60) {
-      return { action: "call", dialogue: "I shall see the next card." };
-    }
-    // Occasional bluff
-    if (Math.random() < 0.15 && stage === "river") {
+
+    // Fold to Tight player big bets
+    if (isTight && toCall >= 50) {
       return {
-        action: "raise",
-        raiseAmount: Math.min(aiChips, toCall + 50),
-        dialogue: "Let us see if you possess the courage to call.",
+        action: "fold",
+        dialogue: "Your betting pattern is strictly value-oriented. My single pair cannot survive this.",
       };
     }
-    return { action: "fold", dialogue: "I yield this hand." };
+
+    if (toCall <= pot * 0.45 || toCall <= 40) {
+      return { action: "call", dialogue: "I shall see the next street." };
+    }
+
+    return { action: "fold", dialogue: "I yield this hand to your wager." };
   }
 
-  // Weak / High Card
+  // 4. Weak / High Card
   if (toCall === 0) {
+    // Steal bluff against Tight players
+    if (isTight && totalHands >= 3 && Math.random() < 0.45 && aiChips >= 40) {
+      return {
+        action: "raise",
+        raiseAmount: Math.min(aiChips, 40),
+        dialogue: "Exploiting your passive tendencies with a position probe.",
+      };
+    }
     return { action: "check", dialogue: "Check." };
   }
 
-  // Small random bluff (10%)
-  if (Math.random() < 0.1 && aiChips >= toCall + 50) {
+  // NEVER bluff against Calling Station
+  if (isCallingStation) {
     return {
-      action: "raise",
-      raiseAmount: Math.min(aiChips, toCall + 50),
-      dialogue: "Perhaps the pot belongs to me.",
+      action: "fold",
+      dialogue: "Bluffing a calling station is folly. I fold gracefully.",
     };
   }
 

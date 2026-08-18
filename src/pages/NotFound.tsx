@@ -4,9 +4,11 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   createDeck,
   evaluateHand,
-  getAIDecision,
+  getAdaptiveAIDecision,
+  classifyPlayerProfile,
   type Card as PokerCard,
   type HandEvaluation,
+  type PlayerProfile,
 } from "../lib/poker";
 
 // Casino Sound Synth using Web Audio API
@@ -20,7 +22,6 @@ function playCasinoSound(type: "deal" | "chip" | "check" | "win" | "fold" | "all
     gain.connect(ctx.destination);
 
     if (type === "deal") {
-      // Crisp card slide swish
       osc.type = "sine";
       osc.frequency.setValueAtTime(450, now);
       osc.frequency.exponentialRampToValueAtTime(180, now + 0.08);
@@ -29,7 +30,6 @@ function playCasinoSound(type: "deal" | "chip" | "check" | "win" | "fold" | "all
       osc.start(now);
       osc.stop(now + 0.08);
     } else if (type === "chip") {
-      // Ceramic chips clack
       osc.type = "triangle";
       osc.frequency.setValueAtTime(1400, now);
       osc.frequency.exponentialRampToValueAtTime(350, now + 0.06);
@@ -38,7 +38,6 @@ function playCasinoSound(type: "deal" | "chip" | "check" | "win" | "fold" | "all
       osc.start(now);
       osc.stop(now + 0.06);
     } else if (type === "check") {
-      // Table wood double knock
       osc.type = "sine";
       osc.frequency.setValueAtTime(130, now);
       osc.frequency.exponentialRampToValueAtTime(40, now + 0.08);
@@ -47,12 +46,11 @@ function playCasinoSound(type: "deal" | "chip" | "check" | "win" | "fold" | "all
       osc.start(now);
       osc.stop(now + 0.08);
     } else if (type === "win") {
-      // Triumph fanfare chord
       osc.type = "sine";
-      osc.frequency.setValueAtTime(523.25, now); // C5
-      osc.frequency.setValueAtTime(659.25, now + 0.08); // E5
-      osc.frequency.setValueAtTime(783.99, now + 0.16); // G5
-      osc.frequency.setValueAtTime(1046.5, now + 0.24); // C6
+      osc.frequency.setValueAtTime(523.25, now);
+      osc.frequency.setValueAtTime(659.25, now + 0.08);
+      osc.frequency.setValueAtTime(783.99, now + 0.16);
+      osc.frequency.setValueAtTime(1046.5, now + 0.24);
       gain.gain.setValueAtTime(0.25, now);
       gain.gain.linearRampToValueAtTime(0.01, now + 0.45);
       osc.start(now);
@@ -96,7 +94,7 @@ export default function NotFound() {
 
   const [stage, setStage] = useState<Stage>("preflop");
   const [isAiThinking, setIsAiThinking] = useState(false);
-  const [aiDialogue, setAiDialogue] = useState("Welcome to the 404 High-Stakes Lounge. Let's see if your bluff holds.");
+  const [aiDialogue, setAiDialogue] = useState("Welcome to the 404 High-Stakes Lounge. I am observing your betting cadence.");
   const [handResult, setHandResult] = useState<string | null>(null);
   const [raiseSlider, setRaiseSlider] = useState(40);
   const [showRulesModal, setShowRulesModal] = useState(false);
@@ -104,13 +102,32 @@ export default function NotFound() {
   const [playerHandEval, setPlayerHandEval] = useState<HandEvaluation | null>(null);
   const [aiHandEval, setAiHandEval] = useState<HandEvaluation | null>(null);
 
+  // Persistent Player Behavioral Pattern Memory
+  const [playerProfile, setPlayerProfile] = useState<PlayerProfile>({
+    totalHands: 0,
+    handsEntered: 0,
+    totalRaises: 0,
+    totalCalls: 0,
+    totalFolds: 0,
+    totalChecks: 0,
+    timesBluffedCaught: 0,
+    timesFoldedToAiRaise: 0,
+    timesRaisedRiver: 0,
+    lastActions: [],
+    archetype: "Observing...",
+    readSummary: "Calibrating baseline tendencies...",
+    vpipPercent: 50,
+    aggressionRate: 50,
+  });
+
+  const [playerRaisedThisHand, setPlayerRaisedThisHand] = useState(false);
+
   const BIG_BLIND = 20;
   const SMALL_BLIND = 10;
 
-  // Start fresh hand
+  // Start fresh hand & record hand counter
   const startNewHand = useCallback(() => {
     if (playerChips <= 0 || aiChips <= 0) {
-      // Re-buy
       setPlayerChips(1000);
       setAiChips(1000);
     }
@@ -120,6 +137,7 @@ export default function NotFound() {
     setStage("preflop");
     setPlayerRoundBet(0);
     setAiRoundBet(0);
+    setPlayerRaisedThisHand(false);
 
     const newDeck = createDeck();
     const pCards = [newDeck.pop()!, newDeck.pop()!];
@@ -140,9 +158,20 @@ export default function NotFound() {
     setAiHole(aiCards);
     setDeck(newDeck);
 
+    setPlayerProfile((prev) =>
+      classifyPlayerProfile({
+        ...prev,
+        totalHands: prev.totalHands + 1,
+      })
+    );
+
     playCasinoSound("deal");
-    setAiDialogue("Cards are in the air. Big Blind $20 posted.");
-  }, [playerChips, aiChips]);
+    setAiDialogue(
+      playerProfile.totalHands >= 2
+        ? `Hand #${playerProfile.totalHands + 1}. Profiled as: ${playerProfile.archetype}. Cards dealt.`
+        : "Cards are in the air. Big Blind $20 posted."
+    );
+  }, [playerChips, aiChips, playerProfile.totalHands, playerProfile.archetype]);
 
   // Initial deal
   useEffect(() => {
@@ -165,21 +194,21 @@ export default function NotFound() {
     setDeck((prevDeck) => {
       const d = [...prevDeck];
       if (stage === "preflop") {
-        d.pop(); // Burn card
+        d.pop();
         const flop = [d.pop()!, d.pop()!, d.pop()!];
         setCommunityCards(flop);
         setStage("flop");
         playCasinoSound("deal");
         setAiDialogue("Flop is dealt. What is your move?");
       } else if (stage === "flop") {
-        d.pop(); // Burn
+        d.pop();
         const turn = d.pop()!;
         setCommunityCards((prev) => [...prev, turn]);
         setStage("turn");
         playCasinoSound("deal");
         setAiDialogue("Turn card is out. The pot grows thicker.");
       } else if (stage === "turn") {
-        d.pop(); // Burn
+        d.pop();
         const river = d.pop()!;
         setCommunityCards((prev) => [...prev, river]);
         setStage("river");
@@ -193,7 +222,7 @@ export default function NotFound() {
     });
   }, [stage]);
 
-  // Showdown hand resolution
+  // Showdown hand resolution with Memory Bluff Detection
   const handleShowdown = useCallback(() => {
     if (playerHole.length < 2 || aiHole.length < 2) return;
 
@@ -202,17 +231,36 @@ export default function NotFound() {
     setPlayerHandEval(pEval);
     setAiHandEval(aEval);
 
+    // Detect if player bluffed with weak hand after aggressive action
+    const playerHadWeakHolding = pEval.rankName === "High Card" || (pEval.rankName === "One Pair" && pEval.score < 1050000);
+    if (playerRaisedThisHand && playerHadWeakHolding) {
+      setPlayerProfile((prev) =>
+        classifyPlayerProfile({
+          ...prev,
+          timesBluffedCaught: prev.timesBluffedCaught + 1,
+        })
+      );
+    }
+
     let winnerMsg = "";
     if (pEval.score > aEval.score) {
       winnerMsg = `🏆 You WIN $${pot}! (${pEval.description})`;
       setPlayerChips((prev) => prev + pot);
       playCasinoSound("win");
-      setAiDialogue("Impeccable play. The pot is yours, sir.");
+      setAiDialogue(
+        playerRaisedThisHand && !playerHadWeakHolding
+          ? "Solid value holding. My read was out-matched on this occasion."
+          : "Impeccable play. The pot is yours, sir."
+      );
     } else if (aEval.score > pEval.score) {
       winnerMsg = `💀 Alfred WINS $${pot}! (${aEval.description})`;
       setAiChips((prev) => prev + pot);
       playCasinoSound("fold");
-      setAiDialogue("Read like an open book. Better luck next hand.");
+      setAiDialogue(
+        playerRaisedThisHand && playerHadWeakHolding
+          ? "I saw through your bluff. The pattern gave you away."
+          : "Read like an open book. Better luck next hand."
+      );
     } else {
       winnerMsg = `🤝 Split Pot! ($${Math.floor(pot / 2)} each)`;
       const half = Math.floor(pot / 2);
@@ -223,14 +271,21 @@ export default function NotFound() {
     }
 
     setHandResult(winnerMsg);
-  }, [playerHole, aiHole, communityCards, pot]);
+  }, [playerHole, aiHole, communityCards, pot, playerRaisedThisHand]);
 
-  // Player Actions
+  // Player Actions with Behavioral Memory Tracking
   const handlePlayerCheck = useCallback(() => {
     if (isAiThinking || stage === "showdown") return;
     playCasinoSound("check");
 
-    // Pass action to AI
+    setPlayerProfile((prev) =>
+      classifyPlayerProfile({
+        ...prev,
+        totalChecks: prev.totalChecks + 1,
+        lastActions: [...prev.lastActions.slice(-6), "Check"],
+      })
+    );
+
     triggerAiTurn(0);
   }, [isAiThinking, stage]);
 
@@ -244,6 +299,15 @@ export default function NotFound() {
     setPot((prev) => prev + actualCall);
     setPlayerRoundBet((prev) => prev + actualCall);
 
+    setPlayerProfile((prev) =>
+      classifyPlayerProfile({
+        ...prev,
+        totalCalls: prev.totalCalls + 1,
+        handsEntered: prev.handsEntered + 1,
+        lastActions: [...prev.lastActions.slice(-6), "Call"],
+      })
+    );
+
     triggerAiTurn(0, true);
   }, [isAiThinking, stage, currentBet, playerRoundBet, playerChips]);
 
@@ -256,6 +320,17 @@ export default function NotFound() {
     setPot((prev) => prev + totalWager);
     setPlayerRoundBet((prev) => prev + totalWager);
     setCurrentBet(playerRoundBet + totalWager);
+    setPlayerRaisedThisHand(true);
+
+    setPlayerProfile((prev) =>
+      classifyPlayerProfile({
+        ...prev,
+        totalRaises: prev.totalRaises + 1,
+        handsEntered: prev.handsEntered + 1,
+        timesRaisedRiver: stage === "river" ? prev.timesRaisedRiver + 1 : prev.timesRaisedRiver,
+        lastActions: [...prev.lastActions.slice(-6), totalWager === playerChips ? "ALL-IN" : "Raise"],
+      })
+    );
 
     triggerAiTurn(totalWager);
   }, [isAiThinking, stage, playerChips, playerRoundBet]);
@@ -265,11 +340,25 @@ export default function NotFound() {
     playCasinoSound("fold");
     setHandResult(`You Folded. Alfred collects $${pot}.`);
     setAiChips((prev) => prev + pot);
-    setAiDialogue("Prudence is the better part of valour.");
     setStage("showdown");
-  }, [isAiThinking, stage, pot]);
 
-  // AI Turn handler with realistic latency
+    setPlayerProfile((prev) =>
+      classifyPlayerProfile({
+        ...prev,
+        totalFolds: prev.totalFolds + 1,
+        timesFoldedToAiRaise: currentBet > playerRoundBet ? prev.timesFoldedToAiRaise + 1 : prev.timesFoldedToAiRaise,
+        lastActions: [...prev.lastActions.slice(-6), "Fold"],
+      })
+    );
+
+    setAiDialogue(
+      playerProfile.archetype === "Tight Rock"
+        ? "Another fold logged. My positional pressure continues to yield dividends."
+        : "Prudence is the better part of valour."
+    );
+  }, [isAiThinking, stage, pot, currentBet, playerRoundBet, playerProfile.archetype]);
+
+  // AI Turn with Adaptive Profiling Decision
   const triggerAiTurn = (playerAddedBet: number, wasPlayerCall = false) => {
     setIsAiThinking(true);
 
@@ -277,13 +366,20 @@ export default function NotFound() {
       setIsAiThinking(false);
 
       if (wasPlayerCall && playerRoundBet >= aiRoundBet) {
-        // Both matched, advance street
         advanceStreet();
         return;
       }
 
       const toCallForAi = Math.max(0, currentBet - aiRoundBet + playerAddedBet);
-      const decision = getAIDecision(aiHole, communityCards, pot, toCallForAi, aiChips, stage === "showdown" ? "river" : stage);
+      const decision = getAdaptiveAIDecision(
+        aiHole,
+        communityCards,
+        pot,
+        toCallForAi,
+        aiChips,
+        stage === "showdown" ? "river" : stage,
+        playerProfile
+      );
       setAiDialogue(decision.dialogue);
 
       if (decision.action === "fold") {
@@ -298,8 +394,6 @@ export default function NotFound() {
         setAiChips((prev) => prev - callAmt);
         setPot((prev) => prev + callAmt);
         setAiRoundBet((prev) => prev + callAmt);
-
-        // Advance to next street
         setTimeout(advanceStreet, 400);
       } else if (decision.action === "raise") {
         const raiseAmt = decision.raiseAmount || 40;
@@ -309,7 +403,6 @@ export default function NotFound() {
         setAiRoundBet((prev) => prev + raiseAmt);
         setCurrentBet(aiRoundBet + raiseAmt);
       } else {
-        // AI Checks
         playCasinoSound("check");
         if (playerRoundBet === aiRoundBet) {
           setTimeout(advanceStreet, 400);
@@ -323,7 +416,6 @@ export default function NotFound() {
   // Global Keyboard Shortcuts Listener
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Don't intercept if user is inside an input/textarea
       if (
         document.activeElement?.tagName === "INPUT" ||
         document.activeElement?.tagName === "TEXTAREA"
@@ -333,7 +425,6 @@ export default function NotFound() {
 
       const key = e.key.toLowerCase();
 
-      // Modal toggle
       if (key === "h" || key === "?") {
         setShowRulesModal((prev) => !prev);
         return;
@@ -346,7 +437,6 @@ export default function NotFound() {
 
       if (showRulesModal) return;
 
-      // Deal Next Hand on Showdown
       if (stage === "showdown") {
         if (e.code === "Enter" || e.code === "Space") {
           e.preventDefault();
@@ -355,7 +445,6 @@ export default function NotFound() {
         return;
       }
 
-      // In-Game Action Hotkeys
       if (key === "f") {
         e.preventDefault();
         handlePlayerFold();
@@ -401,7 +490,7 @@ export default function NotFound() {
     <div className="fixed inset-0 z-[10000] bg-[#070b14] text-white flex flex-col justify-between overflow-hidden select-none font-sans">
       
       {/* Top Header & Bankroll HUD */}
-      <header className="p-4 sm:p-6 flex items-center justify-between border-b border-white/10 bg-black/60 backdrop-blur-md z-20">
+      <header className="p-3 sm:p-5 flex items-center justify-between border-b border-white/10 bg-black/60 backdrop-blur-md z-20">
         
         {/* Title Badge */}
         <div className="flex items-center gap-3">
@@ -414,20 +503,35 @@ export default function NotFound() {
                 404 High-Stakes Lounge
               </span>
               <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 text-[10px] font-mono border border-emerald-500/30">
-                LIVE DEALER
+                ADAPTIVE AI
               </span>
             </div>
-            <h1 className="text-base sm:text-lg font-black text-white uppercase tracking-tight">
-              Texas Hold'em Poker Engine
+            <h1 className="text-sm sm:text-base font-black text-white uppercase tracking-tight">
+              Texas Hold'em Neural Engine
             </h1>
           </div>
         </div>
 
+        {/* AI Pattern Recognition Radar HUD */}
+        <div className="hidden lg:flex items-center gap-4 px-4 py-2 rounded-2xl bg-black/80 border border-amber-500/30 font-mono text-xs shadow-md">
+          <div className="flex items-center gap-2">
+            <span className="size-2 rounded-full bg-amber-400 animate-pulse" />
+            <span className="text-neutral-400 text-[10px] uppercase">Neural Read:</span>
+            <span className="text-amber-300 font-bold">{playerProfile.archetype}</span>
+          </div>
+          <div className="h-4 w-px bg-white/10" />
+          <div className="flex items-center gap-3 text-[11px] text-neutral-400">
+            <span>VPIP: <strong className="text-white">{playerProfile.vpipPercent}%</strong></span>
+            <span>Aggression: <strong className="text-white">{playerProfile.aggressionRate}%</strong></span>
+            <span>Bluffs Caught: <strong className="text-red-400">{playerProfile.timesBluffedCaught}</strong></span>
+          </div>
+        </div>
+
         {/* Chip Bankroll Tracker & Actions */}
-        <div className="flex items-center gap-3 sm:gap-6 font-mono">
+        <div className="flex items-center gap-3 sm:gap-5 font-mono">
           <div className="text-right">
             <span className="text-[10px] text-neutral-400 block uppercase">Your Bankroll</span>
-            <span className="text-lg sm:text-xl font-black text-emerald-400">${playerChips.toLocaleString()}</span>
+            <span className="text-base sm:text-lg font-black text-emerald-400">${playerChips.toLocaleString()}</span>
           </div>
 
           <div className="h-8 w-px bg-white/10" />
@@ -450,7 +554,7 @@ export default function NotFound() {
           {/* Quick Exit Links */}
           <Link
             to="/"
-            className="px-4 py-2 rounded-xl bg-white/10 border border-white/15 text-xs font-bold hover:bg-white hover:text-black transition-all hover:scale-105 ml-1"
+            className="px-3.5 py-2 rounded-xl bg-white/10 border border-white/15 text-xs font-bold hover:bg-white hover:text-black transition-all hover:scale-105 ml-1"
           >
             ← Exit
           </Link>
@@ -458,20 +562,20 @@ export default function NotFound() {
       </header>
 
       {/* Main Luxury Poker Felt Table */}
-      <main className="relative flex-1 flex flex-col items-center justify-between p-4 sm:p-8 max-w-6xl w-full mx-auto">
+      <main className="relative flex-1 flex flex-col items-center justify-between p-3 sm:p-6 max-w-6xl w-full mx-auto">
         
         {/* Table Felt Glow & Oval Border */}
-        <div className="absolute inset-4 sm:inset-8 rounded-[4rem] sm:rounded-[6rem] bg-gradient-to-b from-[#0b3b24] via-[#062416] to-[#04170e] border-[10px] sm:border-[16px] border-[#2a1a0f] shadow-[inset_0_0_80px_rgba(0,0,0,0.8),0_0_60px_rgba(0,0,0,0.9)] overflow-hidden pointer-events-none" />
+        <div className="absolute inset-2 sm:inset-6 rounded-[3.5rem] sm:rounded-[6rem] bg-gradient-to-b from-[#0b3b24] via-[#062416] to-[#04170e] border-[8px] sm:border-[16px] border-[#2a1a0f] shadow-[inset_0_0_80px_rgba(0,0,0,0.8),0_0_60px_rgba(0,0,0,0.9)] overflow-hidden pointer-events-none" />
 
         {/* AI Dealer Area */}
-        <div className="relative z-10 flex flex-col items-center space-y-3 pt-2">
+        <div className="relative z-10 flex flex-col items-center space-y-2 pt-1">
           
-          {/* Alfred Speech Bubble */}
+          {/* Alfred Speech Bubble with Pattern Quote */}
           <motion.div
             key={aiDialogue}
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="px-4 py-2 rounded-2xl bg-black/80 border border-amber-500/30 text-amber-200 text-xs sm:text-sm font-mono max-w-md text-center shadow-lg backdrop-blur-md"
+            className="px-4 py-2 rounded-2xl bg-black/85 border border-amber-500/30 text-amber-200 text-xs sm:text-sm font-mono max-w-lg text-center shadow-lg backdrop-blur-md"
           >
             <span className="text-amber-400 font-bold mr-1">Alfred:</span> {aiDialogue}
           </motion.div>
@@ -508,16 +612,16 @@ export default function NotFound() {
         </div>
 
         {/* Center Community Board & Pot Area */}
-        <div className="relative z-10 flex flex-col items-center space-y-4 my-auto">
+        <div className="relative z-10 flex flex-col items-center space-y-3 my-auto">
           
           {/* Main Pot Counter with Chip Piles */}
-          <div className="flex items-center gap-3 px-6 py-2.5 rounded-full bg-black/80 border border-amber-500/40 shadow-[0_0_30px_rgba(245,158,11,0.3)] backdrop-blur-xl">
+          <div className="flex items-center gap-3 px-6 py-2 rounded-full bg-black/80 border border-amber-500/40 shadow-[0_0_30px_rgba(245,158,11,0.3)] backdrop-blur-xl">
             <span className="text-lg">🪙</span>
             <div>
               <span className="text-[10px] text-amber-300 font-mono block tracking-widest uppercase">
                 TOTAL POT
               </span>
-              <span className="text-2xl sm:text-3xl font-black text-white font-mono">
+              <span className="text-xl sm:text-3xl font-black text-white font-mono">
                 ${pot.toLocaleString()}
               </span>
             </div>
@@ -529,7 +633,7 @@ export default function NotFound() {
           </div>
 
           {/* 5 Community Cards (Flop, Turn, River) */}
-          <div className="flex items-center gap-2 sm:gap-3 p-3 rounded-3xl bg-black/40 border border-white/10 backdrop-blur-md shadow-2xl">
+          <div className="flex items-center gap-2 sm:gap-3 p-2.5 sm:p-3 rounded-3xl bg-black/40 border border-white/10 backdrop-blur-md shadow-2xl">
             {[0, 1, 2, 3, 4].map((index) => {
               const card = communityCards[index];
               return (
@@ -553,7 +657,7 @@ export default function NotFound() {
                 initial={{ opacity: 0, scale: 0.9, y: 10 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0 }}
-                className="px-6 py-3 rounded-2xl bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-500 text-black font-black font-mono text-sm sm:text-base shadow-[0_0_40px_rgba(245,158,11,0.6)] flex items-center gap-3"
+                className="px-6 py-3 rounded-2xl bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-500 text-black font-black font-mono text-xs sm:text-sm shadow-[0_0_40px_rgba(245,158,11,0.6)] flex items-center gap-3"
               >
                 <span>{handResult}</span>
                 <button
@@ -570,11 +674,11 @@ export default function NotFound() {
         </div>
 
         {/* Player Hole Cards & Hand Strength */}
-        <div className="relative z-10 flex flex-col items-center space-y-3 pb-2">
+        <div className="relative z-10 flex flex-col items-center space-y-2 pb-1">
           
           {/* Hand Evaluation Strength Pill */}
           {playerHandEval && (
-            <div className="px-4 py-1.5 rounded-full bg-black/80 border border-emerald-500/40 text-emerald-300 font-mono text-xs backdrop-blur-md shadow-md flex items-center gap-2">
+            <div className="px-4 py-1 rounded-full bg-black/80 border border-emerald-500/40 text-emerald-300 font-mono text-xs backdrop-blur-md shadow-md flex items-center gap-2">
               <span className="size-2 rounded-full bg-emerald-400 animate-pulse" />
               <span>{playerHandEval.description}</span>
             </div>
@@ -598,8 +702,8 @@ export default function NotFound() {
       </main>
 
       {/* Bottom Interactive Action Panel with KEY BINDINGS SHOWN */}
-      <footer className="p-4 sm:p-6 bg-[#04070e] border-t border-white/10 backdrop-blur-xl z-20">
-        <div className="max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+      <footer className="p-3 sm:p-5 bg-[#04070e] border-t border-white/10 backdrop-blur-xl z-20">
+        <div className="max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
           
           {/* Raise Slider & Quick Bets */}
           <div className="flex items-center gap-3 w-full sm:w-auto">
@@ -630,7 +734,7 @@ export default function NotFound() {
                   type="button"
                   onClick={() => setRaiseSlider(Math.min(playerChips, btn.val))}
                   disabled={isAiThinking || stage === "showdown"}
-                  className="px-2.5 py-1 rounded-lg bg-white/5 border border-white/10 text-[10px] font-mono text-neutral-300 hover:border-amber-500/50 hover:text-amber-300 transition-colors disabled:opacity-40 flex items-center gap-1 cursor-pointer"
+                  className="px-2 py-1 rounded-lg bg-white/5 border border-white/10 text-[10px] font-mono text-neutral-300 hover:border-amber-500/50 hover:text-amber-300 transition-colors disabled:opacity-40 flex items-center gap-1 cursor-pointer"
                 >
                   <span>{btn.label}</span>
                   <kbd className="px-1 py-0.2 rounded bg-black/40 text-[8px] text-neutral-400 border border-white/10">
@@ -649,7 +753,7 @@ export default function NotFound() {
               type="button"
               onClick={handlePlayerFold}
               disabled={isAiThinking || stage === "showdown"}
-              className="flex-1 sm:flex-initial px-4 sm:px-5 py-3 rounded-2xl bg-red-500/20 border border-red-500/40 text-red-300 font-mono font-bold text-xs hover:bg-red-500 hover:text-white transition-all disabled:opacity-40 cursor-pointer shadow-lg flex items-center justify-center gap-2"
+              className="flex-1 sm:flex-initial px-4 sm:px-5 py-2.5 sm:py-3 rounded-2xl bg-red-500/20 border border-red-500/40 text-red-300 font-mono font-bold text-xs hover:bg-red-500 hover:text-white transition-all disabled:opacity-40 cursor-pointer shadow-lg flex items-center justify-center gap-2"
             >
               <span>FOLD</span>
               <kbd className="px-1.5 py-0.5 rounded bg-black/40 text-[9px] text-red-200 border border-red-500/30">
@@ -663,7 +767,7 @@ export default function NotFound() {
                 type="button"
                 onClick={handlePlayerCheck}
                 disabled={isAiThinking || stage === "showdown"}
-                className="flex-1 sm:flex-initial px-5 sm:px-6 py-3 rounded-2xl bg-neutral-800 border border-white/20 text-white font-mono font-bold text-xs hover:bg-white hover:text-black transition-all disabled:opacity-40 cursor-pointer shadow-lg flex items-center justify-center gap-2"
+                className="flex-1 sm:flex-initial px-5 sm:px-6 py-2.5 sm:py-3 rounded-2xl bg-neutral-800 border border-white/20 text-white font-mono font-bold text-xs hover:bg-white hover:text-black transition-all disabled:opacity-40 cursor-pointer shadow-lg flex items-center justify-center gap-2"
               >
                 <span>CHECK</span>
                 <kbd className="px-1.5 py-0.5 rounded bg-black/40 text-[9px] text-neutral-300 border border-white/20">
@@ -675,7 +779,7 @@ export default function NotFound() {
                 type="button"
                 onClick={handlePlayerCall}
                 disabled={isAiThinking || stage === "showdown"}
-                className="flex-1 sm:flex-initial px-5 sm:px-6 py-3 rounded-2xl bg-emerald-500 text-black font-mono font-black text-xs hover:bg-emerald-400 transition-all disabled:opacity-40 cursor-pointer shadow-[0_0_20px_rgba(16,185,129,0.4)] flex items-center justify-center gap-2"
+                className="flex-1 sm:flex-initial px-5 sm:px-6 py-2.5 sm:py-3 rounded-2xl bg-emerald-500 text-black font-mono font-black text-xs hover:bg-emerald-400 transition-all disabled:opacity-40 cursor-pointer shadow-[0_0_20px_rgba(16,185,129,0.4)] flex items-center justify-center gap-2"
               >
                 <span>CALL ${toCall}</span>
                 <kbd className="px-1.5 py-0.5 rounded bg-black/30 text-[9px] text-black border border-black/20">
@@ -689,7 +793,7 @@ export default function NotFound() {
               type="button"
               onClick={() => handlePlayerRaise(raiseSlider)}
               disabled={isAiThinking || stage === "showdown" || playerChips <= toCall}
-              className="flex-1 sm:flex-initial px-5 sm:px-6 py-3 rounded-2xl bg-gradient-to-r from-amber-500 to-yellow-500 text-black font-mono font-black text-xs hover:from-amber-400 hover:to-yellow-400 transition-all disabled:opacity-40 cursor-pointer shadow-[0_0_20px_rgba(245,158,11,0.5)] flex items-center justify-center gap-2"
+              className="flex-1 sm:flex-initial px-5 sm:px-6 py-2.5 sm:py-3 rounded-2xl bg-gradient-to-r from-amber-500 to-yellow-500 text-black font-mono font-black text-xs hover:from-amber-400 hover:to-yellow-400 transition-all disabled:opacity-40 cursor-pointer shadow-[0_0_20px_rgba(245,158,11,0.5)] flex items-center justify-center gap-2"
             >
               <span>{raiseSlider >= playerChips ? "ALL-IN 🔥" : `RAISE $${raiseSlider}`}</span>
               <kbd className="px-1.5 py-0.5 rounded bg-black/30 text-[9px] text-black border border-black/20">
@@ -702,7 +806,7 @@ export default function NotFound() {
               <button
                 type="button"
                 onClick={startNewHand}
-                className="px-5 sm:px-6 py-3 rounded-2xl bg-white text-black font-mono font-black text-xs hover:bg-amber-400 transition-all cursor-pointer animate-pulse flex items-center gap-2 shadow-lg"
+                className="px-5 sm:px-6 py-2.5 sm:py-3 rounded-2xl bg-white text-black font-mono font-black text-xs hover:bg-amber-400 transition-all cursor-pointer animate-pulse flex items-center gap-2 shadow-lg"
               >
                 <span>NEXT HAND</span>
                 <kbd className="px-1.5 py-0.5 rounded bg-black text-[9px] text-white">
@@ -744,7 +848,7 @@ export default function NotFound() {
                       404 LOUNGE
                     </span>
                     <h2 className="text-xl sm:text-2xl font-black text-white uppercase tracking-tight">
-                      Poker Rules & Keybindings
+                      Poker Rules & Adaptive AI
                     </h2>
                   </div>
                 </div>
@@ -756,14 +860,14 @@ export default function NotFound() {
                 </button>
               </div>
 
-              {/* Quick Game Rules */}
-              <div className="space-y-3 font-mono text-xs">
+              {/* Adaptive AI Explanation */}
+              <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 space-y-2 font-mono text-xs">
                 <h3 className="text-amber-300 font-bold uppercase tracking-wider flex items-center gap-2">
-                  <span>🎲</span> How to Play Texas Hold'em
+                  <span>🧠</span> Alfred's Adaptive Pattern Recognition
                 </h3>
                 <p className="text-neutral-300 leading-relaxed font-sans text-sm">
-                  You and Alfred (AI) each receive <strong>2 private hole cards</strong>. Five community cards are dealt across 4 betting rounds: <strong>Pre-Flop ➔ Flop (3 cards) ➔ Turn (1 card) ➔ River (1 card)</strong>.
-                  Form the <strong>best 5-card poker hand</strong> to win the pot!
+                  Alfred is not a memoryless bot. He continuously tracks your <strong>VPIP (Voluntarily Put in Pot)</strong>, <strong>Aggression Rate</strong>, <strong>Bluff Frequencies</strong>, and <strong>Fold Tendencies</strong> across rounds.
+                  If you bluff often, he traps you with checks and calls lighter. If you play tight, he steals unchecked pots!
                 </p>
               </div>
 
