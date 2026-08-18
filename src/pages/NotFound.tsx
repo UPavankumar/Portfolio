@@ -289,16 +289,23 @@ export default function NotFound() {
     }
   }, [playerHole, communityCards]);
 
-  // Runout all 5 cards for ALL-IN directly
+  // Runout all 5 cards for ALL-IN directly and evaluate best 5-card hands
   const runoutAllIn = useCallback(
-    (currentDeck: PokerCard[], currentCommunity: PokerCard[]) => {
+    (
+      currentDeck: PokerCard[],
+      currentCommunity: PokerCard[],
+      exactPot: number,
+      exactPlayerChips: number,
+      exactAiChips: number
+    ) => {
       playCasinoSound("allin");
-      addChatMessage("Dealer", "🔥 ALL-IN! Dealing all community cards directly to the board.");
+      addChatMessage("Dealer", "🔥 ALL-IN SHOWDOWN! Dealing the full 5-card board directly.");
 
       const d = [...currentDeck];
       const remainingNeeded = 5 - currentCommunity.length;
       const newCommunity = [...currentCommunity];
 
+      // Deal all remaining cards to complete the 5-card board
       for (let i = 0; i < remainingNeeded; i++) {
         d.pop(); // Burn card
         if (d.length > 0) {
@@ -310,7 +317,7 @@ export default function NotFound() {
       setDeck(d);
       setStage("showdown");
 
-      // Showdown evaluation
+      // Complete 7-card to best 5-card evaluation
       const pEval = evaluateHand(playerHole, newCommunity);
       const aEval = evaluateHand(aiHole, newCommunity);
       setPlayerHandEval(pEval);
@@ -318,24 +325,24 @@ export default function NotFound() {
 
       setTimeout(() => {
         let winnerMsg = "";
-        let finalPlayerChips = playerChips;
-        let finalAiChips = aiChips;
+        let finalPlayerChips = exactPlayerChips;
+        let finalAiChips = exactAiChips;
 
         if (pEval.score > aEval.score) {
-          winnerMsg = `🏆 You WIN $${pot}! (${pEval.description})`;
-          finalPlayerChips += pot;
+          winnerMsg = `🏆 You WIN $${exactPot}! (${pEval.description})`;
+          finalPlayerChips += exactPot;
           setPlayerChips(finalPlayerChips);
           playCasinoSound("win");
-          updateAiDialogue(`You take the $${pot} All-In showdown with ${pEval.description}!`);
+          updateAiDialogue(`You take the $${exactPot} All-In showdown with ${pEval.description}!`);
         } else if (aEval.score > pEval.score) {
-          winnerMsg = `💀 Alfred WINS $${pot}! (${aEval.description})`;
-          finalAiChips += pot;
+          winnerMsg = `💀 Alfred WINS $${exactPot}! (${aEval.description})`;
+          finalAiChips += exactPot;
           setAiChips(finalAiChips);
           playCasinoSound("fold");
-          updateAiDialogue(`Alfred takes the $${pot} All-In showdown with ${aEval.description}.`);
+          updateAiDialogue(`Alfred takes the $${exactPot} All-In showdown with ${aEval.description}.`);
         } else {
-          winnerMsg = `🤝 Split Pot! ($${Math.floor(pot / 2)} each)`;
-          const half = Math.floor(pot / 2);
+          winnerMsg = `🤝 Split Pot! ($${Math.floor(exactPot / 2)} each)`;
+          const half = Math.floor(exactPot / 2);
           finalPlayerChips += half;
           finalAiChips += half;
           setPlayerChips(finalPlayerChips);
@@ -351,9 +358,9 @@ export default function NotFound() {
             setIsBustedModalOpen(true);
           }, 1200);
         }
-      }, 600);
+      }, 700);
     },
-    [playerHole, aiHole, pot, playerChips, aiChips, updateAiDialogue, addChatMessage]
+    [playerHole, aiHole, updateAiDialogue, addChatMessage]
   );
 
   // Advance street (Flop, Turn, River, Showdown)
@@ -452,19 +459,23 @@ export default function NotFound() {
       })
     );
 
-    triggerAiTurn(0, false);
+    triggerAiTurn(0, false, false);
   }, [isAiThinking, stage, addChatMessage]);
 
-  // Player Calls: Matches Alfred's bet and immediately closes the betting street!
+  // Player Calls: Matches Alfred's bet
   const handlePlayerCall = useCallback(() => {
     if (isAiThinking || stage === "showdown") return;
     const toCall = currentBet - playerRoundBet;
     const actualCall = Math.min(playerChips, toCall);
+    const isPlayerAllIn = playerChips - actualCall <= 0;
 
-    playCasinoSound("chip");
-    addChatMessage("You", `Called $${actualCall}.`);
-    setPlayerChips((prev) => prev - actualCall);
-    setPot((prev) => prev + actualCall);
+    playCasinoSound(isPlayerAllIn ? "allin" : "chip");
+    addChatMessage("You", isPlayerAllIn ? `Called $${actualCall} (ALL-IN!) 🔥` : `Called $${actualCall}.`);
+    
+    const newPlayerChips = playerChips - actualCall;
+    const newPot = pot + actualCall;
+    setPlayerChips(newPlayerChips);
+    setPot(newPot);
     setPlayerRoundBet((prev) => prev + actualCall);
 
     setPlayerProfile((prev) =>
@@ -472,30 +483,29 @@ export default function NotFound() {
         ...prev,
         totalCalls: prev.totalCalls + 1,
         handsEntered: prev.handsEntered + 1,
-        lastActions: [...prev.lastActions.slice(-6), "Call"],
+        lastActions: [...prev.lastActions.slice(-6), isPlayerAllIn ? "ALL-IN Call" : "Call"],
       })
     );
 
-    // If player or AI is now All-In, run out the full 5 cards immediately
-    if (playerChips - actualCall <= 0 || aiChips <= 0) {
-      runoutAllIn(deck, communityCards);
+    // IF ANY PLAYER IS ALL-IN -> DEAL ALL 5 COMMUNITY CARDS DIRECTLY!
+    if (isPlayerAllIn || aiChips <= 0) {
+      runoutAllIn(deck, communityCards, newPot, newPlayerChips, aiChips);
       return;
     }
 
-    // Special Case: Pre-flop player calls SB to BB (Alfred has option to Check or Raise)
+    // Pre-flop limp to Big Blind option
     if (stage === "preflop" && aiRoundBet === BIG_BLIND && currentBet === BIG_BLIND) {
-      triggerAiTurn(0, false);
+      triggerAiTurn(0, false, false);
       return;
     }
 
-    // STANDARD HOLD'EM RULE: Calling an existing bet/raise CLOSES THE BETTING STREET!
-    // Alfred does NOT get to raise again on this street. Advance directly!
+    // Standard call closes street
     setTimeout(() => {
       advanceStreet();
     }, 450);
-  }, [isAiThinking, stage, currentBet, playerRoundBet, playerChips, aiChips, deck, communityCards, runoutAllIn, advanceStreet, addChatMessage]);
+  }, [isAiThinking, stage, currentBet, playerRoundBet, playerChips, aiChips, deck, communityCards, pot, runoutAllIn, advanceStreet, addChatMessage]);
 
-  // Player Raise: Gives Alfred one turn to Fold, Call, or Re-Raise
+  // Player Raise / All-In
   const handlePlayerRaise = useCallback(
     (amount: number) => {
       if (isAiThinking || stage === "showdown" || playerChips <= 0) return;
@@ -506,7 +516,8 @@ export default function NotFound() {
       addChatMessage("You", isAllIn ? `Went ALL-IN for $${totalWager}! 🔥` : `Raised to $${totalWager}.`);
 
       const updatedPot = pot + totalWager;
-      setPlayerChips((prev) => prev - totalWager);
+      const updatedPlayerChips = playerChips - totalWager;
+      setPlayerChips(updatedPlayerChips);
       setPot(updatedPot);
       setPlayerRoundBet((prev) => prev + totalWager);
       setCurrentBet(playerRoundBet + totalWager);
@@ -521,7 +532,7 @@ export default function NotFound() {
         })
       );
 
-      triggerAiTurn(totalWager, false);
+      triggerAiTurn(totalWager, isAllIn, isAllIn);
     },
     [isAiThinking, stage, playerChips, playerRoundBet, pot, addChatMessage]
   );
@@ -546,8 +557,8 @@ export default function NotFound() {
     updateAiDialogue("Prudence is the better part of valour. I collect the pot.");
   }, [isAiThinking, stage, pot, currentBet, playerRoundBet, updateAiDialogue, addChatMessage]);
 
-  // AI Turn handler with Proper Street Closure
-  const triggerAiTurn = (playerAddedBet: number, _unused = false) => {
+  // AI Turn handler
+  const triggerAiTurn = (playerAddedBet: number, isPlayerAllIn = false, wasShove = false) => {
     setIsAiThinking(true);
 
     setTimeout(() => {
@@ -557,7 +568,7 @@ export default function NotFound() {
       const decision = getAdaptiveAIDecision(
         aiHole,
         communityCards,
-        pot,
+        pot + (wasShove ? playerAddedBet : 0),
         toCallForAi,
         aiChips,
         stage === "showdown" ? "river" : stage,
@@ -567,37 +578,40 @@ export default function NotFound() {
 
       if (decision.action === "fold") {
         playCasinoSound("fold");
-        setHandResult(`Alfred Folds! You WIN $${pot}!`);
-        setPlayerChips((prev) => prev + pot);
+        const winningPot = pot + (wasShove ? playerAddedBet : 0);
+        setHandResult(`Alfred Folds! You WIN $${winningPot}!`);
+        setPlayerChips((prev) => prev + winningPot);
         playCasinoSound("win");
         setStage("showdown");
       } else if (decision.action === "call") {
-        // Alfred matched player's bet -> ROUND CLOSES! Advance street!
         playCasinoSound("chip");
         const callAmt = Math.min(aiChips, toCallForAi);
-        setAiChips((prev) => prev - callAmt);
-        setPot((prev) => prev + callAmt);
+        const finalAiChips = aiChips - callAmt;
+        const finalPot = pot + (wasShove ? playerAddedBet : 0) + callAmt;
+        setAiChips(finalAiChips);
+        setPot(finalPot);
         setAiRoundBet((prev) => prev + callAmt);
 
-        if (aiChips - callAmt <= 0 || playerChips <= 0) {
-          runoutAllIn(deck, communityCards);
+        // IF PLAYER IS ALL-IN OR ALFRED IS ALL-IN -> DIRECTLY DEAL THE 5 COMMUNITY CARDS & RUN SHOWDOWN!
+        if (isPlayerAllIn || finalAiChips <= 0 || playerChips <= 0) {
+          runoutAllIn(deck, communityCards, finalPot, isPlayerAllIn ? 0 : playerChips, finalAiChips);
         } else {
           setTimeout(advanceStreet, 450);
         }
       } else if (decision.action === "raise") {
-        // Alfred raises -> Now it's the PLAYER'S TURN to Fold, Call, or Re-Raise!
         const raiseAmt = Math.min(aiChips, decision.raiseAmount || 40);
-        playCasinoSound("chip");
-        setAiChips((prev) => prev - raiseAmt);
-        setPot((prev) => prev + raiseAmt);
+        const finalAiChips = aiChips - raiseAmt;
+        const finalPot = pot + (wasShove ? playerAddedBet : 0) + raiseAmt;
+        playCasinoSound(finalAiChips <= 0 ? "allin" : "chip");
+        setAiChips(finalAiChips);
+        setPot(finalPot);
         setAiRoundBet((prev) => prev + raiseAmt);
         setCurrentBet(aiRoundBet + raiseAmt);
 
-        if (aiChips - raiseAmt <= 0 || playerChips <= 0) {
-          runoutAllIn(deck, communityCards);
+        if (finalAiChips <= 0 || isPlayerAllIn) {
+          runoutAllIn(deck, communityCards, finalPot, isPlayerAllIn ? 0 : playerChips, finalAiChips);
         }
       } else {
-        // Alfred checks -> If both checked, street is over! Advance street!
         playCasinoSound("check");
         setTimeout(advanceStreet, 450);
       }
@@ -1140,7 +1154,7 @@ export default function NotFound() {
               </button>
             )}
 
-            {/* RAISE [R] / ALL-IN [A] (Intelligent AI response) */}
+            {/* RAISE [R] / ALL-IN [A] */}
             <button
               type="button"
               onClick={() => handlePlayerRaise(raiseSlider)}
@@ -1232,7 +1246,7 @@ export default function NotFound() {
         )}
       </AnimatePresence>
 
-      {/* GAME OVER / BUSTED REBUY MODAL (ONLY POPULATES AFTER SHOWDOWN RESOLVES LOSS) */}
+      {/* GAME OVER / BUSTED REBUY MODAL */}
       <AnimatePresence>
         {isBustedModalOpen && (
           <motion.div
