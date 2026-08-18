@@ -346,7 +346,6 @@ export default function NotFound() {
 
         setHandResult(winnerMsg);
 
-        // ONLY trigger busted modal AFTER showdown pot is resolved and chips are calculated!
         if (finalPlayerChips <= 0 || finalAiChips <= 0) {
           setTimeout(() => {
             setIsBustedModalOpen(true);
@@ -439,7 +438,7 @@ export default function NotFound() {
     }
   }, [playerHole, aiHole, communityCards, pot, playerChips, aiChips, updateAiDialogue]);
 
-  // Player Actions with Chat Logging
+  // Player Actions with Texas Hold'em Round Closure
   const handlePlayerCheck = useCallback(() => {
     if (isAiThinking || stage === "showdown") return;
     playCasinoSound("check");
@@ -453,9 +452,10 @@ export default function NotFound() {
       })
     );
 
-    triggerAiTurn(0);
+    triggerAiTurn(0, false);
   }, [isAiThinking, stage, addChatMessage]);
 
+  // Player Calls: Matches Alfred's bet and immediately closes the betting street!
   const handlePlayerCall = useCallback(() => {
     if (isAiThinking || stage === "showdown") return;
     const toCall = currentBet - playerRoundBet;
@@ -476,14 +476,26 @@ export default function NotFound() {
       })
     );
 
+    // If player or AI is now All-In, run out the full 5 cards immediately
     if (playerChips - actualCall <= 0 || aiChips <= 0) {
       runoutAllIn(deck, communityCards);
-    } else {
-      triggerAiTurn(0, true);
+      return;
     }
-  }, [isAiThinking, stage, currentBet, playerRoundBet, playerChips, aiChips, deck, communityCards, runoutAllIn, addChatMessage]);
 
-  // Player Raise: Intelligent Adaptive AI response with Risk & Bluff mechanics
+    // Special Case: Pre-flop player calls SB to BB (Alfred has option to Check or Raise)
+    if (stage === "preflop" && aiRoundBet === BIG_BLIND && currentBet === BIG_BLIND) {
+      triggerAiTurn(0, false);
+      return;
+    }
+
+    // STANDARD HOLD'EM RULE: Calling an existing bet/raise CLOSES THE BETTING STREET!
+    // Alfred does NOT get to raise again on this street. Advance directly!
+    setTimeout(() => {
+      advanceStreet();
+    }, 450);
+  }, [isAiThinking, stage, currentBet, playerRoundBet, playerChips, aiChips, deck, communityCards, runoutAllIn, advanceStreet, addChatMessage]);
+
+  // Player Raise: Gives Alfred one turn to Fold, Call, or Re-Raise
   const handlePlayerRaise = useCallback(
     (amount: number) => {
       if (isAiThinking || stage === "showdown" || playerChips <= 0) return;
@@ -509,7 +521,7 @@ export default function NotFound() {
         })
       );
 
-      triggerAiTurn(totalWager);
+      triggerAiTurn(totalWager, false);
     },
     [isAiThinking, stage, playerChips, playerRoundBet, pot, addChatMessage]
   );
@@ -534,17 +546,12 @@ export default function NotFound() {
     updateAiDialogue("Prudence is the better part of valour. I collect the pot.");
   }, [isAiThinking, stage, pot, currentBet, playerRoundBet, updateAiDialogue, addChatMessage]);
 
-  // AI Turn handler with Intelligent Adaptive Call/Raise/Fold decision
-  const triggerAiTurn = (playerAddedBet: number, wasPlayerCall = false) => {
+  // AI Turn handler with Proper Street Closure
+  const triggerAiTurn = (playerAddedBet: number, _unused = false) => {
     setIsAiThinking(true);
 
     setTimeout(() => {
       setIsAiThinking(false);
-
-      if (wasPlayerCall && playerRoundBet >= aiRoundBet) {
-        advanceStreet();
-        return;
-      }
 
       const toCallForAi = Math.max(0, currentBet - aiRoundBet + playerAddedBet);
       const decision = getAdaptiveAIDecision(
@@ -565,6 +572,7 @@ export default function NotFound() {
         playCasinoSound("win");
         setStage("showdown");
       } else if (decision.action === "call") {
+        // Alfred matched player's bet -> ROUND CLOSES! Advance street!
         playCasinoSound("chip");
         const callAmt = Math.min(aiChips, toCallForAi);
         setAiChips((prev) => prev - callAmt);
@@ -574,9 +582,10 @@ export default function NotFound() {
         if (aiChips - callAmt <= 0 || playerChips <= 0) {
           runoutAllIn(deck, communityCards);
         } else {
-          setTimeout(advanceStreet, 400);
+          setTimeout(advanceStreet, 450);
         }
       } else if (decision.action === "raise") {
+        // Alfred raises -> Now it's the PLAYER'S TURN to Fold, Call, or Re-Raise!
         const raiseAmt = Math.min(aiChips, decision.raiseAmount || 40);
         playCasinoSound("chip");
         setAiChips((prev) => prev - raiseAmt);
@@ -588,10 +597,9 @@ export default function NotFound() {
           runoutAllIn(deck, communityCards);
         }
       } else {
+        // Alfred checks -> If both checked, street is over! Advance street!
         playCasinoSound("check");
-        if (playerRoundBet === aiRoundBet) {
-          setTimeout(advanceStreet, 400);
-        }
+        setTimeout(advanceStreet, 450);
       }
     }, 650);
   };
