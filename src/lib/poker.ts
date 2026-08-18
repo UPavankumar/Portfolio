@@ -110,21 +110,24 @@ function getCombinations(cards: Card[], k = 5): Card[][] {
   return result;
 }
 
-function evaluate5CardHand(hand: Card[]): { rankName: HandRank; score: number; description: string } {
-  const sorted = [...hand].sort((a, b) => b.value - a.value);
-  const values = sorted.map((c) => c.value);
-  const suits = sorted.map((c) => c.suit);
+function evaluate5Cards(cards: Card[]): { rankName: HandRank; score: number; description: string } {
+  const sorted = [...cards].sort((a, b) => b.value - a.value);
 
-  const isFlush = suits.every((s) => s === suits[0]);
+  const isFlush = sorted.every((c) => c.suit === sorted[0].suit);
 
+  // Check straight
   let isStraight = false;
-  let straightHigh = 0;
-  if (
-    values[0] - values[1] === 1 &&
-    values[1] - values[2] === 1 &&
-    values[2] - values[3] === 1 &&
-    values[3] - values[4] === 1
-  ) {
+  let straightHigh = sorted[0].value;
+
+  const isSequential = (vals: number[]) => {
+    for (let i = 0; i < vals.length - 1; i++) {
+      if (vals[i] - vals[i + 1] !== 1) return false;
+    }
+    return true;
+  };
+
+  const values = sorted.map((c) => c.value);
+  if (isSequential(values)) {
     isStraight = true;
     straightHigh = values[0];
   } else if (
@@ -134,19 +137,22 @@ function evaluate5CardHand(hand: Card[]): { rankName: HandRank; score: number; d
     values[3] === 3 &&
     values[4] === 2
   ) {
+    // Ace-low straight (A-2-3-4-5)
     isStraight = true;
     straightHigh = 5;
   }
 
+  // Count frequencies
   const counts: Record<number, number> = {};
   for (const v of values) {
     counts[v] = (counts[v] || 0) + 1;
   }
 
-  const freqEntries = Object.entries(counts)
-    .map(([val, count]) => ({ val: Number(val), count }))
-    .sort((a, b) => b.count - a.count || b.val - a.val);
+  const freq = Object.entries(counts)
+    .map(([val, cnt]) => ({ value: Number(val), count: cnt }))
+    .sort((a, b) => b.count - a.count || b.value - a.value);
 
+  // Royal Flush & Straight Flush
   if (isFlush && isStraight) {
     if (straightHigh === 14) {
       return { rankName: "Royal Flush", score: 9000000, description: "Royal Flush" };
@@ -154,351 +160,309 @@ function evaluate5CardHand(hand: Card[]): { rankName: HandRank; score: number; d
     return {
       rankName: "Straight Flush",
       score: 8000000 + straightHigh,
-      description: `Straight Flush, ${getRankName(straightHigh)} High`,
+      description: `Straight Flush, ${sorted[0].rank} High`,
     };
   }
 
-  if (freqEntries[0].count === 4) {
-    const quad = freqEntries[0].val;
-    const kicker = freqEntries[1].val;
+  // Four of a Kind
+  if (freq[0].count === 4) {
+    const quadVal = freq[0].value;
+    const kicker = freq[1].value;
     return {
       rankName: "Four of a Kind",
-      score: 7000000 + quad * 100 + kicker,
-      description: `Four of a Kind, ${getRankName(quad)}s`,
+      score: 7000000 + quadVal * 100 + kicker,
+      description: `Four of a Kind, ${freq[0].value}s`,
     };
   }
 
-  if (freqEntries[0].count === 3 && freqEntries[1].count === 2) {
-    const trip = freqEntries[0].val;
-    const pair = freqEntries[1].val;
+  // Full House
+  if (freq[0].count === 3 && freq[1].count === 2) {
+    const tripVal = freq[0].value;
+    const pairVal = freq[1].value;
     return {
       rankName: "Full House",
-      score: 6000000 + trip * 100 + pair,
-      description: `Full House, ${getRankName(trip)}s full of ${getRankName(pair)}s`,
+      score: 6000000 + tripVal * 100 + pairVal,
+      description: `Full House, ${freq[0].value}s full of ${freq[1].value}s`,
     };
   }
 
+  // Flush
   if (isFlush) {
-    const tieScore = values.reduce((acc, v, idx) => acc + v * Math.pow(15, 4 - idx), 0);
+    let score = 5000000;
+    values.forEach((v, idx) => {
+      score += v * Math.pow(15, 4 - idx);
+    });
     return {
       rankName: "Flush",
-      score: 5000000 + tieScore,
-      description: `Flush, ${getRankName(values[0])} High`,
+      score,
+      description: `Flush, ${sorted[0].rank} High`,
     };
   }
 
+  // Straight
   if (isStraight) {
     return {
       rankName: "Straight",
       score: 4000000 + straightHigh,
-      description: `Straight, ${getRankName(straightHigh)} High`,
+      description: `Straight, ${straightHigh === 5 ? "5" : sorted[0].rank} High`,
     };
   }
 
-  if (freqEntries[0].count === 3) {
-    const trip = freqEntries[0].val;
-    const kickers = [freqEntries[1].val, freqEntries[2].val];
+  // Three of a Kind
+  if (freq[0].count === 3) {
+    const tripVal = freq[0].value;
+    const kickers = freq.slice(1).map((f) => f.value);
     return {
       rankName: "Three of a Kind",
-      score: 3000000 + trip * 1000 + kickers[0] * 15 + kickers[1],
-      description: `Three of a Kind, ${getRankName(trip)}s`,
+      score: 3000000 + tripVal * 1000 + kickers[0] * 15 + kickers[1],
+      description: `Three of a Kind, ${freq[0].value}s`,
     };
   }
 
-  if (freqEntries[0].count === 2 && freqEntries[1].count === 2) {
-    const highPair = Math.max(freqEntries[0].val, freqEntries[1].val);
-    const lowPair = Math.min(freqEntries[0].val, freqEntries[1].val);
-    const kicker = freqEntries[2].val;
+  // Two Pair
+  if (freq[0].count === 2 && freq[1].count === 2) {
+    const highPair = Math.max(freq[0].value, freq[1].value);
+    const lowPair = Math.min(freq[0].value, freq[1].value);
+    const kicker = freq[2].value;
     return {
       rankName: "Two Pair",
-      score: 2000000 + highPair * 1000 + lowPair * 50 + kicker,
-      description: `Two Pair, ${getRankName(highPair)}s and ${getRankName(lowPair)}s`,
+      score: 2000000 + highPair * 1000 + lowPair * 15 + kicker,
+      description: `Two Pair, ${highPair}s and ${lowPair}s`,
     };
   }
 
-  if (freqEntries[0].count === 2) {
-    const pair = freqEntries[0].val;
-    const kickers = [freqEntries[1].val, freqEntries[2].val, freqEntries[3].val];
-    const kickScore = kickers.reduce((acc, v, idx) => acc + v * Math.pow(15, 2 - idx), 0);
+  // One Pair
+  if (freq[0].count === 2) {
+    const pairVal = freq[0].value;
+    const kickers = freq.slice(1).map((f) => f.value);
+    let score = 1000000 + pairVal * 10000;
+    kickers.forEach((k, i) => {
+      score += k * Math.pow(15, 2 - i);
+    });
     return {
       rankName: "One Pair",
-      score: 1000000 + pair * 5000 + kickScore,
-      description: `Pair of ${getRankName(pair)}s`,
+      score,
+      description: `One Pair, ${pairVal}s`,
     };
   }
 
-  const tieScore = values.reduce((acc, v, idx) => acc + v * Math.pow(15, 4 - idx), 0);
+  // High Card
+  let score = 0;
+  values.forEach((v, idx) => {
+    score += v * Math.pow(15, 4 - idx);
+  });
   return {
     rankName: "High Card",
-    score: tieScore,
-    description: `High Card, ${getRankName(values[0])}`,
+    score,
+    description: `High Card, ${sorted[0].rank}`,
   };
 }
 
-function getRankName(val: number): string {
-  if (val === 14) return "Ace";
-  if (val === 13) return "King";
-  if (val === 12) return "Queen";
-  if (val === 11) return "Jack";
-  return val.toString();
-}
-
+// 7-card best 5 evaluation
 export function evaluateHand(holeCards: Card[], communityCards: Card[]): HandEvaluation {
   const allCards = [...holeCards, ...communityCards];
   if (allCards.length < 5) {
+    const sorted = [...allCards].sort((a, b) => b.value - a.value);
     return {
       rankName: "High Card",
-      score: 0,
-      description: "Waiting for board cards...",
-      bestCards: holeCards,
+      score: sorted[0]?.value || 0,
+      description: sorted[0] ? `High Card: ${sorted[0].rank}` : "Evaluating...",
+      bestCards: sorted,
     };
   }
 
   const combos = getCombinations(allCards, 5);
-  let bestEval: { rankName: HandRank; score: number; description: string } = {
-    rankName: "High Card",
-    score: -1,
-    description: "",
-  };
-  let bestCards: Card[] = [];
+  let bestScore = -1;
+  let bestRankName: HandRank = "High Card";
+  let bestDesc = "";
+  let best5: Card[] = [];
 
   for (const combo of combos) {
-    const currentEval = evaluate5CardHand(combo);
-    if (currentEval.score > bestEval.score) {
-      bestEval = currentEval;
-      bestCards = combo;
+    const evalResult = evaluate5Cards(combo);
+    if (evalResult.score > bestScore) {
+      bestScore = evalResult.score;
+      bestRankName = evalResult.rankName;
+      bestDesc = evalResult.description;
+      best5 = combo;
     }
   }
 
   return {
-    ...bestEval,
-    bestCards,
+    rankName: bestRankName,
+    score: bestScore,
+    description: bestDesc,
+    bestCards: best5,
   };
 }
 
-// Monte Carlo Win Equity Calculation Engine
+// Real-time Monte Carlo Poker Equity Calculator (250 trials)
 export function calculateWinProbability(
   playerHole: Card[],
   communityCards: Card[],
   simulations = 250
 ): number {
-  if (playerHole.length < 2) return 50;
+  if (!playerHole || playerHole.length < 2) return 50;
 
-  const usedSet = new Set([...playerHole, ...communityCards].map((c) => `${c.rank}${c.suit}`));
-  const fullDeck = createDeck();
-  const availableDeck = fullDeck.filter((c) => !usedSet.has(`${c.rank}${c.suit}`));
+  const usedCards = new Set<string>();
+  playerHole.forEach((c) => usedCards.add(`${c.rank}_${c.suit}`));
+  communityCards.forEach((c) => usedCards.add(`${c.rank}_${c.suit}`));
 
-  if (availableDeck.length < 2) return 50;
+  const remainingDeck: Card[] = [];
+  for (const suit of SUITS) {
+    const color = suit === "♥" || suit === "♦" ? "red" : "black";
+    for (const r of RANKS) {
+      if (!usedCards.has(`${r.rank}_${suit}`)) {
+        remainingDeck.push({
+          suit,
+          rank: r.rank,
+          value: r.value,
+          color,
+        });
+      }
+    }
+  }
 
   let wins = 0;
   let ties = 0;
-  const remainingCommunity = 5 - communityCards.length;
+  const cardsNeeded = 5 - communityCards.length;
 
-  for (let s = 0; s < simulations; s++) {
-    const simDeck = shuffle(availableDeck);
-    const simAiHole = [simDeck[0], simDeck[1]];
+  for (let i = 0; i < simulations; i++) {
+    const deckCopy = shuffle([...remainingDeck]);
+    const aiHoleSim = [deckCopy.pop()!, deckCopy.pop()!];
+    const commSim = [...communityCards];
 
-    const simCommunity = [...communityCards];
-    for (let i = 0; i < remainingCommunity; i++) {
-      simCommunity.push(simDeck[2 + i]);
+    for (let c = 0; c < cardsNeeded; c++) {
+      commSim.push(deckCopy.pop()!);
     }
 
-    const pEval = evaluateHand(playerHole, simCommunity);
-    const aEval = evaluateHand(simAiHole, simCommunity);
+    const pScore = evaluateHand(playerHole, commSim).score;
+    const aScore = evaluateHand(aiHoleSim, commSim).score;
 
-    if (pEval.score > aEval.score) {
+    if (pScore > aScore) {
       wins++;
-    } else if (pEval.score === aEval.score) {
+    } else if (pScore === aScore) {
       ties += 0.5;
     }
   }
 
-  return Math.max(5, Math.min(95, Math.round(((wins + ties) / simulations) * 100)));
+  const equity = Math.round(((wins + ties) / simulations) * 100);
+  return Math.max(5, Math.min(98, equity));
 }
 
-// Classify player pattern into actionable archetype
+// Dynamic Player Profiling & Behavioral Classification
 export function classifyPlayerProfile(profile: PlayerProfile): PlayerProfile {
-  const total = profile.totalHands;
-  if (total < 2) {
+  const { totalHands, handsEntered, totalRaises, totalCalls, totalFolds } = profile;
+
+  if (totalHands < 2) {
     return {
       ...profile,
       archetype: "Observing...",
-      readSummary: "Calibrating baseline tendencies...",
+      readSummary: "Observing initial baseline betting frequency...",
       vpipPercent: 50,
       aggressionRate: 50,
     };
   }
 
-  const vpip = Math.round((profile.handsEntered / total) * 100);
-  const totalActions = profile.totalRaises + profile.totalCalls + profile.totalChecks + profile.totalFolds;
-  const aggRate = totalActions > 0 ? Math.round((profile.totalRaises / Math.max(1, profile.totalRaises + profile.totalCalls)) * 100) : 40;
+  const vpip = Math.round((handsEntered / Math.max(1, totalHands)) * 100);
+  const totalDecisions = Math.max(1, totalRaises + totalCalls + totalFolds);
+  const aggression = Math.round((totalRaises / totalDecisions) * 100);
 
   let archetype: PlayerArchetype = "Balanced Shark";
-  let summary = "Balanced, versatile opponent.";
+  let summary = "";
 
-  if (aggRate >= 65 || profile.timesBluffedCaught >= 2) {
+  if (aggression > 55 && vpip > 50) {
     archetype = "Aggressive Bluffer";
-    summary = `High aggression (${aggRate}%) & bluff frequency. Susceptible to check-traps and light call-downs.`;
-  } else if (vpip >= 70 && aggRate <= 35) {
+    summary = "High aggression frequency with loose range. Exploitable via disciplined check-calls & trap-sets.";
+  } else if (vpip > 65 && aggression <= 30) {
     archetype = "Calling Station";
-    summary = `High VPIP (${vpip}%) with low fold rate. Value-bet big; avoid bluffing.`;
-  } else if (vpip <= 40 && profile.totalFolds >= total * 0.4) {
+    summary = "Passive high VPIP. Avoid dry bluffs; extract maximum value on solid made hands.";
+  } else if (vpip <= 30 && aggression >= 40) {
     archetype = "Tight Rock";
-    summary = `Disciplined (${vpip}% VPIP). Steal unchecked pots; respect sudden raises.`;
+    summary = "Selective conservative range. Yield when facing heavy aggression; attack unclaimed small pots.";
   } else {
     archetype = "Balanced Shark";
-    summary = `Calculated player (${vpip}% VPIP, ${aggRate}% Agg). Using standard GTO mixed strategy.`;
+    summary = "Balanced variance and strategic timing. Proceed with standard GTO positional defense.";
   }
 
   return {
     ...profile,
-    vpipPercent: vpip,
-    aggressionRate: aggRate,
     archetype,
     readSummary: summary,
+    vpipPercent: vpip,
+    aggressionRate: aggression,
   };
 }
 
-// Adaptive Risk-Tolerant & Bluff-Capable AI Poker Decision Engine
+// Intelligent Adaptive AI Decision Engine
+export interface AIDecision {
+  action: "fold" | "call" | "raise" | "check";
+  raiseAmount?: number;
+  dialogue: string;
+}
+
 export function getAdaptiveAIDecision(
   aiHole: Card[],
-  community: Card[],
+  communityCards: Card[],
   pot: number,
   toCall: number,
   aiChips: number,
   stage: "preflop" | "flop" | "turn" | "river",
   playerProfile: PlayerProfile
-): { action: "fold" | "check" | "call" | "raise"; raiseAmount?: number; dialogue: string } {
-  const evaluation = evaluateHand(aiHole, community);
-  const v1 = aiHole[0].value;
-  const v2 = aiHole[1].value;
-  const isPocketPair = v1 === v2;
-  const highCard = Math.max(v1, v2);
-  const isSuited = aiHole[0].suit === aiHole[1].suit;
-  const rank = evaluation.rankName;
+): AIDecision {
+  const isPocketPair = aiHole[0]?.rank === aiHole[1]?.rank;
+  const highCard = Math.max(aiHole[0]?.value || 0, aiHole[1]?.value || 0);
 
-  const { archetype, totalHands } = playerProfile;
-  const isAggressive = archetype === "Aggressive Bluffer";
-  const isCallingStation = archetype === "Calling Station";
-  const isTight = archetype === "Tight Rock";
+  const currentEval = evaluateHand(aiHole, communityCards);
+  const rank = currentEval.rankName;
 
-  // Pre-Flop Street
-  if (stage === "preflop") {
-    // Monster pockets
-    if ((isPocketPair && v1 >= 10) || (v1 >= 13 && v2 >= 13)) {
-      if (aiChips >= toCall + 60) {
-        return {
-          action: "raise",
-          raiseAmount: Math.min(aiChips, toCall + (isCallingStation ? 80 : 60)),
-          dialogue: isCallingStation
-            ? "A commanding starting hand. Since you rarely fold pre-flop, let us make it worthwhile."
-            : isAggressive
-            ? "An exceptional holding. Let us test your customary aggression, sir."
-            : "A fine starting position. I raise.",
-        };
-      }
-      return { action: "call", dialogue: "I shall match your entry wager." };
-    }
+  const isBluffer = playerProfile.archetype === "Aggressive Bluffer";
+  const isCallingStation = playerProfile.archetype === "Calling Station";
 
-    // High risk bluff raise pre-flop (20% chance with suited connectors/high card)
-    if (Math.random() < 0.22 && highCard >= 10 && aiChips >= toCall + 50) {
-      return {
-        action: "raise",
-        raiseAmount: Math.min(aiChips, toCall + 40),
-        dialogue: "Applying early positional pressure. Let us see who yields.",
-      };
-    }
-
-    // Playable hands: pairs, connectors, high broadways
-    if (isPocketPair || (highCard >= 8 && (isSuited || Math.abs(v1 - v2) <= 3))) {
-      if (toCall <= 60 || toCall <= aiChips * 0.25) {
-        return {
-          action: "call",
-          dialogue: isTight
-            ? "You entered the pot, which implies strength. Let us see the flop."
-            : "Very well, cards on the felt.",
-        };
-      }
-    }
-
-    // Free check
-    if (toCall === 0) {
-      return { action: "check", dialogue: "Check to you, sir." };
-    }
-
-    // Steal against tight players
-    if (isTight && totalHands >= 2 && Math.random() < 0.45 && aiChips >= 50) {
-      return {
-        action: "raise",
-        raiseAmount: Math.min(aiChips, toCall + 40),
-        dialogue: "You fold often under pre-flop pressure. Let us test that resolve.",
-      };
-    }
-
-    // Cheap call
-    if (toCall <= 30) {
-      return { action: "call", dialogue: "A modest price to pay. I shall call." };
-    }
-
-    return {
-      action: "fold",
-      dialogue: isTight
-        ? "Given how rarely you raise, sir, I must respect your pocket. Folded."
-        : "Prudence dictates a fold. Your pot.",
-    };
-  }
-
-  // Post-Flop Streets (Flop, Turn, River)
-
-  // 1. Monster Hands: Straight, Flush, Full House, Quads, Straight Flush
+  // 1. Monster Hands (Full House, Quads, Straight, Flush, Trips)
   if (
     rank === "Royal Flush" ||
     rank === "Straight Flush" ||
     rank === "Four of a Kind" ||
     rank === "Full House" ||
     rank === "Flush" ||
-    rank === "Straight"
+    rank === "Straight" ||
+    rank === "Three of a Kind"
   ) {
-    // Check-trap aggressive players
-    if (isAggressive && toCall === 0 && (stage === "flop" || stage === "turn") && Math.random() < 0.7) {
+    if (isBluffer && Math.random() < 0.4 && stage !== "river") {
       return {
-        action: "check",
-        dialogue: "Check. (I anticipate your customary attack, sir.)",
+        action: toCall > 0 ? "call" : "check",
+        dialogue: "A cautious stance for the moment. Let us see what unfolds.",
       };
     }
 
-    // Value raise
-    if (aiChips >= toCall + 60) {
-      const raiseSize = isCallingStation ? Math.floor(pot * 0.8) : Math.floor(pot * 0.6);
-      return {
-        action: "raise",
-        raiseAmount: Math.min(aiChips, toCall + Math.max(60, raiseSize)),
-        dialogue: `A formidable board. My holding is well ahead.`,
-      };
-    }
-    return { action: "call", dialogue: "I shall call." };
+    const valueRaise = Math.min(
+      aiChips,
+      Math.max(40, Math.floor(pot * (isCallingStation ? 0.75 : 0.5)))
+    );
+    return {
+      action: "raise",
+      raiseAmount: toCall + valueRaise,
+      dialogue: "A commanding position. I must raise the stakes.",
+    };
   }
 
-  // 2. Strong Hands: Three of a Kind or Two Pair
-  if (rank === "Three of a Kind" || rank === "Two Pair") {
-    if (toCall === 0) {
-      if (Math.random() < 0.65 && aiChips >= 50) {
+  // 2. Two Pair / Top Pair Strong Kicker
+  if (rank === "Two Pair" || (rank === "One Pair" && isPocketPair && highCard >= 10)) {
+    if (toCall <= pot * 0.75 || toCall <= aiChips * 0.5) {
+      if (toCall === 0 && Math.random() < 0.55 && aiChips >= 40) {
         return {
           action: "raise",
-          raiseAmount: Math.min(aiChips, Math.max(50, Math.floor(pot * 0.55))),
-          dialogue: "Pressing the statistical advantage.",
+          raiseAmount: Math.min(aiChips, Math.max(30, Math.floor(pot * 0.5))),
+          dialogue: "I fancy my holdings on this texture. A modest raise.",
         };
       }
-      return { action: "check", dialogue: "Check to you." };
+      return { action: toCall > 0 ? "call" : "check", dialogue: toCall > 0 ? "I call your wager." : "Check." };
     }
-
-    return { action: "call", dialogue: `My ${rank} warrants a solid call.` };
   }
 
-  // 3. Medium Hands: One Pair
+  // 3. Medium One Pair / Draws
   if (rank === "One Pair") {
     if (toCall === 0) {
-      // Semi-bluff / Value probe (40% chance)
       if (Math.random() < 0.45 && aiChips >= 40) {
         return {
           action: "raise",
@@ -509,12 +473,10 @@ export function getAdaptiveAIDecision(
       return { action: "check", dialogue: "Check." };
     }
 
-    // Call moderate bets with One Pair
     if (toCall <= pot * 0.6 || toCall <= aiChips * 0.4) {
       return { action: "call", dialogue: "I shall see the next street with my pair." };
     }
 
-    // River bluff re-raise (20% high-risk maneuver)
     if (stage === "river" && Math.random() < 0.22 && aiChips >= toCall + 60 && !isCallingStation) {
       return {
         action: "raise",
@@ -528,7 +490,6 @@ export function getAdaptiveAIDecision(
 
   // 4. Pure Air / High Card — ACTIVE BLUFF ENGINE
   if (toCall === 0) {
-    // 30% Pure Bluff steal on Turn / River
     if ((stage === "turn" || stage === "river") && Math.random() < 0.32 && aiChips >= 50 && !isCallingStation) {
       return {
         action: "raise",
@@ -539,7 +500,6 @@ export function getAdaptiveAIDecision(
     return { action: "check", dialogue: "Check." };
   }
 
-  // Floating / Semi-bluff call with high cards (25% risk tolerance)
   if (highCard >= 12 && toCall <= 40 && Math.random() < 0.3) {
     return {
       action: "call",
@@ -547,7 +507,6 @@ export function getAdaptiveAIDecision(
     };
   }
 
-  // Random aggressive check-raise bluff (15% chance)
   if (stage === "river" && Math.random() < 0.18 && aiChips >= toCall + 60 && !isCallingStation) {
     return {
       action: "raise",
@@ -557,4 +516,116 @@ export function getAdaptiveAIDecision(
   }
 
   return { action: "fold", dialogue: "Nothing of note in my hand. Folded." };
+}
+
+// Alfred's Witty & Articulate Card Commentary Engine
+export function getAlfredCardCommentary(
+  playerHole: Card[],
+  _communityCards: Card[],
+  pEval: HandEvaluation,
+  result: "player_win" | "ai_win" | "split" | "player_folded"
+): string {
+  if (!playerHole || playerHole.length < 2) return "A curious hand, sir.";
+
+  const c1 = playerHole[0];
+  const c2 = playerHole[1];
+  const isPocketPair = c1.rank === c2.rank;
+  const isSuited = c1.suit === c2.suit;
+  const highRank = Math.max(c1.value, c2.value);
+  const isConnected = Math.abs(c1.value - c2.value) === 1;
+
+  // 1. If player folded
+  if (result === "player_folded") {
+    if (isPocketPair) {
+      return `Folding pocket ${c1.rank}s? A very cautious release, sir.`;
+    }
+    if (highRank === 14 && isSuited) {
+      return `Releasing suited Ace-${c2.rank}? Prudence over bravado.`;
+    }
+    return "A disciplined fold. Live to fight another hand.";
+  }
+
+  // 2. Specific notable pocket card combinations
+  // Pocket Rockets (A-A)
+  if (isPocketPair && c1.rank === "A") {
+    return result === "player_win"
+      ? "Pocket Aces! 'Bullets' in the hole played with lethal precision, sir."
+      : "Pocket Aces cracked! Even the best starting hand in poker can be humbled by the board.";
+  }
+
+  // Pocket Kings (K-K)
+  if (isPocketPair && c1.rank === "K") {
+    return result === "player_win"
+      ? "Pocket Kings ('Cowboys')! You wielded the crown with authority, sir."
+      : "Kings in the hole, yet the runout proved unkind. Tough break, sir.";
+  }
+
+  // Pocket Queens / Jacks
+  if (isPocketPair && (c1.rank === "Q" || c1.rank === "J")) {
+    return result === "player_win"
+      ? `Pocket ${c1.rank}s! High-caliber paint in the pocket, beautifully navigated.`
+      : `Pocket ${c1.rank}s didn't survive the showdown.`;
+  }
+
+  // Low/Mid Pocket Pairs
+  if (isPocketPair) {
+    return result === "player_win"
+      ? `Pocket ${c1.rank}s! Small pair, but deadly when handled with care.`
+      : `Pocket ${c1.rank}s — brave effort holding the small pair to the end.`;
+  }
+
+  // Big Slick (A-K)
+  if ((c1.rank === "A" && c2.rank === "K") || (c1.rank === "K" && c2.rank === "A")) {
+    return isSuited
+      ? "Big Slick suited (A-K)! The quintessential drawing powerhouse."
+      : "Ace-King offsuit! Classic high-stakes artillery.";
+  }
+
+  // 7-2 Offsuit (The Hammer / Worst hand)
+  if (!isSuited && ((c1.rank === "7" && c2.rank === "2") || (c1.rank === "2" && c2.rank === "7"))) {
+    return result === "player_win"
+      ? "7-2 offsuit?! Winning with the statistical worst hand in Texas Hold'em is sheer psychological genius."
+      : "Ah, the infamous 7-2 offsuit. Truly playing on veteran difficulty, sir.";
+  }
+
+  // Suited Connectors
+  if (isSuited && isConnected) {
+    return `Suited connectors (${c1.rank}${c1.suit} ${c2.rank}${c2.suit})! A connoisseur's choice for hidden straights and flushes.`;
+  }
+
+  // 3. Made hands commentary
+  if (pEval.rankName === "Royal Flush") {
+    return "A Royal Flush! In all my years at the felt, I have seldom witnessed such absolute perfection. Splendid!";
+  }
+  if (pEval.rankName === "Straight Flush") {
+    return `A Straight Flush! An astronomical hand (${pEval.description}). A masterclass on the felt.`;
+  }
+  if (pEval.rankName === "Four of a Kind") {
+    return `Quads! Devastating four-of-a-kind firepower (${pEval.description}).`;
+  }
+  if (pEval.rankName === "Full House") {
+    return `A full boat! (${pEval.description}). Impeccable board texture connection.`;
+  }
+  if (pEval.rankName === "Flush") {
+    return `A pristine flush in ${c1.suit}! Beautiful monochrome board connection.`;
+  }
+  if (pEval.rankName === "Straight") {
+    return `A 5-card sequence straight (${pEval.description})! You connected the dots flawlessly.`;
+  }
+  if (pEval.rankName === "Three of a Kind") {
+    return `Trips! (${pEval.description}). A concealed weapon on this board.`;
+  }
+  if (pEval.rankName === "Two Pair") {
+    return `Two pair (${pEval.description}). Solid and disciplined execution.`;
+  }
+  if (pEval.rankName === "One Pair") {
+    return result === "player_win"
+      ? `A pair of ${pEval.description.split(", ")[1] || "cards"} held up! Crisp value.`
+      : `Just a pair in the end. The board offered little assistance.`;
+  }
+
+  // High Card
+  return result === "player_win"
+    ? `You won that pot with mere High Card (${pEval.description})?! Ice in your veins, sir.`
+    : `High Card only (${pEval.description}). A valiant attempt to contest the pot nonetheless.`;
 }

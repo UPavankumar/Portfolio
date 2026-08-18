@@ -7,6 +7,7 @@ import {
   calculateWinProbability,
   getAdaptiveAIDecision,
   classifyPlayerProfile,
+  getAlfredCardCommentary,
   type Card as PokerCard,
   type HandEvaluation,
   type PlayerProfile,
@@ -289,7 +290,7 @@ export default function NotFound() {
     }
   }, [playerHole, communityCards]);
 
-  // Runout all 5 cards for ALL-IN directly and evaluate best 5-card hands
+  // Runout all 5 cards for ALL-IN directly and evaluate best 5-card hands + Alfred card comment
   const runoutAllIn = useCallback(
     (
       currentDeck: PokerCard[],
@@ -327,20 +328,22 @@ export default function NotFound() {
         let winnerMsg = "";
         let finalPlayerChips = exactPlayerChips;
         let finalAiChips = exactAiChips;
+        let resultType: "player_win" | "ai_win" | "split" = "split";
 
         if (pEval.score > aEval.score) {
+          resultType = "player_win";
           winnerMsg = `🏆 You WIN $${exactPot}! (${pEval.description})`;
           finalPlayerChips += exactPot;
           setPlayerChips(finalPlayerChips);
           playCasinoSound("win");
-          updateAiDialogue(`You take the $${exactPot} All-In showdown with ${pEval.description}!`);
         } else if (aEval.score > pEval.score) {
+          resultType = "ai_win";
           winnerMsg = `💀 Alfred WINS $${exactPot}! (${aEval.description})`;
           finalAiChips += exactPot;
           setAiChips(finalAiChips);
           playCasinoSound("fold");
-          updateAiDialogue(`Alfred takes the $${exactPot} All-In showdown with ${aEval.description}.`);
         } else {
+          resultType = "split";
           winnerMsg = `🤝 Split Pot! ($${Math.floor(exactPot / 2)} each)`;
           const half = Math.floor(exactPot / 2);
           finalPlayerChips += half;
@@ -348,10 +351,13 @@ export default function NotFound() {
           setPlayerChips(finalPlayerChips);
           setAiChips(finalAiChips);
           playCasinoSound("chip");
-          updateAiDialogue("All-in tie! The pot is split evenly.");
         }
 
         setHandResult(winnerMsg);
+
+        // Alfred card commentary on user's hand
+        const commentary = getAlfredCardCommentary(playerHole, newCommunity, pEval, resultType);
+        updateAiDialogue(commentary);
 
         if (finalPlayerChips <= 0 || finalAiChips <= 0) {
           setTimeout(() => {
@@ -400,7 +406,7 @@ export default function NotFound() {
     });
   }, [stage, updateAiDialogue]);
 
-  // Showdown hand resolution
+  // Showdown hand resolution with Alfred card commentary
   const handleShowdown = useCallback(() => {
     if (playerHole.length < 2 || aiHole.length < 2) return;
 
@@ -412,20 +418,22 @@ export default function NotFound() {
     let winnerMsg = "";
     let finalPlayerChips = playerChips;
     let finalAiChips = aiChips;
+    let resultType: "player_win" | "ai_win" | "split" = "split";
 
     if (pEval.score > aEval.score) {
+      resultType = "player_win";
       winnerMsg = `🏆 You WIN $${pot}! (${pEval.description})`;
       finalPlayerChips += pot;
       setPlayerChips(finalPlayerChips);
       playCasinoSound("win");
-      updateAiDialogue(`Impeccable play! You take the $${pot} pot with ${pEval.description}.`);
     } else if (aEval.score > pEval.score) {
+      resultType = "ai_win";
       winnerMsg = `💀 Alfred WINS $${pot}! (${aEval.description})`;
       finalAiChips += pot;
       setAiChips(finalAiChips);
       playCasinoSound("fold");
-      updateAiDialogue(`I claim the pot with ${aEval.description}. Better luck next hand, sir.`);
     } else {
+      resultType = "split";
       winnerMsg = `🤝 Split Pot! ($${Math.floor(pot / 2)} each)`;
       const half = Math.floor(pot / 2);
       finalPlayerChips += half;
@@ -433,10 +441,13 @@ export default function NotFound() {
       setPlayerChips(finalPlayerChips);
       setAiChips(finalAiChips);
       playCasinoSound("chip");
-      updateAiDialogue("A deadlock! We split the pot evenly.");
     }
 
     setHandResult(winnerMsg);
+
+    // Alfred specific insightful card commentary
+    const commentary = getAlfredCardCommentary(playerHole, communityCards, pEval, resultType);
+    updateAiDialogue(commentary);
 
     if (finalPlayerChips <= 0 || finalAiChips <= 0) {
       setTimeout(() => {
@@ -554,8 +565,14 @@ export default function NotFound() {
       })
     );
 
-    updateAiDialogue("Prudence is the better part of valour. I collect the pot.");
-  }, [isAiThinking, stage, pot, currentBet, playerRoundBet, updateAiDialogue, addChatMessage]);
+    const foldComment = getAlfredCardCommentary(
+      playerHole,
+      communityCards,
+      evaluateHand(playerHole, communityCards),
+      "player_folded"
+    );
+    updateAiDialogue(foldComment);
+  }, [isAiThinking, stage, pot, currentBet, playerRoundBet, playerHole, communityCards, updateAiDialogue, addChatMessage]);
 
   // AI Turn handler
   const triggerAiTurn = (playerAddedBet: number, isPlayerAllIn = false, wasShove = false) => {
@@ -810,7 +827,7 @@ export default function NotFound() {
           {/* AI Dealer Area */}
           <div className="relative z-10 flex flex-col items-center space-y-2 pt-1">
             
-            {/* Alfred Speech Bubble */}
+            {/* Alfred Speech Bubble with Specific Card Commentary */}
             <motion.div
               key={aiDialogue}
               initial={{ opacity: 0, y: -10 }}
