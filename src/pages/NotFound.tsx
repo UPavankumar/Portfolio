@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   createDeck,
   evaluateHand,
+  calculateWinProbability,
   getAdaptiveAIDecision,
   classifyPlayerProfile,
   type Card as PokerCard,
@@ -106,10 +107,15 @@ export default function NotFound() {
   const [raiseSlider, setRaiseSlider] = useState(40);
   const [showRulesModal, setShowRulesModal] = useState(false);
   const [showChatSidebar, setShowChatSidebar] = useState(true);
+  const [showWelcomeModal, setShowWelcomeModal] = useState(true);
+  const [isBustedModalOpen, setIsBustedModalOpen] = useState(false);
 
   // Red Dot Laser Cursor Tracking
   const [mousePos, setMousePos] = useState({ x: -100, y: -100 });
   const [isMouseInside, setIsMouseInside] = useState(false);
+
+  // Live Win Probability Equity %
+  const [winProbability, setWinProbability] = useState(50);
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
@@ -190,6 +196,7 @@ export default function NotFound() {
 
   // Restart match with fresh stacks
   const handleRebuy = useCallback(() => {
+    setIsBustedModalOpen(false);
     setPlayerChips(1000);
     setAiChips(1000);
     setHandResult(null);
@@ -222,6 +229,8 @@ export default function NotFound() {
 
   // Start fresh hand
   const startNewHand = useCallback(() => {
+    setIsBustedModalOpen(false);
+
     if (playerChips <= 0 || aiChips <= 0) {
       handleRebuy();
       return;
@@ -271,10 +280,12 @@ export default function NotFound() {
     startNewHand();
   }, []);
 
-  // Update real-time hand strength evaluation
+  // Update real-time hand strength evaluation & Win Equity %
   useEffect(() => {
     if (playerHole.length === 2) {
       setPlayerHandEval(evaluateHand(playerHole, communityCards));
+      const equity = calculateWinProbability(playerHole, communityCards);
+      setWinProbability(equity);
     }
   }, [playerHole, communityCards]);
 
@@ -307,28 +318,43 @@ export default function NotFound() {
 
       setTimeout(() => {
         let winnerMsg = "";
+        let finalPlayerChips = playerChips;
+        let finalAiChips = aiChips;
+
         if (pEval.score > aEval.score) {
           winnerMsg = `🏆 You WIN $${pot}! (${pEval.description})`;
-          setPlayerChips((prev) => prev + pot);
+          finalPlayerChips += pot;
+          setPlayerChips(finalPlayerChips);
           playCasinoSound("win");
           updateAiDialogue(`You take the $${pot} All-In showdown with ${pEval.description}!`);
         } else if (aEval.score > pEval.score) {
           winnerMsg = `💀 Alfred WINS $${pot}! (${aEval.description})`;
-          setAiChips((prev) => prev + pot);
+          finalAiChips += pot;
+          setAiChips(finalAiChips);
           playCasinoSound("fold");
           updateAiDialogue(`Alfred takes the $${pot} All-In showdown with ${aEval.description}.`);
         } else {
           winnerMsg = `🤝 Split Pot! ($${Math.floor(pot / 2)} each)`;
           const half = Math.floor(pot / 2);
-          setPlayerChips((prev) => prev + half);
-          setAiChips((prev) => prev + half);
+          finalPlayerChips += half;
+          finalAiChips += half;
+          setPlayerChips(finalPlayerChips);
+          setAiChips(finalAiChips);
           playCasinoSound("chip");
           updateAiDialogue("All-in tie! The pot is split evenly.");
         }
+
         setHandResult(winnerMsg);
-      }, 500);
+
+        // ONLY trigger busted modal AFTER showdown pot is resolved and chips are calculated!
+        if (finalPlayerChips <= 0 || finalAiChips <= 0) {
+          setTimeout(() => {
+            setIsBustedModalOpen(true);
+          }, 1200);
+        }
+      }, 600);
     },
-    [playerHole, aiHole, pot, updateAiDialogue, addChatMessage]
+    [playerHole, aiHole, pot, playerChips, aiChips, updateAiDialogue, addChatMessage]
   );
 
   // Advance street (Flop, Turn, River, Showdown)
@@ -378,27 +404,40 @@ export default function NotFound() {
     setAiHandEval(aEval);
 
     let winnerMsg = "";
+    let finalPlayerChips = playerChips;
+    let finalAiChips = aiChips;
+
     if (pEval.score > aEval.score) {
       winnerMsg = `🏆 You WIN $${pot}! (${pEval.description})`;
-      setPlayerChips((prev) => prev + pot);
+      finalPlayerChips += pot;
+      setPlayerChips(finalPlayerChips);
       playCasinoSound("win");
       updateAiDialogue(`Impeccable play! You take the $${pot} pot with ${pEval.description}.`);
     } else if (aEval.score > pEval.score) {
       winnerMsg = `💀 Alfred WINS $${pot}! (${aEval.description})`;
-      setAiChips((prev) => prev + pot);
+      finalAiChips += pot;
+      setAiChips(finalAiChips);
       playCasinoSound("fold");
       updateAiDialogue(`I claim the pot with ${aEval.description}. Better luck next hand, sir.`);
     } else {
       winnerMsg = `🤝 Split Pot! ($${Math.floor(pot / 2)} each)`;
       const half = Math.floor(pot / 2);
-      setPlayerChips((prev) => prev + half);
-      setAiChips((prev) => prev + half);
+      finalPlayerChips += half;
+      finalAiChips += half;
+      setPlayerChips(finalPlayerChips);
+      setAiChips(finalAiChips);
       playCasinoSound("chip");
       updateAiDialogue("A deadlock! We split the pot evenly.");
     }
 
     setHandResult(winnerMsg);
-  }, [playerHole, aiHole, communityCards, pot, updateAiDialogue]);
+
+    if (finalPlayerChips <= 0 || finalAiChips <= 0) {
+      setTimeout(() => {
+        setIsBustedModalOpen(true);
+      }, 1200);
+    }
+  }, [playerHole, aiHole, communityCards, pot, playerChips, aiChips, updateAiDialogue]);
 
   // Player Actions with Chat Logging
   const handlePlayerCheck = useCallback(() => {
@@ -437,7 +476,6 @@ export default function NotFound() {
       })
     );
 
-    // If player or AI is now all-in (0 chips left), directly run out the board!
     if (playerChips - actualCall <= 0 || aiChips <= 0) {
       runoutAllIn(deck, communityCards);
     } else {
@@ -445,7 +483,7 @@ export default function NotFound() {
     }
   }, [isAiThinking, stage, currentBet, playerRoundBet, playerChips, aiChips, deck, communityCards, runoutAllIn, addChatMessage]);
 
-  // Player Raise: Intelligent Adaptive AI response (no longer auto-folds every single time!)
+  // Player Raise: Intelligent Adaptive AI response with Risk & Bluff mechanics
   const handlePlayerRaise = useCallback(
     (amount: number) => {
       if (isAiThinking || stage === "showdown" || playerChips <= 0) return;
@@ -598,10 +636,12 @@ export default function NotFound() {
 
       if (key === "escape") {
         setShowRulesModal(false);
+        setShowWelcomeModal(false);
+        setIsBustedModalOpen(false);
         return;
       }
 
-      if (showRulesModal) return;
+      if (showRulesModal || showWelcomeModal || isBustedModalOpen) return;
 
       if (stage === "showdown") {
         if (e.code === "Enter" || e.code === "Space") {
@@ -640,6 +680,8 @@ export default function NotFound() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [
     showRulesModal,
+    showWelcomeModal,
+    isBustedModalOpen,
     stage,
     toCall,
     playerChips,
@@ -651,8 +693,6 @@ export default function NotFound() {
     handlePlayerRaise,
     startNewHand,
   ]);
-
-  const isGameOver = playerChips <= 0 || aiChips <= 0;
 
   return (
     <div className="fixed inset-0 z-[10000] bg-[#070b14] text-white flex flex-col justify-between overflow-hidden select-none font-sans cursor-none">
@@ -765,7 +805,7 @@ export default function NotFound() {
               </div>
             )}
 
-            {/* AI Avatar & Hole Cards (Shows cards on showdown) */}
+            {/* AI Avatar & Hole Cards */}
             <div className="flex items-center gap-4">
               <div className="relative size-12 sm:size-14 rounded-full border-2 border-amber-500/50 bg-[#121624] overflow-hidden flex items-center justify-center text-xl shadow-lg">
                 🤵
@@ -851,16 +891,34 @@ export default function NotFound() {
 
           </div>
 
-          {/* Player Hole Cards & Hand Strength */}
+          {/* Player Hole Cards, Hand Strength & Live Win Probability % */}
           <div className="relative z-10 flex flex-col items-center space-y-2 pb-1">
             
-            {/* Hand Evaluation Strength Pill */}
-            {playerHandEval && (
-              <div className="px-4 py-1 rounded-full bg-black/80 border border-emerald-500/40 text-emerald-300 font-mono text-xs backdrop-blur-md shadow-md flex items-center gap-2">
-                <span className="size-2 rounded-full bg-emerald-400 animate-pulse" />
-                <span>{playerHandEval.description}</span>
+            {/* Real-time Hand Strength & Win Probability Equity Bar */}
+            <div className="flex items-center gap-2">
+              {playerHandEval && (
+                <div className="px-3.5 py-1 rounded-full bg-black/80 border border-emerald-500/40 text-emerald-300 font-mono text-xs backdrop-blur-md shadow-md flex items-center gap-2">
+                  <span className="size-2 rounded-full bg-emerald-400 animate-pulse" />
+                  <span>{playerHandEval.description}</span>
+                </div>
+              )}
+
+              {/* Dynamic Win Equity % Pill */}
+              <div className="px-3.5 py-1 rounded-full bg-black/80 border border-white/15 font-mono text-xs backdrop-blur-md shadow-md flex items-center gap-2">
+                <span className="text-[10px] text-neutral-400 uppercase">Win Chance:</span>
+                <span
+                  className={`font-black ${
+                    winProbability >= 65
+                      ? "text-emerald-400"
+                      : winProbability >= 40
+                      ? "text-amber-400"
+                      : "text-red-400"
+                  }`}
+                >
+                  {winProbability}%
+                </span>
               </div>
-            )}
+            </div>
 
             {/* Player Cards */}
             <div className="flex items-center gap-3">
@@ -1106,9 +1164,69 @@ export default function NotFound() {
         </div>
       </footer>
 
-      {/* GAME OVER / BUSTED REBUY MODAL */}
+      {/* 404 INITIAL WELCOME POP-UP / ROUTE BANNER */}
       <AnimatePresence>
-        {isGameOver && (
+        {showWelcomeModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[40000] bg-black/85 backdrop-blur-md flex items-center justify-center p-4 sm:p-6"
+            onClick={() => setShowWelcomeModal(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 20 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-[#0b101d] border border-amber-500/40 rounded-3xl p-6 sm:p-8 max-w-lg w-full text-center space-y-6 shadow-[0_0_80px_rgba(245,158,11,0.3)] font-mono relative"
+            >
+              <button
+                onClick={() => setShowWelcomeModal(false)}
+                className="absolute top-4 right-4 size-8 rounded-full bg-white/10 hover:bg-white/20 text-neutral-300 hover:text-white flex items-center justify-center text-xs transition-colors cursor-pointer"
+              >
+                ✕
+              </button>
+
+              <div className="size-16 rounded-2xl bg-amber-500 text-black font-black flex items-center justify-center text-3xl mx-auto shadow-lg">
+                ♠
+              </div>
+
+              <div className="space-y-2">
+                <span className="text-red-400 text-xs font-bold tracking-widest uppercase">
+                  ERROR 404 /// ROUTE NOT FOUND
+                </span>
+                <h2 className="text-xl sm:text-2xl font-black text-white uppercase tracking-tight">
+                  This page is not available.
+                </h2>
+                <p className="text-xs text-neutral-300 leading-relaxed font-sans mt-2">
+                  The page you are looking for does not exist. But since you've arrived at <strong>Alfred's High-Stakes Lounge</strong>, pull up a chair and play Texas Hold'em against our AI dealer!
+                </p>
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-3">
+                <button
+                  type="button"
+                  onClick={() => setShowWelcomeModal(false)}
+                  className="flex-1 py-3.5 rounded-2xl bg-gradient-to-r from-amber-500 to-yellow-500 text-black font-black uppercase text-xs hover:bg-amber-400 transition-all cursor-pointer shadow-[0_0_20px_rgba(245,158,11,0.4)]"
+                >
+                  ♠ LET'S PLAY POKER [ESC]
+                </button>
+                <Link
+                  to="/"
+                  className="px-5 py-3.5 rounded-2xl bg-white/10 border border-white/15 text-white font-bold uppercase text-xs hover:bg-white hover:text-black transition-all flex items-center justify-center"
+                >
+                  ← Return to Portfolio
+                </Link>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* GAME OVER / BUSTED REBUY MODAL (ONLY POPULATES AFTER SHOWDOWN RESOLVES LOSS) */}
+      <AnimatePresence>
+        {isBustedModalOpen && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -1118,19 +1236,19 @@ export default function NotFound() {
             <motion.div
               initial={{ scale: 0.9, y: 20 }}
               animate={{ scale: 1, y: 0 }}
-              className="bg-[#0b101d] border border-amber-500/40 rounded-3xl p-8 max-w-md w-full text-center space-y-6 shadow-2xl"
+              className="bg-[#0b101d] border border-amber-500/40 rounded-3xl p-8 max-w-md w-full text-center space-y-6 shadow-2xl font-mono"
             >
               <div className="size-20 rounded-3xl mx-auto flex items-center justify-center text-4xl bg-amber-500/10 border border-amber-500/30">
                 {playerChips <= 0 ? "💸" : "👑"}
               </div>
 
               <div className="space-y-2">
-                <h2 className="text-2xl sm:text-3xl font-black uppercase tracking-tight text-white font-mono">
+                <h2 className="text-2xl sm:text-3xl font-black uppercase tracking-tight text-white">
                   {playerChips <= 0 ? "YOU ARE BUSTED!" : "CHAMPION! ALFRED BUSTED"}
                 </h2>
-                <p className="text-xs text-neutral-400 font-mono leading-relaxed">
+                <p className="text-xs text-neutral-400 leading-relaxed font-sans">
                   {playerChips <= 0
-                    ? "You ran out of chips on the high-stakes felt. Re-buy $1,000 to get back in the action!"
+                    ? "You ran out of chips after the final showdown. Re-buy $1,000 to get back in the action!"
                     : "You cleaned Alfred out of chips! Exceptional poker mastery, sir."}
                 </p>
               </div>
@@ -1139,13 +1257,13 @@ export default function NotFound() {
                 <button
                   type="button"
                   onClick={handleRebuy}
-                  className="w-full py-4 rounded-2xl bg-gradient-to-r from-amber-500 to-yellow-500 text-black font-black uppercase tracking-widest font-mono text-sm shadow-[0_0_30px_rgba(245,158,11,0.6)] hover:bg-white transition-all cursor-pointer"
+                  className="w-full py-4 rounded-2xl bg-gradient-to-r from-amber-500 to-yellow-500 text-black font-black uppercase tracking-widest text-sm shadow-[0_0_30px_rgba(245,158,11,0.6)] hover:bg-white transition-all cursor-pointer"
                 >
                   RE-BUY $1,000 & PLAY AGAIN ↵
                 </button>
                 <Link
                   to="/"
-                  className="w-full py-3.5 rounded-2xl bg-white/10 text-white font-bold uppercase tracking-wider font-mono text-xs hover:bg-white hover:text-black transition-all"
+                  className="w-full py-3.5 rounded-2xl bg-white/10 text-white font-bold uppercase tracking-wider text-xs hover:bg-white hover:text-black transition-all"
                 >
                   Return to Portfolio
                 </Link>
@@ -1189,7 +1307,7 @@ export default function NotFound() {
                 </div>
                 <button
                   onClick={() => setShowRulesModal(false)}
-                  className="size-8 rounded-full bg-white/10 hover:bg-white/20 text-neutral-300 hover:text-white flex items-center justify-center text-xs font-mono transition-colors"
+                  className="size-8 rounded-full bg-white/10 hover:bg-white/20 text-neutral-300 hover:text-white flex items-center justify-center text-xs font-mono transition-colors cursor-pointer"
                 >
                   ✕
                 </button>
