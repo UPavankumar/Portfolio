@@ -1,5 +1,8 @@
 import { useEffect, useState } from "react";
+import { useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
+
+const VALID_ROUTES = ["/", "/about", "/projects", "/skills", "/contact"];
 
 const GREETINGS = [
   "Hello", // EN
@@ -18,11 +21,20 @@ const GREETINGS = [
 ];
 
 export default function Preloader() {
+  const location = useLocation();
+  const is404Route = !VALID_ROUTES.includes(location.pathname);
+
   const [index, setIndex] = useState(0);
   const [isFinished, setIsFinished] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(!is404Route);
 
   useEffect(() => {
+    if (is404Route) {
+      setIsLoading(false);
+      document.body.style.overflow = "";
+      return;
+    }
+
     document.body.style.overflow = "hidden";
 
     if (isFinished) {

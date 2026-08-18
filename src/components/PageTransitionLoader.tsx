@@ -32,6 +32,12 @@ export default function PageTransitionLoader() {
     }
     prevPath.current = location.pathname;
 
+    // Skip loader when entering 404 page
+    if (!ROUTE_INFO[location.pathname]) {
+      setLoading(false);
+      return;
+    }
+
     // Immediately cover screen BEFORE browser paint
     setLoading(true);
     setIsRevealing(false);
