@@ -65,22 +65,22 @@ export default function ScrollPipelineLab() {
   return (
     <section
       ref={containerRef}
-      className="relative z-10 w-full min-h-screen flex flex-col items-center justify-center bg-[#02040a] text-white px-4 sm:px-6 lg:px-12 py-20 select-none overflow-hidden"
+      className="relative z-10 w-full min-h-screen flex flex-col items-center justify-center bg-[#09090b] text-zinc-100 px-4 sm:px-6 lg:px-12 py-20 select-none overflow-hidden"
     >
       {/* Ambient background glow */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 size-[650px] bg-[#00f0ff]/10 rounded-full blur-[140px] pointer-events-none" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 size-[650px] bg-white/5 rounded-full blur-[140px] pointer-events-none" />
 
       <div className="w-full max-w-6xl mx-auto flex flex-col items-center space-y-8 lg:space-y-12">
         
         {/* Section Telemetry Header */}
         <div className="flex flex-col items-center text-center space-y-3">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full border border-[#00f0ff]/30 bg-[#00f0ff]/10 text-[#00f0ff] font-mono text-xs tracking-widest uppercase">
-            <span className="size-2 rounded-full bg-[#00f0ff] animate-pulse" />
+          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full border border-white/20 bg-white/5 text-zinc-200 font-mono text-xs tracking-widest uppercase">
+            <span className="size-2 rounded-full bg-zinc-300 animate-pulse" />
             <span>INTERACTIVE ARCHITECTURE LAB</span>
           </div>
 
           <h2 className="text-3xl sm:text-5xl lg:text-6xl font-black uppercase tracking-tight text-white">
-            The Autonomous <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#00f0ff] via-teal-300 to-white">Pipeline Core</span>
+            The Autonomous <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-zinc-400 to-zinc-600">Pipeline Core</span>
           </h2>
 
           <p className="text-xs sm:text-base text-neutral-400 max-w-xl leading-relaxed font-sans">
@@ -105,7 +105,7 @@ export default function ScrollPipelineLab() {
                 }}
                 className={`p-4 sm:p-5 rounded-2xl sm:rounded-3xl border transition-all duration-300 text-left cursor-pointer relative overflow-hidden backdrop-blur-xl ${
                   isActive
-                    ? "bg-neutral-900/90 border-[#00f0ff] shadow-[0_0_30px_rgba(0,240,255,0.25)]"
+                    ? "bg-neutral-900/90 border-white/40 shadow-[0_0_30px_rgba(255,255,255,0.15)]"
                     : "bg-neutral-950/50 border-white/10 hover:border-white/20 text-neutral-400"
                 }`}
               >
@@ -113,12 +113,12 @@ export default function ScrollPipelineLab() {
                 {isActive && (
                   <motion.div
                     layoutId="stage-active-line"
-                    className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#00f0ff] via-teal-300 to-white"
+                    className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-white via-zinc-400 to-zinc-600"
                   />
                 )}
 
                 <div className="flex items-center justify-between font-mono text-[10px] sm:text-xs mb-2">
-                  <span className={isActive ? "text-[#00f0ff] font-bold" : "text-neutral-500"}>
+                  <span className={isActive ? "text-zinc-200 font-bold" : "text-neutral-500"}>
                     {stg.badge}
                   </span>
                   <span className="flex items-center gap-1.5">
@@ -147,7 +147,7 @@ export default function ScrollPipelineLab() {
 
             <div className="flex items-center gap-4 text-[11px]">
               <span className="text-neutral-500 hidden sm:inline">PROCESSING TIME:</span>
-              <span className="px-2.5 py-0.5 rounded-full bg-white/10 text-[#00f0ff] font-bold">
+              <span className="px-2.5 py-0.5 rounded-full bg-white/10 text-zinc-200 font-bold">
                 ⚡ {activeStage.latency}
               </span>
             </div>
@@ -172,8 +172,8 @@ export default function ScrollPipelineLab() {
               </div>
 
               {/* Transformation Logic */}
-              <div className="p-4 sm:p-5 rounded-2xl bg-[#00f0ff]/5 border border-[#00f0ff]/20 space-y-2">
-                <span className="text-[10px] text-[#00f0ff] uppercase tracking-widest block font-bold">Core Processing Logic</span>
+              <div className="p-4 sm:p-5 rounded-2xl bg-white/5 border border-white/15 space-y-2">
+                <span className="text-[10px] text-zinc-300 uppercase tracking-widest block font-bold">Core Processing Logic</span>
                 <p className="text-neutral-200 font-sans text-xs sm:text-sm font-medium leading-relaxed">
                   {activeStage.process}
                 </p>
@@ -192,7 +192,7 @@ export default function ScrollPipelineLab() {
           {/* Bottom Live Diagnostic Console */}
           <div className="p-4 rounded-2xl bg-black/80 border border-white/10 font-mono text-[11px] text-neutral-400 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="flex items-center gap-2">
-              <span className="text-[#00f0ff] font-bold">EXECUTION LOG:</span>
+              <span className="text-zinc-200 font-bold">EXECUTION LOG:</span>
               <span className="text-neutral-300 truncate">
                 Payload validated · schema matches strict enterprise compliance · zero dropped frames
               </span>

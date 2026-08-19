@@ -1,12 +1,12 @@
 @import "tailwindcss";
 
 @theme {
-  --color-ink: #02040a;
-  --color-panel: #070c18;
-  --color-panel-light: #0f172a;
-  --color-line: rgba(255, 255, 255, 0.1);
-  --color-fg: #ffffff;
-  --color-mut: #94a3b8;
+  --color-ink: #09090b;
+  --color-panel: #18181b;
+  --color-panel-light: #27272a;
+  --color-line: rgba(255, 255, 255, 0.08);
+  --color-fg: #fafafa;
+  --color-mut: #a1a1aa;
   --color-acc: #38bdf8;
   --color-acc-neon: #00f0ff;
   --color-acc-emerald: #10b981;
@@ -21,8 +21,8 @@ html {
 }
 
 body {
-  background-color: #02040a;
-  color: #ffffff;
+  background-color: #09090b;
+  color: #fafafa;
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -34,19 +34,19 @@ body {
   width: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #02040a;
+  background: #09090b;
 }
 ::-webkit-scrollbar-thumb {
-  background: #1e293b;
+  background: #27272a;
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #00f0ff;
+  background: #38bdf8;
 }
 
 /* Avant-Garde Kinetic Gradient Text */
 .kinetic-gradient {
-  background: linear-gradient(135deg, #ffffff 0%, #00f0ff 30%, #8b5cf6 70%, #ec4899 100%);
+  background: linear-gradient(135deg, #ffffff 0%, #38bdf8 30%, #818cf8 70%, #ec4899 100%);
   background-size: 300% 300%;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -61,29 +61,29 @@ body {
 
 /* Glassmorphism Cards */
 .cyber-card {
-  background: rgba(7, 12, 24, 0.75);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(24, 24, 27, 0.75);
+  border: 1px solid rgba(39, 39, 42, 0.8);
   backdrop-filter: blur(20px);
   box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
   transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .cyber-card:hover {
-  border-color: rgba(0, 240, 255, 0.5);
-  box-shadow: 0 0 40px -5px rgba(0, 240, 255, 0.3);
+  border-color: rgba(56, 189, 248, 0.5);
+  box-shadow: 0 0 40px -5px rgba(56, 189, 248, 0.25);
   transform: translateY(-4px) scale(1.005);
 }
 
 /* Background Grid overlay */
 .dotgrid {
-  background-image: radial-gradient(circle, #334155 1.2px, transparent 1.2px);
+  background-image: radial-gradient(circle, #3f3f46 1.2px, transparent 1.2px);
   background-size: 36px 36px;
   mask-image: radial-gradient(ellipse 90% 80% at 50% 40%, black 50%, transparent 100%);
 }
 
 ::selection {
-  background: #00f0ff;
-  color: #02040a;
+  background: #38bdf8;
+  color: #09090b;
 }
 
 section[id],

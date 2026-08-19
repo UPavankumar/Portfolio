@@ -17,7 +17,7 @@ export default function ExecutiveHome() {
       <section className="relative z-20 w-full max-w-4xl mx-auto px-4 sm:px-6 md:px-8 py-20 sm:py-28 min-h-[calc(100vh-4rem)] flex flex-col justify-between items-center text-center">
         
         {/* Top Status & Role Pill */}
-        <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-white/10 bg-black/40 backdrop-blur-xl text-xs font-mono text-zinc-300 shadow-[0_0_20px_rgba(56,189,248,0.15)]">
+        <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-white/10 bg-black/40 backdrop-blur-xl text-xs font-mono text-zinc-300 shadow-[0_0_20px_rgba(255,255,255,0.1)]">
           <span className="size-2 rounded-full bg-emerald-500 animate-pulse" />
           <span className="uppercase tracking-wider font-medium">{profile.role}</span>
           <span className="text-zinc-600">•</span>
@@ -42,7 +42,7 @@ export default function ExecutiveHome() {
               to="/projects"
               onMouseEnter={playHoverSound}
               onClick={playClickSound}
-              className="px-6 py-3.5 rounded-lg bg-white text-black font-semibold hover:bg-sky-400 transition-all shadow-[0_0_25px_rgba(255,255,255,0.25)] hover:scale-105"
+              className="px-6 py-3.5 rounded-lg bg-white text-black font-semibold hover:bg-zinc-200 transition-all shadow-[0_0_25px_rgba(255,255,255,0.25)] hover:scale-105"
             >
               Explore Production Work →
             </Link>
@@ -52,7 +52,7 @@ export default function ExecutiveHome() {
               download="Pavan_Kumar_Resume.pdf"
               onMouseEnter={playHoverSound}
               onClick={playClickSound}
-              className="px-6 py-3.5 rounded-lg border border-white/15 bg-black/50 text-zinc-200 hover:text-white hover:border-sky-400 transition-all backdrop-blur-xl hover:scale-105"
+              className="px-6 py-3.5 rounded-lg border border-white/15 bg-black/50 text-zinc-200 hover:text-white hover:border-zinc-400 transition-all backdrop-blur-xl hover:scale-105"
             >
               Download Résumé (PDF)
             </a>
@@ -61,7 +61,7 @@ export default function ExecutiveHome() {
               to="/contact"
               onMouseEnter={playHoverSound}
               onClick={playClickSound}
-              className="px-6 py-3.5 rounded-lg border border-white/15 bg-black/50 text-zinc-200 hover:text-white hover:border-sky-400 transition-all backdrop-blur-xl hover:scale-105"
+              className="px-6 py-3.5 rounded-lg border border-white/15 bg-black/50 text-zinc-200 hover:text-white hover:border-zinc-400 transition-all backdrop-blur-xl hover:scale-105"
             >
               Contact & Consult
             </Link>
@@ -76,7 +76,7 @@ export default function ExecutiveHome() {
           </div>
 
           <div className="p-3 rounded-lg border border-white/10 bg-black/40 backdrop-blur-xl">
-            <span className="text-xl font-bold text-sky-400 block">99.4%</span>
+            <span className="text-xl font-bold text-zinc-200 block">99.4%</span>
             <span className="text-[11px] text-zinc-400 uppercase tracking-wider">Schema Accuracy</span>
           </div>
 

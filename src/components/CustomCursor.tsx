@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { useMotionValue, useSpring, useVelocity, useAnimationFrame } from "framer-motion";
 
 export default function CustomCursor() {
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const trailCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const planeCanvasRef = useRef<HTMLCanvasElement | null>(null);
   
   // Initialize with center of window to prevent (0, 0) / (-100, -100) top-left jumps
   const initialPos = {
@@ -32,6 +33,7 @@ export default function CustomCursor() {
   const headingAngleRad = useRef(-Math.PI / 4);
   const prevAngleRad = useRef(-Math.PI / 4);
 
+  // Trail Properties (UNTOUCHED)
   const config = {
     pointsNumber: 18,
     widthFactor: 0.4,
@@ -103,18 +105,22 @@ export default function CustomCursor() {
       }));
     }
 
-    const canvas = canvasRef.current;
-    if (!canvas) return;
+    const trailCanvas = trailCanvasRef.current;
+    const planeCanvas = planeCanvasRef.current;
+    if (!trailCanvas || !planeCanvas) return;
 
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
+    const trailCtx = trailCanvas.getContext("2d");
+    const planeCtx = planeCanvas.getContext("2d");
+    if (!trailCtx || !planeCtx) return;
 
     const planePath = new Path2D("M2.5 12L21.5 3.5L13 21.5L9.5 14L2.5 12Z");
     const linePath = new Path2D("M21.5 3.5L9.5 14");
 
     const handleResize = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
+      trailCanvas.width = window.innerWidth;
+      trailCanvas.height = window.innerHeight;
+      planeCanvas.width = window.innerWidth;
+      planeCanvas.height = window.innerHeight;
     };
 
     const updateMouse = (px: number, py: number) => {
@@ -185,7 +191,8 @@ export default function CustomCursor() {
     let animId: number;
 
     const render = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      trailCtx.clearRect(0, 0, trailCanvas.width, trailCanvas.height);
+      planeCtx.clearRect(0, 0, planeCanvas.width, planeCanvas.height);
 
       const px = planeX.get();
       const py = planeY.get();
@@ -201,7 +208,7 @@ export default function CustomCursor() {
       const tailX = px + Math.cos(angle + Math.PI) * (8 * currentScale);
       const tailY = py + Math.sin(angle + Math.PI) * (8 * currentScale);
 
-      // Update trail points with dead-zone to eliminate idle running/jitter
+      // Update trail points with dead-zone to eliminate idle running/jitter (UNTOUCHED)
       points.current.forEach((p, index) => {
         if (index === 0) {
           p.x = tailX;
@@ -230,48 +237,48 @@ export default function CustomCursor() {
       });
 
       if (cursorOpacity.current > 0.02) {
-        ctx.save();
-        ctx.globalAlpha = cursorOpacity.current;
-
-        // 1. Draw Fluid Line Trail on Canvas
-        ctx.lineCap = "round";
-        ctx.strokeStyle = "#ffffff";
+        // 1. Render Fluid Trail on trailCanvas (under mix-blend-difference)
+        trailCtx.save();
+        trailCtx.globalAlpha = cursorOpacity.current;
+        trailCtx.lineCap = "round";
+        trailCtx.strokeStyle = "#ffffff";
         const isHovered = isHoverRef.current || isProjectRef.current;
 
-        ctx.beginPath();
-        ctx.moveTo(points.current[0].x, points.current[0].y);
+        trailCtx.beginPath();
+        trailCtx.moveTo(points.current[0].x, points.current[0].y);
 
         for (let i = 1; i < points.current.length - 1; i++) {
           const midX = 0.5 * (points.current[i].x + points.current[i + 1].x);
           const midY = 0.5 * (points.current[i].y + points.current[i + 1].y);
-          ctx.quadraticCurveTo(points.current[i].x, points.current[i].y, midX, midY);
-          ctx.lineWidth = config.widthFactor * (config.pointsNumber - i) * (isHovered ? 2.2 : 1);
-          ctx.stroke();
+          trailCtx.quadraticCurveTo(points.current[i].x, points.current[i].y, midX, midY);
+          trailCtx.lineWidth = config.widthFactor * (config.pointsNumber - i) * (isHovered ? 2.2 : 1);
+          trailCtx.stroke();
         }
 
-        ctx.lineTo(
+        trailCtx.lineTo(
           points.current[points.current.length - 1].x,
           points.current[points.current.length - 1].y
         );
-        ctx.stroke();
+        trailCtx.stroke();
+        trailCtx.restore();
 
-        // 2. Draw Paper Plane SVG directly on Canvas
-        ctx.save();
-        ctx.translate(px, py);
-        ctx.rotate(angle + Math.PI / 4); // +45deg to align plane vector
-        ctx.scale(currentScale, currentScale);
-        ctx.translate(-12, -12); // center at (12, 12)
+        // 2. Render Paper Plane Icon on planeCanvas (solid white + black crease, no CSS difference blend)
+        planeCtx.save();
+        planeCtx.globalAlpha = cursorOpacity.current;
+        planeCtx.translate(px, py);
+        planeCtx.rotate(angle + Math.PI / 4); // +45deg to align plane vector
+        planeCtx.scale(currentScale, currentScale);
+        planeCtx.translate(-12, -12); // center at (12, 12)
 
-        ctx.fillStyle = "#ffffff";
-        ctx.fill(planePath);
+        planeCtx.fillStyle = "#ffffff";
+        planeCtx.fill(planePath);
 
-        ctx.strokeStyle = "#000000";
-        ctx.lineWidth = 1.2;
-        ctx.stroke(planePath);
-        ctx.stroke(linePath);
+        planeCtx.strokeStyle = "#000000";
+        planeCtx.lineWidth = 1.2;
+        planeCtx.stroke(planePath);
+        planeCtx.stroke(linePath);
 
-        ctx.restore();
-        ctx.restore();
+        planeCtx.restore();
       }
 
       animId = requestAnimationFrame(render);
@@ -289,14 +296,21 @@ export default function CustomCursor() {
     };
   }, [isDesktopMouse, planeX, planeY, mouseX, mouseY, scale]);
 
-  // Completely disabled on mobile and touch screens
   if (!isDesktopMouse) return null;
 
   return (
-    <canvas
-      ref={canvasRef}
-      className="fixed top-0 left-0 w-full h-full pointer-events-none z-[10000] mix-blend-difference hidden md:block"
-      style={{ filter: "drop-shadow(0 0 4px rgba(255,255,255,0.25))" }}
-    />
+    <>
+      {/* Trail Canvas with CSS Color Inversion */}
+      <canvas
+        ref={trailCanvasRef}
+        className="fixed top-0 left-0 w-full h-full pointer-events-none z-[10000] mix-blend-difference hidden md:block"
+        style={{ filter: "drop-shadow(0 0 4px rgba(255,255,255,0.25))" }}
+      />
+      {/* Paper Plane Canvas with Solid White Fill & Black Crease Line (No Inversion) */}
+      <canvas
+        ref={planeCanvasRef}
+        className="fixed top-0 left-0 w-full h-full pointer-events-none z-[10001] hidden md:block"
+      />
+    </>
   );
 }

@@ -10,7 +10,7 @@ export default function About() {
     <MotionConfig reducedMotion="user">
       <Nav />
 
-      <main className="min-h-screen bg-[#030712] text-white pt-24 sm:pt-28 md:pt-36 pb-24 px-4 sm:px-6 md:px-[5vw] overflow-x-hidden">
+      <main className="min-h-screen bg-[#09090b] text-zinc-100 pt-24 sm:pt-28 md:pt-36 pb-24 px-4 sm:px-6 md:px-[5vw] overflow-x-hidden">
         <div className="max-w-6xl mx-auto space-y-12 sm:space-y-20 md:space-y-28">
           
           {/* Top Availability Ticker */}

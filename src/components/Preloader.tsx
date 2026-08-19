@@ -7,9 +7,7 @@ const VALID_ROUTES = ["/", "/about", "/projects", "/contact"];
 const GREETINGS = [
   "Hello", // EN
   "Bonjour", // FR
-  "Hola", // ES
   "你好", // ZH
-  "안녕하세요", // KO
   "Ciao", // IT
   "Hallo", // DE
   "Olá", // PT
@@ -58,7 +56,9 @@ export default function Preloader() {
       });
     }, 380);
 
-    return () => clearInterval(interval);
+    return () => {
+      clearInterval(interval);
+    };
   }, [isFinished, is404Route]);
 
   return (
