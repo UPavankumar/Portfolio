@@ -5,18 +5,18 @@ import Footer from "../components/Footer";
 import { projects, type Project } from "../data/resume";
 import { playClickSound, playHoverSound } from "../lib/sound";
 
-import aria1 from "../assets/projects/aria-1.png";
-import aria2 from "../assets/projects/aria-2.png";
-import aria3 from "../assets/projects/aria-3.png";
-import sales1 from "../assets/projects/sales-agent-1.png";
-import sales2 from "../assets/projects/sales-agent-2.png";
-import sales3 from "../assets/projects/sales-agent-3.png";
-import einvoice1 from "../assets/projects/einvoice-1.png";
-import einvoice2 from "../assets/projects/einvoice-2.png";
-import einvoice3 from "../assets/projects/einvoice-3.png";
-import content1 from "../assets/projects/content-1.png";
-import content2 from "../assets/projects/content-2.png";
-import content3 from "../assets/projects/content-3.png";
+import aria1 from "../assets/projects/aria-1.jpg";
+import aria2 from "../assets/projects/aria-2.jpg";
+import aria3 from "../assets/projects/aria-3.jpg";
+import sales1 from "../assets/projects/sales-agent-1.jpg";
+import sales2 from "../assets/projects/sales-agent-2.jpg";
+import sales3 from "../assets/projects/sales-agent-3.jpg";
+import einvoice1 from "../assets/projects/einvoice-1.jpg";
+import einvoice2 from "../assets/projects/einvoice-2.jpg";
+import einvoice3 from "../assets/projects/einvoice-3.jpg";
+import content1 from "../assets/projects/content-1.jpg";
+import content2 from "../assets/projects/content-2.jpg";
+import content3 from "../assets/projects/content-3.jpg";
 
 function MiniPipeline({ steps }: { steps: string[] }) {
   return (
