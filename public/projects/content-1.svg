@@ -35,7 +35,7 @@
   <!-- Center Card Frame -->
   <rect x="60" y="70" width="680" height="460" fill="rgba(15, 17, 28, 0.85)" stroke="rgba(255,255,255,0.12)" stroke-width="1.5" rx="16"/>
 
-  <!-- Graphic Wave & Tech Grid lines -->
+  <!-- Graphic Wave and Tech Grid lines -->
   <path d="M 90 350 Q 220 220 350 350 T 610 350 T 710 350" fill="none" stroke="url(#accent-content-01)" stroke-width="4"/>
   <path d="M 90 350 Q 220 450 350 350 T 610 350 T 710 350" fill="none" stroke="#eab308" stroke-width="2" stroke-dasharray="6,6" opacity="0.7"/>
 
@@ -49,7 +49,7 @@
   <rect x="90" y="100" width="220" height="32" fill="rgba(255,255,255,0.08)" stroke="url(#accent-content-01)" stroke-width="1.2" rx="8"/>
   <text x="106" y="121" fill="#f97316" font-family="monospace" font-size="12" font-weight="bold" letter-spacing="2.5">SYSTEM ARCHITECTURE</text>
 
-  <!-- Title & Subtext -->
+  <!-- Title and Subtext -->
   <text x="90" y="185" fill="#ffffff" font-family="system-ui, -apple-system, sans-serif" font-size="34" font-weight="900" letter-spacing="-1">SEO AUTOMATION</text>
   <text x="90" y="222" fill="rgba(255,255,255,0.75)" font-family="monospace" font-size="14">Multi-Channel Autonomous Publisher</text>
 
