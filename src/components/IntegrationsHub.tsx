@@ -2,15 +2,15 @@ import { createRef, useMemo, useRef, forwardRef, type ReactNode } from "react";
 import { AnimatedBeam } from "./ui/animated-beam";
 import { cn } from "../lib/utils";
 
-const SOURCES = ["MS GRAPH API", "GOOGLE WORKSPACE", "PDF / XLSX", "VOICE / WEBRTC"];
-const SINKS = ["POSTGRESQL", "ODOO CRM", "POWER BI", "LHDN / REST"];
+const SOURCES = ["MS GRAPH API", "WORKSPACE", "PDF / XLSX", "WEBRTC VOICE"];
+const SINKS = ["POSTGRESQL", "ODOO CRM", "POWER BI", "LHDN REST"];
 
 const Chip = forwardRef<HTMLDivElement, { children: ReactNode; className?: string }>(
   ({ children, className }, ref) => (
     <div
       ref={ref}
       className={cn(
-        "z-10 rounded-full border border-line bg-panel px-2.5 py-1.5 text-center font-mono text-[9px] leading-tight tracking-wider text-fg/90 shadow-[0_0_20px_-8px_#34e0c230] sm:px-3 sm:py-2 sm:text-[10px] lg:text-[11px]",
+        "z-10 rounded-full border border-line bg-panel px-2 sm:px-3 py-1.5 sm:py-2 text-center font-mono text-[8px] sm:text-[10px] lg:text-[11px] leading-tight tracking-wider text-fg/90 shadow-[0_0_20px_-8px_#34e0c230] whitespace-nowrap",
         className
       )}
     >
@@ -29,7 +29,7 @@ export default function IntegrationsHub() {
   return (
     <div
       ref={containerRef}
-      className="relative mx-auto mt-12 w-full max-w-3xl sm:mt-16"
+      className="relative mx-auto mt-10 sm:mt-16 w-full max-w-3xl px-1 sm:px-4"
       role="img"
       aria-label="Diagram of enterprise systems flowing through an LLM core into databases and dashboards"
     >
@@ -39,7 +39,7 @@ export default function IntegrationsHub() {
           containerRef={containerRef}
           fromRef={r}
           toRef={hubRef}
-          curvature={i % 2 === 0 ? -28 : 28}
+          curvature={i % 2 === 0 ? -24 : 24}
           pathColor="#1e293b"
           pathOpacity={0.9}
           gradientStartColor="#38bdf8"
@@ -54,7 +54,7 @@ export default function IntegrationsHub() {
           containerRef={containerRef}
           fromRef={hubRef}
           toRef={r}
-          curvature={i % 2 === 0 ? 28 : -28}
+          curvature={i % 2 === 0 ? 24 : -24}
           pathColor="#1e293b"
           pathOpacity={0.9}
           gradientStartColor="#38bdf8"
@@ -64,8 +64,8 @@ export default function IntegrationsHub() {
         />
       ))}
 
-      <div className="flex items-center justify-between gap-2 py-4 sm:gap-4">
-        <div className="flex flex-col gap-4 sm:gap-5">
+      <div className="flex items-center justify-between gap-1 sm:gap-4 py-4">
+        <div className="flex flex-col gap-3 sm:gap-5">
           {SOURCES.map((s, i) => (
             <Chip key={s} ref={sourceRefs[i]}>
               {s}
@@ -75,13 +75,13 @@ export default function IntegrationsHub() {
 
         <div
           ref={hubRef}
-          className="z-10 flex size-16 shrink-0 flex-col items-center justify-center rounded-full border-2 border-acc/60 bg-panel text-center shadow-[0_0_50px_-10px_rgba(56,189,248,0.4)] sm:size-24 lg:size-28"
+          className="z-10 flex size-14 sm:size-24 lg:size-28 shrink-0 flex-col items-center justify-center rounded-full border-2 border-acc/60 bg-panel text-center shadow-[0_0_50px_-10px_rgba(56,189,248,0.4)]"
         >
-          <span className="font-mono text-[10px] font-semibold text-acc sm:text-xs">LLM</span>
-          <span className="hidden font-mono text-[9px] text-mut sm:block">agents · prompts</span>
+          <span className="font-mono text-[9px] sm:text-xs font-bold text-acc">AI CORE</span>
+          <span className="hidden font-mono text-[9px] text-mut sm:block">agents · loops</span>
         </div>
 
-        <div className="flex flex-col gap-4 sm:gap-5">
+        <div className="flex flex-col gap-3 sm:gap-5">
           {SINKS.map((s, i) => (
             <Chip key={s} ref={sinkRefs[i]}>
               {s}

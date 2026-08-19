@@ -6,84 +6,106 @@ gsap.registerPlugin(ScrollTrigger);
 
 export default function TextReveal() {
   const sectionRef = useRef<HTMLElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
   const wordsRef = useRef<HTMLDivElement>(null);
   const glowBeamRef = useRef<HTMLDivElement>(null);
 
   useLayoutEffect(() => {
     const ctx = gsap.context(() => {
       const section = sectionRef.current;
-      const container = containerRef.current;
       const words = wordsRef.current;
       const glowBeam = glowBeamRef.current;
 
-      if (!section || !container || !words) return;
+      if (!section || !words) return;
 
-      // 1. Smoothly expand and merge the carried energy conduit into the section
-      if (glowBeam) {
-        gsap.fromTo(
-          glowBeam,
-          { scaleY: 0, opacity: 0 },
-          {
-            scaleY: 1,
-            opacity: 1,
-            ease: "power2.out",
-            scrollTrigger: {
-              trigger: section,
-              start: "top 80%",
-              end: "top 30%",
-              scrub: true,
-            },
-          }
-        );
-      }
+      const mm = gsap.matchMedia();
 
-      // 2. Main Horizontal & Depth Emerge Timeline
-      const tl = gsap.timeline({
-        scrollTrigger: {
-          trigger: section,
-          pin: true,
-          scrub: 0.8,
-          anticipatePin: 1,
-          start: "top top",
-          end: () => "+=" + window.innerWidth * 1.5,
-          invalidateOnRefresh: true,
-        },
-      });
+      // Desktop: Pinned horizontal depth animation
+      mm.add("(min-width: 1024px)", () => {
+        if (glowBeam) {
+          gsap.fromTo(
+            glowBeam,
+            { scaleY: 0, opacity: 0 },
+            {
+              scaleY: 1,
+              opacity: 1,
+              ease: "power2.out",
+              scrollTrigger: {
+                trigger: section,
+                start: "top 80%",
+                end: "top 30%",
+                scrub: true,
+              },
+            }
+          );
+        }
 
-      // Smooth horizontal translate
-      tl.to(words, {
-        x: () => -(words.scrollWidth - window.innerWidth + window.innerWidth * 0.2),
-        ease: "none",
-      });
-
-      // 3. Smooth word-by-word luminous reveal (NO chaotic random jumps!)
-      const wordElements = words.querySelectorAll(".reveal-word");
-      wordElements.forEach((word) => {
-        gsap.fromTo(
-          word,
-          {
-            opacity: 0.15,
-            filter: "blur(10px)",
-            y: 40,
-            scale: 0.92,
+        const tl = gsap.timeline({
+          scrollTrigger: {
+            trigger: section,
+            pin: true,
+            scrub: 0.8,
+            anticipatePin: 1,
+            start: "top top",
+            end: () => "+=" + window.innerWidth * 1.2,
+            invalidateOnRefresh: true,
           },
-          {
-            opacity: 1,
-            filter: "blur(0px)",
-            y: 0,
-            scale: 1,
-            ease: "power2.out",
-            scrollTrigger: {
-              trigger: word,
-              containerAnimation: tl,
-              start: "left 90%",
-              end: "left 40%",
-              scrub: true,
+        });
+
+        tl.to(words, {
+          x: () => -(words.scrollWidth - window.innerWidth + window.innerWidth * 0.15),
+          ease: "none",
+        });
+
+        const wordElements = words.querySelectorAll(".reveal-word");
+        wordElements.forEach((word) => {
+          gsap.fromTo(
+            word,
+            {
+              opacity: 0.15,
+              filter: "blur(10px)",
+              y: 40,
+              scale: 0.92,
             },
-          }
-        );
+            {
+              opacity: 1,
+              filter: "blur(0px)",
+              y: 0,
+              scale: 1,
+              ease: "power2.out",
+              scrollTrigger: {
+                trigger: word,
+                containerAnimation: tl,
+                start: "left 90%",
+                end: "left 40%",
+                scrub: true,
+              },
+            }
+          );
+        });
       });
+
+      // Mobile: Clean fade-in without locking vertical touch scroll
+      mm.add("(max-width: 1023px)", () => {
+        const wordElements = words.querySelectorAll(".reveal-word");
+        wordElements.forEach((word) => {
+          gsap.fromTo(
+            word,
+            { opacity: 0.2, y: 15 },
+            {
+              opacity: 1,
+              y: 0,
+              duration: 0.6,
+              scrollTrigger: {
+                trigger: word,
+                start: "top 85%",
+                end: "top 60%",
+                scrub: 0.5,
+              },
+            }
+          );
+        });
+      });
+
     }, sectionRef);
 
     return () => ctx.revert();
@@ -100,54 +122,41 @@ export default function TextReveal() {
   return (
     <section
       ref={sectionRef}
-      className="h-screen flex flex-col justify-center overflow-hidden bg-gradient-to-b from-[#030712] via-[#050914] to-[#030712] relative z-10 text-white select-none"
+      className="relative z-10 w-full min-h-[50vh] lg:h-screen flex flex-col items-center justify-center overflow-hidden bg-background py-14 lg:py-0 border-t border-line"
     >
-      {/* Top Merging Energy Conduit connecting directly from Hero */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 flex flex-col items-center pointer-events-none z-20">
-        <div
-          ref={glowBeamRef}
-          className="w-[2px] h-32 bg-gradient-to-b from-[#00f0ff] via-[#00f0ff]/60 to-transparent shadow-[0_0_20px_#00f0ff] origin-top"
-        />
-      </div>
+      {/* Background Energy Conduit */}
+      <div
+        ref={glowBeamRef}
+        className="absolute top-0 w-px h-full bg-gradient-to-b from-[#00f0ff] via-[#00f0ff]/30 to-transparent pointer-events-none hidden lg:block"
+        style={{ transformOrigin: "top center" }}
+      />
 
-      {/* Ambient background glow backdrop */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_50%,rgba(0,240,255,0.06),transparent_100%)] pointer-events-none" />
-
-      {/* Section Sub-Telemetry */}
-      <div className="absolute top-12 left-8 sm:left-16 font-mono text-[10px] sm:text-xs text-neutral-500 tracking-[0.25em] uppercase flex items-center gap-3">
-        <span className="size-2 rounded-full bg-[#00f0ff] animate-pulse shadow-[0_0_8px_#00f0ff]" />
-        <span>CORE MOTTO /// SEAMLESS EXECUTION</span>
-      </div>
-
-      {/* Continuous Typography Track */}
-      <div ref={containerRef} className="w-full flex items-center">
+      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 flex flex-col items-center justify-center">
+        
+        {/* Kinetic Header */}
         <div
           ref={wordsRef}
-          className="flex items-center gap-[4vw] sm:gap-[5vw] whitespace-nowrap pl-[10vw] pr-[20vw]"
+          className="flex flex-wrap lg:flex-nowrap items-center justify-center gap-2.5 sm:gap-4 lg:gap-8 font-black uppercase tracking-tight text-center lg:text-left select-none text-2xl sm:text-4xl lg:text-7xl"
         >
-          {phrases.map((phrase, i) => (
-            <div
-              key={i}
-              className="reveal-word flex items-center font-black tracking-tighter uppercase text-[clamp(3.5rem,11vw,11rem)] leading-none will-change-transform"
+          {phrases.map((phrase, idx) => (
+            <span
+              key={idx}
+              className={`reveal-word inline-block transition-colors will-change-transform ${
+                phrase.accent
+                  ? "text-transparent bg-clip-text bg-gradient-to-r from-[#00f0ff] via-teal-300 to-white drop-shadow-[0_0_30px_rgba(0,240,255,0.3)]"
+                  : "text-fg"
+              }`}
             >
-              {phrase.accent ? (
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#00f0ff] via-teal-300 to-white drop-shadow-[0_0_35px_rgba(0,240,255,0.4)]">
-                  {phrase.text}
-                </span>
-              ) : (
-                <span className="text-white/90 drop-shadow-[0_0_25px_rgba(255,255,255,0.15)]">
-                  {phrase.text}
-                </span>
-              )}
-            </div>
+              {phrase.text}
+            </span>
           ))}
         </div>
-      </div>
 
-      {/* Bottom Sub-Indicator */}
-      <div className="absolute bottom-12 right-8 sm:right-16 font-mono text-[10px] text-neutral-500 tracking-widest uppercase flex items-center gap-2">
-        <span>SCROLL TO ADVANCE PIPELINE</span>
-        <span className="text-[#00f0ff]">→</span>
+        {/* Subtitle */}
+        <p className="mt-6 sm:mt-8 max-w-xl text-center text-xs sm:text-base text-mut leading-relaxed px-4">
+          Architecting autonomous systems that bridge raw enterprise data into production AI actions.
+        </p>
+
       </div>
     </section>
   );
