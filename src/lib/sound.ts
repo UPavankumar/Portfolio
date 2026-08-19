@@ -6,9 +6,12 @@ let soundEnabled = true;
 let hoverAudioTemplate: HTMLAudioElement | null = null;
 let clickAudioTemplate: HTMLAudioElement | null = null;
 
+const hoverPath = (import.meta.env.BASE_URL || "/").replace(/\/$/, "") + "/assets/Hover.mp3";
+const clickPath = (import.meta.env.BASE_URL || "/").replace(/\/$/, "") + "/assets/Click.mp3";
+
 if (typeof window !== "undefined") {
-  hoverAudioTemplate = new Audio("/assets/Hover.mp3");
-  clickAudioTemplate = new Audio("/assets/Click.mp3");
+  hoverAudioTemplate = new Audio(hoverPath);
+  clickAudioTemplate = new Audio(clickPath);
   hoverAudioTemplate.preload = "auto";
   clickAudioTemplate.preload = "auto";
   hoverAudioTemplate.load();
@@ -32,7 +35,7 @@ export function isSoundEnabled(): boolean {
 export function playHoverSound() {
   if (!soundEnabled || typeof window === "undefined") return;
   try {
-    const sound = hoverAudioTemplate ? (hoverAudioTemplate.cloneNode(true) as HTMLAudioElement) : new Audio("/assets/Hover.mp3");
+    const sound = hoverAudioTemplate ? (hoverAudioTemplate.cloneNode(true) as HTMLAudioElement) : new Audio(hoverPath);
     sound.volume = 0.65;
     sound.play().catch(() => {});
   } catch {
@@ -47,7 +50,7 @@ export function playHoverSound() {
 export function playClickSound() {
   if (!soundEnabled || typeof window === "undefined") return;
   try {
-    const sound = clickAudioTemplate ? (clickAudioTemplate.cloneNode(true) as HTMLAudioElement) : new Audio("/assets/Click.mp3");
+    const sound = clickAudioTemplate ? (clickAudioTemplate.cloneNode(true) as HTMLAudioElement) : new Audio(clickPath);
     sound.volume = 0.85;
     sound.play().catch(() => {});
   } catch {
