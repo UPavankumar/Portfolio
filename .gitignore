@@ -77,7 +77,6 @@ dist/
 # Local-only files
 .claude/
 *.tsbuildinfo
-HeadShot.jpg
 Pavan Resume.pdf
 inspiration/
 is-a-dev-setup/
