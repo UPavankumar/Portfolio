@@ -5,6 +5,19 @@ import Footer from "../components/Footer";
 import { projects, type Project } from "../data/resume";
 import { playClickSound, playHoverSound } from "../lib/sound";
 
+import aria1 from "../assets/projects/aria-1.svg";
+import aria2 from "../assets/projects/aria-2.svg";
+import aria3 from "../assets/projects/aria-3.svg";
+import sales1 from "../assets/projects/sales-agent-1.svg";
+import sales2 from "../assets/projects/sales-agent-2.svg";
+import sales3 from "../assets/projects/sales-agent-3.svg";
+import einvoice1 from "../assets/projects/einvoice-1.svg";
+import einvoice2 from "../assets/projects/einvoice-2.svg";
+import einvoice3 from "../assets/projects/einvoice-3.svg";
+import content1 from "../assets/projects/content-1.svg";
+import content2 from "../assets/projects/content-2.svg";
+import content3 from "../assets/projects/content-3.svg";
+
 function MiniPipeline({ steps }: { steps: string[] }) {
   return (
     <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 font-mono text-[10px] sm:text-[11px] text-acc mt-4 sm:mt-6 mb-3 sm:mb-4">
@@ -18,44 +31,42 @@ function MiniPipeline({ steps }: { steps: string[] }) {
   );
 }
 
-const BASE_PATH = (import.meta.env.BASE_URL || "./").replace(/\/$/, "") + "/projects/";
-
 const projectMeta: Record<string, { year: string; domain: string; type: string; color: string; imgL: string; imgM: string; imgR: string }> = {
   aria: {
     year: "2025",
     domain: "Voice AI & WebRTC",
     type: "Production Assistant",
     color: "bg-blue-500",
-    imgL: `${BASE_PATH}aria-1.svg`,
-    imgM: `${BASE_PATH}aria-2.svg`,
-    imgR: `${BASE_PATH}aria-3.svg`,
+    imgL: aria1,
+    imgM: aria2,
+    imgR: aria3,
   },
   "sales-agent": {
     year: "2025",
     domain: "Autonomous Agents",
     type: "Inbound Pipeline",
     color: "bg-purple-500",
-    imgL: `${BASE_PATH}sales-agent-1.svg`,
-    imgM: `${BASE_PATH}sales-agent-2.svg`,
-    imgR: `${BASE_PATH}sales-agent-3.svg`,
+    imgL: sales1,
+    imgM: sales2,
+    imgR: sales3,
   },
   einvoice: {
     year: "2024 — 2025",
     domain: "Enterprise ETL",
     type: "LHDN Compliance",
     color: "bg-emerald-500",
-    imgL: `${BASE_PATH}einvoice-1.svg`,
-    imgM: `${BASE_PATH}einvoice-2.svg`,
-    imgR: `${BASE_PATH}einvoice-3.svg`,
+    imgL: einvoice1,
+    imgM: einvoice2,
+    imgR: einvoice3,
   },
   content: {
     year: "2024",
     domain: "SEO Automation",
     type: "Multi-Channel Publishing",
     color: "bg-orange-500",
-    imgL: `${BASE_PATH}content-1.svg`,
-    imgM: `${BASE_PATH}content-2.svg`,
-    imgR: `${BASE_PATH}content-3.svg`,
+    imgL: content1,
+    imgM: content2,
+    imgR: content3,
   },
 };
 
