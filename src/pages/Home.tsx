@@ -1,11 +1,11 @@
 import { MotionConfig } from "framer-motion";
-import EnterpriseExperience from "../components/EnterpriseArchitecture/EnterpriseExperience";
+import BattlefieldStage from "../components/Battlefield/BattlefieldStage";
 
 export default function Home() {
   return (
     <MotionConfig reducedMotion="user">
-      <main className="w-full h-screen overflow-hidden">
-        <EnterpriseExperience />
+      <main className="w-full bg-[#020409]">
+        <BattlefieldStage />
       </main>
     </MotionConfig>
   );
