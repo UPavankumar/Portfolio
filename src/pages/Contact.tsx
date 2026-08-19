@@ -75,21 +75,21 @@ export default function Contact() {
         {/* Main Content Area: Centered, fits in one screen */}
         <div className="w-full max-w-6xl mx-auto my-auto grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-12 items-center">
           
-          {/* Left Column: Direct Info & Quick Channels */}
-          <div className="lg:col-span-5 space-y-4 sm:space-y-5">
+          {/* Direct Info & Quick Channels (Bottom on Mobile, Left on Desktop) */}
+          <div className="lg:col-span-5 order-2 lg:order-1 space-y-3 sm:space-y-5">
             
-            {/* Availability Pill */}
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-zinc-800 bg-zinc-900/60 text-[11px] font-mono text-zinc-300">
+            {/* Availability Pill - hidden on small mobile to maximize screen fit */}
+            <div className="hidden sm:inline-flex items-center gap-2 px-3 py-1 rounded-full border border-zinc-800 bg-zinc-900/60 text-[11px] font-mono text-zinc-300">
               <span className="size-2 rounded-full bg-emerald-500 animate-pulse" />
               <span>Available for AI Automation & Engineering</span>
             </div>
 
             {/* Headline */}
-            <div className="space-y-1.5 sm:space-y-2">
-              <h1 className="text-2xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-white leading-tight">
+            <div className="space-y-1 sm:space-y-2">
+              <h1 className="text-xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-white leading-tight">
                 Let's Build Something <span className="text-sky-400">Reliable.</span>
               </h1>
-              <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed">
+              <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed hidden sm:block">
                 Have a manual workflow to automate, a voice agent to deploy, or a role to discuss? Reach out directly.
               </p>
             </div>
@@ -98,56 +98,56 @@ export default function Contact() {
             <div className="space-y-2 font-mono text-xs">
               
               {/* Email */}
-              <div className="flex items-center justify-between p-3 rounded-xl border border-zinc-800 bg-zinc-950/50 hover:border-zinc-700 transition-colors">
-                <div className="flex items-center gap-2.5 truncate">
+              <div className="flex items-center justify-between p-2.5 sm:p-3 rounded-xl border border-zinc-800 bg-zinc-950/50 hover:border-zinc-700 transition-colors">
+                <div className="flex items-center gap-2 truncate">
                   <span className="text-sky-400">✉</span>
-                  <a href={`mailto:${profile.email}`} className="text-zinc-200 hover:text-white font-medium truncate">
+                  <a href={`mailto:${profile.email}`} className="text-zinc-200 hover:text-white font-medium text-xs truncate">
                     {profile.email}
                   </a>
                 </div>
                 <button
                   type="button"
                   onClick={() => copyToClipboard(profile.email, "email")}
-                  className="px-2.5 py-1 rounded-md bg-zinc-900 border border-zinc-800 text-[10px] text-zinc-400 hover:text-white cursor-pointer transition-colors shrink-0 ml-2"
+                  className="px-2 py-0.5 rounded-md bg-zinc-900 border border-zinc-800 text-[10px] text-zinc-400 hover:text-white cursor-pointer transition-colors shrink-0 ml-2"
                 >
                   {copiedType === "email" ? "✓ Copied" : "Copy"}
                 </button>
               </div>
 
               {/* Phone */}
-              <div className="flex items-center justify-between p-3 rounded-xl border border-zinc-800 bg-zinc-950/50 hover:border-zinc-700 transition-colors">
-                <div className="flex items-center gap-2.5 truncate">
+              <div className="flex items-center justify-between p-2.5 sm:p-3 rounded-xl border border-zinc-800 bg-zinc-950/50 hover:border-zinc-700 transition-colors">
+                <div className="flex items-center gap-2 truncate">
                   <span className="text-emerald-400">📱</span>
-                  <a href={`tel:${profile.phone}`} className="text-zinc-200 hover:text-white font-medium truncate">
+                  <a href={`tel:${profile.phone}`} className="text-zinc-200 hover:text-white font-medium text-xs truncate">
                     {profile.phone}
                   </a>
                 </div>
                 <button
                   type="button"
                   onClick={() => copyToClipboard(profile.phone, "phone")}
-                  className="px-2.5 py-1 rounded-md bg-zinc-900 border border-zinc-800 text-[10px] text-zinc-400 hover:text-white cursor-pointer transition-colors shrink-0 ml-2"
+                  className="px-2 py-0.5 rounded-md bg-zinc-900 border border-zinc-800 text-[10px] text-zinc-400 hover:text-white cursor-pointer transition-colors shrink-0 ml-2"
                 >
                   {copiedType === "phone" ? "✓ Copied" : "Copy"}
                 </button>
               </div>
 
               {/* Social / Resume Links */}
-              <div className="flex items-center gap-2 pt-1 text-[11px]">
+              <div className="flex items-center gap-2 pt-0.5 text-[11px]">
                 <a
                   href="/Pavan_Resume.pdf"
                   download="Pavan_Kumar_Resume.pdf"
                   onMouseEnter={playHoverSound}
                   onClick={playClickSound}
-                  className="flex-1 py-2 px-3 rounded-xl border border-zinc-800 bg-zinc-900/40 hover:bg-zinc-800 text-zinc-300 hover:text-white text-center transition-colors"
+                  className="flex-1 py-1.5 px-2.5 rounded-lg border border-zinc-800 bg-zinc-900/40 hover:bg-zinc-800 text-zinc-300 hover:text-white text-center transition-colors text-xs"
                 >
-                  📜 Résumé PDF
+                  📜 Résumé
                 </a>
                 <a
                   href={profile.linkedin}
                   target="_blank"
                   rel="noreferrer"
                   onMouseEnter={playHoverSound}
-                  className="flex-1 py-2 px-3 rounded-xl border border-zinc-800 bg-zinc-900/40 hover:bg-zinc-800 text-zinc-300 hover:text-white text-center transition-colors"
+                  className="flex-1 py-1.5 px-2.5 rounded-lg border border-zinc-800 bg-zinc-900/40 hover:bg-zinc-800 text-zinc-300 hover:text-white text-center transition-colors text-xs"
                 >
                   LinkedIn ↗
                 </a>
@@ -156,7 +156,7 @@ export default function Contact() {
                   target="_blank"
                   rel="noreferrer"
                   onMouseEnter={playHoverSound}
-                  className="flex-1 py-2 px-3 rounded-xl border border-zinc-800 bg-zinc-900/40 hover:bg-zinc-800 text-zinc-300 hover:text-white text-center transition-colors"
+                  className="flex-1 py-1.5 px-2.5 rounded-lg border border-zinc-800 bg-zinc-900/40 hover:bg-zinc-800 text-zinc-300 hover:text-white text-center transition-colors text-xs"
                 >
                   GitHub ↗
                 </a>
@@ -166,8 +166,8 @@ export default function Contact() {
 
           </div>
 
-          {/* Right Column: Compact Direct Message Form */}
-          <div className="lg:col-span-7">
+          {/* Direct Message Form (Top on Mobile, Right on Desktop) */}
+          <div className="lg:col-span-7 order-1 lg:order-2">
             <div className="rounded-2xl border border-zinc-800/80 bg-zinc-950/60 backdrop-blur-xl p-4 sm:p-6 md:p-7 shadow-xl space-y-4">
               
               <div className="flex items-center justify-between border-b border-zinc-800/80 pb-3">
