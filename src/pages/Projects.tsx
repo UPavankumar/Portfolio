@@ -18,7 +18,7 @@ function MiniPipeline({ steps }: { steps: string[] }) {
   );
 }
 
-const RAW_BASE = "https://raw.githubusercontent.com/UPavankumar/Portfolio/main/public/projects/";
+const BASE_PATH = (import.meta.env.BASE_URL || "./").replace(/\/$/, "") + "/projects/";
 
 const projectMeta: Record<string, { year: string; domain: string; type: string; color: string; imgL: string; imgM: string; imgR: string }> = {
   aria: {
@@ -26,36 +26,36 @@ const projectMeta: Record<string, { year: string; domain: string; type: string; 
     domain: "Voice AI & WebRTC",
     type: "Production Assistant",
     color: "bg-blue-500",
-    imgL: `${RAW_BASE}aria-1.svg`,
-    imgM: `${RAW_BASE}aria-2.svg`,
-    imgR: `${RAW_BASE}aria-3.svg`,
+    imgL: `${BASE_PATH}aria-1.svg`,
+    imgM: `${BASE_PATH}aria-2.svg`,
+    imgR: `${BASE_PATH}aria-3.svg`,
   },
   "sales-agent": {
     year: "2025",
     domain: "Autonomous Agents",
     type: "Inbound Pipeline",
     color: "bg-purple-500",
-    imgL: `${RAW_BASE}sales-agent-1.svg`,
-    imgM: `${RAW_BASE}sales-agent-2.svg`,
-    imgR: `${RAW_BASE}sales-agent-3.svg`,
+    imgL: `${BASE_PATH}sales-agent-1.svg`,
+    imgM: `${BASE_PATH}sales-agent-2.svg`,
+    imgR: `${BASE_PATH}sales-agent-3.svg`,
   },
   einvoice: {
     year: "2024 — 2025",
     domain: "Enterprise ETL",
     type: "LHDN Compliance",
     color: "bg-emerald-500",
-    imgL: `${RAW_BASE}einvoice-1.svg`,
-    imgM: `${RAW_BASE}einvoice-2.svg`,
-    imgR: `${RAW_BASE}einvoice-3.svg`,
+    imgL: `${BASE_PATH}einvoice-1.svg`,
+    imgM: `${BASE_PATH}einvoice-2.svg`,
+    imgR: `${BASE_PATH}einvoice-3.svg`,
   },
   content: {
     year: "2024",
     domain: "SEO Automation",
     type: "Multi-Channel Publishing",
     color: "bg-orange-500",
-    imgL: `${RAW_BASE}content-1.svg`,
-    imgM: `${RAW_BASE}content-2.svg`,
-    imgR: `${RAW_BASE}content-3.svg`,
+    imgL: `${BASE_PATH}content-1.svg`,
+    imgM: `${BASE_PATH}content-2.svg`,
+    imgR: `${BASE_PATH}content-3.svg`,
   },
 };
 
@@ -162,18 +162,18 @@ export default function Projects() {
                   <div className={`col-span-12 lg:col-span-7 grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4 ${isEven ? "" : "lg:order-1"}`}>
                     <div className="hidden md:flex flex-col gap-4">
                       <div className="aspect-[4/5] rounded-3xl overflow-hidden border border-white/10 shadow-2xl group relative bg-black">
-                        <img className="absolute inset-0 w-full h-full object-cover grayscale contrast-110 opacity-60 group-hover:grayscale-25 group-hover:opacity-85 group-hover:scale-110 transition-all duration-700" src={meta.imgL} alt={project.title} />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent pointer-events-none" />
+                        <img className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-all duration-700" src={meta.imgL} alt={project.title} />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
                       </div>
                       <div className="aspect-square rounded-3xl overflow-hidden border border-white/10 shadow-2xl group relative bg-black">
-                        <img className="absolute inset-0 w-full h-full object-cover grayscale contrast-110 opacity-60 group-hover:grayscale-25 group-hover:opacity-85 group-hover:scale-110 transition-all duration-700" src={meta.imgM} alt={project.title} />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent pointer-events-none" />
+                        <img className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-all duration-700" src={meta.imgM} alt={project.title} />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
                       </div>
                     </div>
 
                     <div className="col-span-1 md:col-span-2 aspect-video md:aspect-[4/5] rounded-2xl sm:rounded-3xl overflow-hidden border border-white/10 shadow-2xl group self-center relative bg-black">
-                      <img className="absolute inset-0 w-full h-full object-cover grayscale contrast-110 opacity-70 group-hover:grayscale-25 group-hover:opacity-90 group-hover:scale-105 transition-all duration-700" src={meta.imgR} alt={project.title} />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent pointer-events-none" />
+                      <img className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-all duration-700" src={meta.imgR} alt={project.title} />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent pointer-events-none" />
                       <div className="absolute bottom-4 sm:bottom-6 left-4 sm:left-6 right-4 sm:right-6 flex items-center justify-between font-mono text-xs">
                         <span className="px-2.5 sm:px-3 py-1 rounded-full bg-black/80 border border-white/15 text-white backdrop-blur-md text-[10px] sm:text-xs">
                           {meta.type}
