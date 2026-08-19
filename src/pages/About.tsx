@@ -96,9 +96,9 @@ export default function About() {
               <div className="relative rounded-3xl overflow-hidden border border-white/15 bg-neutral-900/60 shadow-2xl p-2.5 sm:p-3 group">
                 <div className="aspect-[4/5] rounded-2xl overflow-hidden relative">
                   <img
-                    src="https://raw.githubusercontent.com/UPavankumar/Portfolio/main/public/HeadShot.jpg"
+                    src={(import.meta.env.BASE_URL || "./").replace(/\/$/, "") + "/HeadShot.jpg"}
                     onError={(e) => {
-                      (e.currentTarget as HTMLImageElement).src = "/HeadShot.jpg";
+                      (e.currentTarget as HTMLImageElement).src = "https://raw.githubusercontent.com/UPavankumar/Portfolio/main/public/HeadShot.jpg";
                     }}
                     alt={profile.name}
                     className="w-full h-full object-cover grayscale contrast-125 group-hover:grayscale-0 group-hover:scale-105 transition-all duration-700"
