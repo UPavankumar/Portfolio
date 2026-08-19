@@ -6,7 +6,6 @@ const ROUTE_INFO: Record<string, { label: string; sub: string }> = {
   "/": { label: "HOME", sub: "EXECUTIVE OVERVIEW" },
   "/about": { label: "ABOUT", sub: "CAREER & BIOGRAPHY" },
   "/projects": { label: "WORK", sub: "PRODUCTION CASE STUDIES" },
-  "/skills": { label: "SKILLS", sub: "ENGINEERING MATRIX" },
   "/contact": { label: "CONTACT", sub: "DIRECT INQUIRY" },
 };
 

@@ -3,7 +3,6 @@ import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import Home from "./pages/Home";
 import About from "./pages/About";
 import Projects from "./pages/Projects";
-import SkillsPage from "./pages/SkillsPage";
 import Contact from "./pages/Contact";
 import NotFound from "./pages/NotFound";
 import Preloader from "./components/Preloader";
@@ -18,7 +17,6 @@ const PAGE_TITLES: Record<string, string> = {
   "/": "Pavan Kumar — Business Analyst · AI Automation",
   "/about": "About & Career Story | Pavan Kumar",
   "/projects": "Production Architectures & Case Studies | Pavan Kumar",
-  "/skills": "Tools & Engineering Matrix | Pavan Kumar",
   "/contact": "Get in Touch & Consult | Pavan Kumar",
 };
 
@@ -78,7 +76,6 @@ export default function App() {
         <Route path="/" element={<Home />} />
         <Route path="/about" element={<About />} />
         <Route path="/projects" element={<Projects />} />
-        <Route path="/skills" element={<SkillsPage />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="*" element={<NotFound />} />
       </Routes>

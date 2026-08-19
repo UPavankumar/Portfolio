@@ -7,7 +7,6 @@ const NAV_LINKS = [
   { name: "Home", path: "/" },
   { name: "About", path: "/about" },
   { name: "Work", path: "/projects" },
-  { name: "Skills", path: "/skills" },
   { name: "Contact", path: "/contact" },
 ];
 
@@ -26,8 +25,6 @@ export default function Nav() {
       setActivePath("/about");
     } else if (location.pathname === "/projects") {
       setActivePath("/projects");
-    } else if (location.pathname === "/skills") {
-      setActivePath("/skills");
     } else if (location.pathname === "/contact") {
       setActivePath("/contact");
     } else {
@@ -86,7 +83,7 @@ export default function Nav() {
         </div>
       </Link>
 
-      {/* Desktop Floating Center Navbar (Clean Dedicated Page Links) */}
+      {/* Desktop Floating Center Navbar */}
       <div className="absolute inset-0 px-4 md:px-6 pointer-events-none hidden lg:block">
         <motion.nav
           initial={false}

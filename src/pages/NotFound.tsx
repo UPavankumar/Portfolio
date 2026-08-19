@@ -7,7 +7,6 @@ const QUICK_ROUTES = [
   { label: "Home Base", path: "/", icon: "⚡" },
   { label: "Case Studies", path: "/projects", icon: "🚀" },
   { label: "About & Story", path: "/about", icon: "👤" },
-  { label: "Skills Matrix", path: "/skills", icon: "⚙️" },
   { label: "Contact Channel", path: "/contact", icon: "📬" },
 ];
 
@@ -22,12 +21,10 @@ export default function NotFound() {
 
     playPopSound();
 
-    if (query.includes("about") || query.includes("bio") || query.includes("story") || query.includes("resume")) {
+    if (query.includes("about") || query.includes("bio") || query.includes("story") || query.includes("resume") || query.includes("skill") || query.includes("tool") || query.includes("stack")) {
       navigate("/about");
     } else if (query.includes("project") || query.includes("work") || query.includes("case") || query.includes("voice") || query.includes("invoice")) {
       navigate("/projects");
-    } else if (query.includes("skill") || query.includes("tool") || query.includes("stack") || query.includes("tech")) {
-      navigate("/skills");
     } else if (query.includes("contact") || query.includes("hire") || query.includes("email") || query.includes("message")) {
       navigate("/contact");
     } else {

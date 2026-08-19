@@ -58,8 +58,6 @@ export default function Footer() {
             <span>·</span>
             <Link to="/projects" className="hover:text-white transition-colors">Work</Link>
             <span>·</span>
-            <Link to="/skills" className="hover:text-white transition-colors">Skills</Link>
-            <span>·</span>
             <Link to="/contact" className="hover:text-white transition-colors">Contact</Link>
           </div>
         </div>

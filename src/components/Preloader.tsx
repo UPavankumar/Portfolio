@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 
-const VALID_ROUTES = ["/", "/about", "/projects", "/skills", "/contact"];
+const VALID_ROUTES = ["/", "/about", "/projects", "/contact"];
 
 const GREETINGS = [
   "Hello", // EN
