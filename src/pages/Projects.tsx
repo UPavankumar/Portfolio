@@ -18,42 +18,44 @@ function MiniPipeline({ steps }: { steps: string[] }) {
   );
 }
 
+const RAW_BASE = "https://raw.githubusercontent.com/UPavankumar/Portfolio/main/public/projects/";
+
 const projectMeta: Record<string, { year: string; domain: string; type: string; color: string; imgL: string; imgM: string; imgR: string }> = {
   aria: {
     year: "2025",
     domain: "Voice AI & WebRTC",
     type: "Production Assistant",
     color: "bg-blue-500",
-    imgL: "https://images.unsplash.com/photo-1620712943543-bcc4688e7485?q=80&w=800&auto=format&fit=crop",
-    imgM: "https://images.unsplash.com/photo-1589254065878-42c9da997008?q=80&w=800&auto=format&fit=crop",
-    imgR: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=800&auto=format&fit=crop",
+    imgL: `${RAW_BASE}aria-1.svg`,
+    imgM: `${RAW_BASE}aria-2.svg`,
+    imgR: `${RAW_BASE}aria-3.svg`,
   },
   "sales-agent": {
     year: "2025",
     domain: "Autonomous Agents",
     type: "Inbound Pipeline",
     color: "bg-purple-500",
-    imgL: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=800&auto=format&fit=crop",
-    imgM: "https://images.unsplash.com/photo-1504868584819-f8e8b4b6d7e3?q=80&w=800&auto=format&fit=crop",
-    imgR: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=800&auto=format&fit=crop",
+    imgL: `${RAW_BASE}sales-agent-1.svg`,
+    imgM: `${RAW_BASE}sales-agent-2.svg`,
+    imgR: `${RAW_BASE}sales-agent-3.svg`,
   },
   einvoice: {
     year: "2024 — 2025",
     domain: "Enterprise ETL",
     type: "LHDN Compliance",
     color: "bg-emerald-500",
-    imgL: "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?q=80&w=800&auto=format&fit=crop",
-    imgM: "https://images.unsplash.com/photo-1664575602276-acd073f104c1?q=80&w=800&auto=format&fit=crop",
-    imgR: "https://images.unsplash.com/photo-1640161704729-cbe966a08476?q=80&w=800&auto=format&fit=crop",
+    imgL: `${RAW_BASE}einvoice-1.svg`,
+    imgM: `${RAW_BASE}einvoice-2.svg`,
+    imgR: `${RAW_BASE}einvoice-3.svg`,
   },
   content: {
     year: "2024",
     domain: "SEO Automation",
     type: "Multi-Channel Publishing",
     color: "bg-orange-500",
-    imgL: "https://images.unsplash.com/photo-1432821596592-e2c18b78144f?q=80&w=800&auto=format&fit=crop",
-    imgM: "https://images.unsplash.com/photo-1493612276216-ee3925520721?q=80&w=800&auto=format&fit=crop",
-    imgR: "https://images.unsplash.com/photo-1499750310107-5fef28a66643?q=80&w=800&auto=format&fit=crop",
+    imgL: `${RAW_BASE}content-1.svg`,
+    imgM: `${RAW_BASE}content-2.svg`,
+    imgR: `${RAW_BASE}content-3.svg`,
   },
 };
 
